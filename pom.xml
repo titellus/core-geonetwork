@@ -1146,6 +1146,7 @@
     <module>core</module>
     <module>schemas</module>
     <module>csw-server</module>
+    <module>csw-proxy</module>
     <module>harvesters</module>
     <module>healthmonitor</module>
     <module>services</module>

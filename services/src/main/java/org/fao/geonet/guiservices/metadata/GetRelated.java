@@ -312,13 +312,13 @@ public class GetRelated implements Service, RelatedMetadata {
     @Override
     public Element getRelated(ServiceContext context, int iId, String uuid, String type, int from_, int to_, boolean fast_)
             throws Exception {
+        Element relatedRecords = new Element("relations");
         final String id = String.valueOf(iId);
         final String from = "" + from_;
         final String to = "" + to_;
         final String fast = "" + fast_;
         GeonetContext gc = (GeonetContext) context.getHandlerContext(Geonet.CONTEXT_NAME);
         DataManager dm = gc.getBean(DataManager.class);
-        Element relatedRecords = new Element("relations");
         List<String> listOfTypes = new ArrayList<String>(Arrays.asList(type.split(",|\\|")));
         if (listOfTypes != null && listOfTypes.size() == 1 && "".equals(listOfTypes.get(0))) {
             listOfTypes.clear();
@@ -329,6 +329,11 @@ public class GetRelated implements Service, RelatedMetadata {
             // Get from DB
             md = dm.getMetadata(context, id, forEditing, withValidationErrors,
                     keepXlinkAttributes);
+        }
+        
+        if(md == null) {
+            //Looks like we are working with an external not-saved metadata. Skip this!
+            return relatedRecords;
         }
 
         String schemaIdentifier = dm.getMetadataSchema(id);

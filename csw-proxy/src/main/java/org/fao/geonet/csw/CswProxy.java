@@ -23,6 +23,7 @@ Rome - Italy. email: geonetwork@osgeo.org
 package org.fao.geonet.csw;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
@@ -30,15 +31,22 @@ import java.nio.file.Path;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.fao.geonet.constants.Geonet;
+import org.fao.geonet.kernel.SchemaManager;
+import org.fao.geonet.services.metadata.format.Format;
+import org.fao.geonet.services.metadata.format.FormatType;
+import org.fao.geonet.services.metadata.format.FormatterWidth;
 import org.fao.geonet.utils.Xml;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.context.request.NativeWebRequest;
 
 import jeeves.server.context.ServiceContext;
 
@@ -52,10 +60,17 @@ import jeeves.server.context.ServiceContext;
 
 @Controller("csw-proxy")
 public class CswProxy {
+    
+    @Autowired
+    private Format formatter;
+    
+    @Autowired 
+    private SchemaManager sm;
 
     @RequestMapping(value = "/{lang}/csw-proxy", produces = {
             MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
-    public @ResponseBody String doProxy(String format, String url)
+    public @ResponseBody String doProxy(String format, String url, 
+            final NativeWebRequest nativeRequest)
             throws Exception {
         String res = "";
 
@@ -72,7 +87,6 @@ public class CswProxy {
         in.close();
 
         res = sb.toString();
-        // Convert to common format
 
         // Convert to format
         switch (format) {
@@ -85,7 +99,8 @@ public class CswProxy {
         case "dublincore":
             throw new NotImplementedException("Format not recognized");
         case "pdf":
-            throw new NotImplementedException("Format not recognized");
+        case "application/pdf":
+            res = convertToPdf(res, nativeRequest);
         case "json-ld":
             throw new NotImplementedException("Format not recognized");
         default:
@@ -93,6 +108,27 @@ public class CswProxy {
         }
 
         return res;
+    }
+
+    /**
+     * @param res
+     * @param original
+     * @return
+     * @throws Exception 
+     */
+    private String convertToPdf(String res, NativeWebRequest request) throws Exception {
+        final ServiceContext context = ServiceContext.get();
+        SAXBuilder sax = new SAXBuilder();
+        Document doc = sax.build(new StringReader(res));
+        Element e = (Element) doc.getRootElement().getChildren().get(0);
+        e.detach();
+        String schema = sm.autodetectSchema(e);
+        
+        FormatterWidth width = FormatterWidth._100;
+        
+        formatter.execXml(context.getLanguage(), FormatType.pdf.name(),
+                "full_view", res, null, schema, width, null, request);
+        return "";
     }
 
     /**
@@ -115,6 +151,13 @@ public class CswProxy {
         Path xslPath = context.getAppPath().resolve(Geonet.Path.XSLT_FOLDER)
                 .resolve("services").resolve("dcat").resolve("rdf.xsl");
 
+        Element record = transform(md, url, context, xslPath);
+
+        return (new XMLOutputter()).outputString(record);
+    }
+
+    private Element transform(String md, URL url, final ServiceContext context,
+            Path xslPath) throws JDOMException, IOException, Exception {
         SAXBuilder sax = new SAXBuilder();
         Document doc = sax.build(new StringReader(md));
 
@@ -157,7 +200,14 @@ public class CswProxy {
         modelEl.addContent(e);
 
         Element record = Xml.transform(modelEl, xslPath);
+        return record;
+    }
 
-        return (new XMLOutputter()).outputString(record);
+    public Format getFormatter() {
+        return formatter;
+    }
+
+    public void setFormatter(Format formatter) {
+        this.formatter = formatter;
     }
 }

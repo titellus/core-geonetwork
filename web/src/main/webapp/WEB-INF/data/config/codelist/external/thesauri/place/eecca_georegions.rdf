@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+         xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <skos:ConceptScheme rdf:about="http://euwiplus.eu/register/georegions/">
+    <dc:title>EECCA georegions</dc:title>
+    <dc:description/>
+    <dcterms:issued>2017-03-13</dcterms:issued>
+    <dcterms:modified>2017-03-13</dcterms:modified>
+  </skos:ConceptScheme>
+
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/Dniestr basin">
+    <skos:prefLabel xml:lang="en">Dniestr basin</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">Dniestr basin</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/Aral sea basin">
+    <skos:prefLabel xml:lang="en">Aral sea basin</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">Aral sea basin</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/Amudarya basin">
+    <skos:prefLabel xml:lang="en">Amudarya basin</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">Amudarya basin</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/Syrdarya basin">
+    <skos:prefLabel xml:lang="en">Syrdarya basin</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">Syrdarya basin</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/Afghanistan">
+    <skos:prefLabel xml:lang="en">Afghanistan</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">Афганистан</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/Kazakhstan">
+    <skos:prefLabel xml:lang="en">Kazakhstan</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">Казахстан</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/Kyrgyzstan">
+    <skos:prefLabel xml:lang="en">Kyrgyzstan</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">Kyrgyzstan</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/Moldova">
+    <skos:prefLabel xml:lang="en">Moldova</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">Moldova</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/Tajikistan">
+    <skos:prefLabel xml:lang="en">Tajikistan</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">Tajikistan</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/Turkmenistan">
+    <skos:prefLabel xml:lang="en">Turkmenistan</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">Turkmenistan</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/Ukraine">
+    <skos:prefLabel xml:lang="en">Ukraine</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">Ukraine</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/Uzbekistan">
+    <skos:prefLabel xml:lang="en">Uzbekistan</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">Uzbekistan</skos:prefLabel>
+  </skos:Concept>
+</rdf:RDF>

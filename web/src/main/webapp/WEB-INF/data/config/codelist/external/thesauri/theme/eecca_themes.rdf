@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+         xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <skos:ConceptScheme rdf:about="http://euwiplus.eu/register/themes/">
+    <dc:title>EECCA themes</dc:title>
+    <dc:description/>
+    <dcterms:issued>2017-03-13</dcterms:issued>
+    <dcterms:modified>2017-03-13</dcterms:modified>
+  </skos:ConceptScheme>
+
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/AD">
+    <skos:prefLabel xml:lang="en">AD - Administratives aspect and operations</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">AD - Administratives aspect and operations</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/HYE">
+    <skos:prefLabel xml:lang="en">HYE - Hydro entities and water related areas</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">HYE - Hydro entities and water related areas</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/ENV">
+    <skos:prefLabel xml:lang="en">ENV - Environmental / geographical context</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">ENV - Environmental / geographical context</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/MO">
+    <skos:prefLabel xml:lang="en">MO - Monitoring network and stations</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">MO - Monitoring network and stations</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/MO-STA">
+    <skos:prefLabel xml:lang="en">MO-STA - Monitoring network and stations</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">MO-STA - Monitoring network and stations</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/MO-MET">
+    <skos:prefLabel xml:lang="en">MO-MET - Meteo / climato data</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">MO-MET - Meteo / climato data</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/MO-QTT">
+    <skos:prefLabel xml:lang="en">MO-QTT - Water status / quantitative aspects</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">MO-QTT - Water status / quantitative aspects</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/MO-QLT">
+    <skos:prefLabel xml:lang="en">MO-QLT - Water status / qualitative aspects</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">MO-QLT - Water status / qualitative aspects</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/UP">
+    <skos:prefLabel xml:lang="en">UP - User polluters</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">UP - User polluters</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/UP-ID">
+    <skos:prefLabel xml:lang="en">UP-ID - Identification of the users polluters</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">UP-ID - Identification of the users polluters</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/UP-IS">
+    <skos:prefLabel xml:lang="en">UP-IS - Infrastructures used by the users polluters</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">UP-IS - Infrastructures used by the users polluters</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/IUD">
+    <skos:prefLabel xml:lang="en">IUD - Uses and pressure (intake use discharge)</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">IUD - Uses and pressure (intake use discharge)</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/RISK">
+    <skos:prefLabel xml:lang="en">RISK - Risk management</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">RISK - Risk management</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/ECO">
+    <skos:prefLabel xml:lang="en">ECO - Economical data</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">ECO - Economical data</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://euwiplus.eu/register/themes/IN">
+    <skos:prefLabel xml:lang="en">IN - Indicator status and performance</skos:prefLabel>
+    <skos:prefLabel xml:lang="ru">IN - Indicator status and performance</skos:prefLabel>
+  </skos:Concept>
+</rdf:RDF>

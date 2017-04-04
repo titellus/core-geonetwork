@@ -1185,7 +1185,7 @@
     <!-- Configure database config file to use. Could be
      h2, postgres, sqlserver, mysql, oracle, db2, postgres-postgis, jndi-postgres-postgis
      -->
-    <db.type>h2</db.type>
+    <db.type>postgres</db.type>
     <db.config.file>../config-db/${db.type}.xml</db.config.file>
     <db.host>localhost</db.host>
     <db.port>5432</db.port>

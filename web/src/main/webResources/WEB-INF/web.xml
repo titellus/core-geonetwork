@@ -324,6 +324,11 @@
         <param-name>geonetwork.dir</param-name>
         <param-value>/app/geonetwork_data_dir</param-value>
     </init-param>-->
+    <init-param>
+      <param-name>geonetwork.dir</param-name>
+      <param-value>/opt/gndata</param-value>
+    </init-param>
+
     <load-on-startup>1</load-on-startup>
   </servlet>
 

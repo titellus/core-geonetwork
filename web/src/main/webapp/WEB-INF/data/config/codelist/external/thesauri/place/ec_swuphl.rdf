@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<rdf:RDF xmlns:gml="http://www.opengis.net/gml#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:skos="http://www.w3.org/2004/02/skos/core#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <skos:ConceptScheme>
+    <dc:title>Ecuador / UPHL</dc:title>
+    <dc:description/>
+    <dc:creator>
+      <foaf:Organization>
+        <foaf:name/>
+      </foaf:Organization>
+    </dc:creator>
+    <dc:rights/>
+    <dcterms:issued>2017-04-17 12:00:00</dcterms:issued>
+    <dcterms:modified>2017-04-17 12:00:00</dcterms:modified>
+  </skos:ConceptScheme>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#PC-01">
+    <skos:prefLabel xml:lang="en">Alamor</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Alamor</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-80.454 -4.4881</gml:lowerCorner>
+        <gml:upperCorner>-79.873 -3.9759</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#PC-02">
+    <skos:prefLabel xml:lang="en">Calvas</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Calvas</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-80.141 -4.7476</gml:lowerCorner>
+        <gml:upperCorner>-79.281 -4.1792</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#PC-03">
+    <skos:prefLabel xml:lang="en">Catamayo</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Catamayo</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-80.171 -4.5093</gml:lowerCorner>
+        <gml:upperCorner>-79.100 -3.6780</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#PC-04">
+    <skos:prefLabel xml:lang="en">Puyango</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Puyango</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-80.486 -4.2178</gml:lowerCorner>
+        <gml:upperCorner>-79.366 -3.4854</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#JU-01">
+    <skos:prefLabel xml:lang="en">Zarumilla</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Zarumilla</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-80.446 -3.8527</gml:lowerCorner>
+        <gml:upperCorner>-79.629 -3.1623</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#JU-02">
+    <skos:prefLabel xml:lang="en">Jubones</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Jubones</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-79.992 -3.7209</gml:lowerCorner>
+        <gml:upperCorner>-78.924 -3.0313</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#JU-03">
+    <skos:prefLabel xml:lang="en">Balao</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Balao</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-79.925 -3.2894</gml:lowerCorner>
+        <gml:upperCorner>-79.281 -2.6508</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#GU-01">
+    <skos:prefLabel xml:lang="en">Cañar</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Cañar</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-79.752 -2.8653</gml:lowerCorner>
+        <gml:upperCorner>-78.747 -2.3562</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#JU-04">
+    <skos:prefLabel xml:lang="en">Naranjal</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Naranjal</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-79.750 -2.7931</gml:lowerCorner>
+        <gml:upperCorner>-79.425 -2.5473</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#ES-02">
+    <skos:prefLabel xml:lang="en">Esmeraldas</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Esmeraldas</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-79.992 -1.0724</gml:lowerCorner>
+        <gml:upperCorner>-78.535 0.99508</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#GU-02">
+    <skos:prefLabel xml:lang="en">Taura</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Taura</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-79.889 -2.6656</gml:lowerCorner>
+        <gml:upperCorner>-79.047 -2.1406</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#GU-08">
+    <skos:prefLabel xml:lang="en">Daule</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Daule</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-80.595 -2.1820</gml:lowerCorner>
+        <gml:upperCorner>-79.176 -0.23807</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#GU-09">
+    <skos:prefLabel xml:lang="en">Guayas</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Guayas</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-79.884 -2.1994</gml:lowerCorner>
+        <gml:upperCorner>-78.789 -0.92855</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#GU-06">
+    <skos:prefLabel xml:lang="en">Chimbo</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Chimbo</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-79.784 -2.4413</gml:lowerCorner>
+        <gml:upperCorner>-78.622 -1.3471</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#GU-07">
+    <skos:prefLabel xml:lang="en">Vinces</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Vinces</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-79.858 -1.9449</gml:lowerCorner>
+        <gml:upperCorner>-78.922 -0.24585</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#GU-03">
+    <skos:prefLabel xml:lang="en">Est. Bajén,Puná Isla</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Est. Bajén,Puná Isla</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-80.683 -3.0436</gml:lowerCorner>
+        <gml:upperCorner>-79.846 -2.0746</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#GU-04">
+    <skos:prefLabel xml:lang="en">Zapotal</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Zapotal</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-80.731 -2.4745</gml:lowerCorner>
+        <gml:upperCorner>-80.328 -2.0918</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#GU-05">
+    <skos:prefLabel xml:lang="en">Javita</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Javita</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-81.011 -2.4067</gml:lowerCorner>
+        <gml:upperCorner>-80.287 -1.6752</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#MA-01">
+    <skos:prefLabel xml:lang="en">Jipijapa</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Jipijapa</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-80.913 -1.8264</gml:lowerCorner>
+        <gml:upperCorner>-80.500 -0.79374</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#MA-02">
+    <skos:prefLabel xml:lang="en">Portoviejo</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Portoviejo</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-80.574 -1.3515</gml:lowerCorner>
+        <gml:upperCorner>-79.993 -0.78687</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#MA-03">
+    <skos:prefLabel xml:lang="en">Chone</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Chone</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-80.521 -1.0684</gml:lowerCorner>
+        <gml:upperCorner>-79.872 -0.48902</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#MA-04">
+    <skos:prefLabel xml:lang="en">Briceño</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Briceño</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-80.493 -0.65242</gml:lowerCorner>
+        <gml:upperCorner>-80.131 -0.16188</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#MA-05">
+    <skos:prefLabel xml:lang="en">Jama</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Jama</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-80.350 -0.53427</gml:lowerCorner>
+        <gml:upperCorner>-79.945 -0.16067</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#ES-01">
+    <skos:prefLabel xml:lang="en">Muisne</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Muisne</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-80.101 0.26786</gml:lowerCorner>
+        <gml:upperCorner>-79.673 0.98267</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#MA-06">
+    <skos:prefLabel xml:lang="en">Cuaque</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Cuaque</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-80.264 -0.23726</gml:lowerCorner>
+        <gml:upperCorner>-79.738 0.43550</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#ES-04">
+    <skos:prefLabel xml:lang="en">Verde</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Verde</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-79.634 0.52974</gml:lowerCorner>
+        <gml:upperCorner>-78.999 1.2227</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#ES-05">
+    <skos:prefLabel xml:lang="en">Cayapas</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Cayapas</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-79.301 0.37333</gml:lowerCorner>
+        <gml:upperCorner>-78.427 1.4543</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#MI-01">
+    <skos:prefLabel xml:lang="en">Mira</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Mira</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-78.571 0.12132</gml:lowerCorner>
+        <gml:upperCorner>-77.649 1.2448</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#MI-02">
+    <skos:prefLabel xml:lang="en">Carchi</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Carchi</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-77.961 0.67370</gml:lowerCorner>
+        <gml:upperCorner>-77.662 0.85088</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#NA-01">
+    <skos:prefLabel xml:lang="en">San Miguel</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">San Miguel</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-77.465 -0.25208</gml:lowerCorner>
+        <gml:upperCorner>-75.256 0.43941</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#NA-02">
+    <skos:prefLabel xml:lang="en">Napo</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Napo</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-78.437 -1.8321</gml:lowerCorner>
+        <gml:upperCorner>-75.188 0.72885</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#PA-02">
+    <skos:prefLabel xml:lang="en">Cunambo</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Cunambo</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-77.559 -2.5139</gml:lowerCorner>
+        <gml:upperCorner>-75.810 -1.5166</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#PA-01">
+    <skos:prefLabel xml:lang="en">Pastaza</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Pastaza</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-78.939 -2.7822</gml:lowerCorner>
+        <gml:upperCorner>-76.534 -0.58916</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#SA-01">
+    <skos:prefLabel xml:lang="en">Morona</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Morona</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-78.040 -2.9898</gml:lowerCorner>
+        <gml:upperCorner>-77.195 -1.9733</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#SA-02">
+    <skos:prefLabel xml:lang="en">Santiago</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Santiago</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-79.363 -4.6859</gml:lowerCorner>
+        <gml:upperCorner>-77.805 -1.9980</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#SA-03">
+    <skos:prefLabel xml:lang="en">Mayo</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Mayo</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-79.428 -5.0154</gml:lowerCorner>
+        <gml:upperCorner>-78.863 -4.2269</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#ES-03">
+    <skos:prefLabel xml:lang="en">Guayllabamba</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">Guayllabamba</skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-79.412 -0.68422</gml:lowerCorner>
+        <gml:upperCorner>-77.965 0.59524</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://193.70.117.229/ecuador#">
+    <skos:prefLabel xml:lang="en"></skos:prefLabel>
+    <skos:prefLabel xml:lang="es"></skos:prefLabel>
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-92.017 -1.4119</gml:lowerCorner>
+        <gml:upperCorner>-89.241 1.6549</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+</rdf:RDF>

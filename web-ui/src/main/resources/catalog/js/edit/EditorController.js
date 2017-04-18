@@ -448,7 +448,7 @@
         // Go to editor home
         $location.path('');
         // Tentative to close the browser tab
-        window.close();
+        // window.close();
         // This last point may trigger
         // "Scripts may close only the windows that were opened by it."
         // when the editor was not opened by a script.

@@ -82,6 +82,7 @@
     <facet name="keyword" indexKey="keyword" label="keywords" localized="true"/>
     <facet name="topicCat" indexKey="topicCat" label="topicCats" localized="true"/>
     <facet name="category" indexKey="_cat" label="categories" localized="true"/>
+    <facet name="iwrmThemeURI" indexKey="iwrmthemeuri" label="iwrmThemeURI"/>
     <facet name="inspireTheme" indexKey="inspiretheme" label="inspireThemes"/>
     <facet name="inspireThemeWithAc" indexKey="inspirethemewithac" label="inspireThemesWithAc"/>
     <facet name="inspireThemeURI" indexKey="inspirethemeuri" label="inspireThemesURI"/>
@@ -135,7 +136,9 @@
             translator="term:http://geonetwork-opensource.org/inspire-theme"/>
       <!--<item facet="inspireTheme" sortBy="value" sortOrder="asc" max="35"/>-->
       <!--<item facet="inspireThemeWithAc" sortBy="value" sortOrder="asc" max="35"/>-->
-      <item facet="keyword" max="15"/>
+      <!--<item facet="keyword" max="15"/>-->
+      <item facet="iwrmThemeURI" max="35"
+            translator="term:http://oieau.org/iwrm/themes"/>
       <item facet="orgName" max="25"/>
       <item facet="sourceCatalog"
             translator="db:org.fao.geonet.repository.SourceRepository:findOneByUuid"/>
@@ -159,6 +162,8 @@
 
     <summaryType name="manager" format="DIMENSION">
       <item facet="type" translator="codelist:gmd:MD_ScopeCode"/>
+      <item facet="iwrmThemeURI" max="35"
+            translator="term:http://oieau.org/iwrm/themes"/>
       <item facet="category" max="99" sortBy="value"
             translator="db:org.fao.geonet.repository.MetadataCategoryRepository:findOneByName"/>
       <item facet="mdStatus" max="10" sortBy="value"
@@ -180,6 +185,9 @@
     See above. -->
     <summaryType name="hits">
       <item facet="type" translator="codelist:gmd:MD_ScopeCode"/>
+      <!--<item facet="iwrmTheme" max="15"/>-->
+      <item facet="iwrmThemeURI" max="35"
+            translator="term:http://oieau.org/iwrm/themes"/>
       <item facet="topicCat" translator="codelist:gmd:MD_TopicCategoryCode" max="20"/>
       <item facet="inspireTheme" sortBy="value" sortOrder="asc" max="35"/>
       <item facet="inspireThemeWithAc" sortBy="value" sortOrder="asc" max="35"/>

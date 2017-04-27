@@ -37,11 +37,14 @@
   <div class="row" data-ng-show="searchInfo.count > 0">
     <div class="col-sm-8" data-ng-show="browse !== ''">
       <span data-translate="">browseBy</span>
-      <span
-        data-ng-show="searchInfo.facet['inspireThemes'].length > 0 && searchInfo.facet['topicCats'].length > 0">
+      <span>
         <label data-ng-show="searchInfo.facet['inspireThemes'].length > 0">
           <input type="radio" name="browse" value="inspire" data-ng-model="browse"/>
           <span data-translate="">inspireThemes</span>
+        </label>
+        <label data-ng-show="searchInfo.facet['iwrmThemeURI'].length > 0">
+          <input type="radio" name="browse" value="iwrmThemeURI" data-ng-model="browse"/>
+          <span data-translate="">iwrmTheme</span>
         </label>
         <label data-ng-show="searchInfo.facet['topicCats'].length > 0">
           <input type="radio" name="browse" value="topics" data-ng-model="browse"/>
@@ -73,8 +76,27 @@
             </div>
         </span>
         <span id="chips-card"
-              data-ng-repeat="(key, facet) in searchInfo.facet['inspireThemesURI'] track by $index"
-              class="col-xs-6 col-sm-6 col-lg-4" data-ng-show="browse === 'inspire'">
+              data-ng-repeat="(key, facet) in searchInfo.facet['iwrmThemeURI'] track by $index"
+              class="col-xs-6 col-sm-6 col-lg-4" data-ng-show="browse === 'iwrmThemeURI'">
+            <div class="badge-icon col-xs-3">
+              <a title="{{facet['@label']}}"
+                 data-ng-href="#/search?facet.q=iwrmThemeURI%2F{{facet['@name'] | encodeURIComponent | encodeURIComponent}}">
+                <span class="badge-result badge-result-inspire">
+                  <img src="../../images/icons/{{facet['@name'].slice(facet['@name'].lastIndexOf('/')+1)}}.png"/>
+                </span>
+              </a>
+            </div>
+            <div class="badge-text col-xs-9">
+              <a title="{{facet['@label']}}"
+                 data-ng-href="#/search?facet.q=iwrmThemeURI%2F{{facet['@name'] | encodeURIComponent | encodeURIComponent}}">
+                <span class="gn-icon-label">{{facet['@label']}}</span><br>
+                <span class="badge">{{facet['@count']}}</span>
+              </a>
+            </div>
+        </span>
+        <span id="chips-card"
+                     data-ng-repeat="(key, facet) in searchInfo.facet['inspireThemesURI'] track by $index"
+                     class="col-xs-6 col-sm-6 col-lg-4" data-ng-show="browse === 'inspire'">
             <div class="badge-icon col-xs-3">
               <a title="{{facet['@label']}}"
                  data-ng-href="#/search?facet.q=inspireThemeURI%2F{{facet['@name'] | encodeURIComponent | encodeURIComponent}}">

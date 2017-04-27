@@ -62,6 +62,10 @@
                 select="if ($inspire!='false') then document(concat('file:///', replace($thesauriDir, '\\', '/'), '/external/thesauri/theme/inspire-theme.rdf')) else ''"/>
   <xsl:variable name="inspire-theme"
                 select="if ($inspire!='false') then $inspire-thesaurus//skos:Concept else ''"/>
+  <xsl:variable name="iwrm-thesaurus"
+                select="document(concat('file:///', replace($thesauriDir, '\\', '/'), '/external/thesauri/theme/ec-theme.rdf'))"/>
+  <xsl:variable name="iwrm-theme"
+                select="$iwrm-thesaurus//skos:Concept"/>
 
   <!-- If identification creation, publication and revision date
     should be indexed as a temporal extent information (eg. in INSPIRE
@@ -378,6 +382,19 @@
                 name="thesaurus-{substring-after($thesaurusIdentifier,'geonetwork.thesaurus.')}"
                 string="{string(.)}"
                 store="true" index="true"/>
+
+            </xsl:for-each>
+          </xsl:if>
+
+          <xsl:if test="$thesaurusIdentifier = 'geonetwork.thesaurus.external.theme.ec-theme'">
+            <xsl:for-each select="$listOfKeywords">
+              <xsl:variable name="keyword" select="."/>
+              <Field name="iwrmTheme" string="{string(.)}"
+                     store="true" index="true"/>
+              <xsl:variable name="iwrmThemeURI"
+                            select="$iwrm-theme[skos:prefLabel = $keyword]"/>
+              <Field name="iwrmthemeuri" string="{$iwrmThemeURI/@rdf:about}" store="true"
+                     index="true"/>
 
             </xsl:for-each>
           </xsl:if>

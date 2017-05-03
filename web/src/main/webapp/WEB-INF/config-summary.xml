@@ -109,6 +109,12 @@
     <facet name="subTemplateType" indexKey="_root" label="subTemplateTypes"/>
     <facet name="groupOwner" indexKey="_groupOwner" label="groupOwners"/>
     <facet name="publishedForGroup" indexKey="_groupPublished" label="publishedForGroup"/>
+    <facet name="ecuphl"
+           label="ecuphl"
+           indexKey="thesaurus-external.place.ec_swuphl"/>
+    <facet name="ecdh"
+           label="ecdh"
+           indexKey="thesaurus-external.place.ec_swdemhydro50k"/>
     <!--
     Example configuration for hierarchical facet based on
     the GeoNetwork region thesaurus or GEMET.
@@ -140,6 +146,8 @@
       <item facet="iwrmThemeURI" max="35"
             translator="term:http://oieau.org/iwrm/themes"/>
       <item facet="orgName" max="25"/>
+      <item facet="ecuphl" max="25"/>
+      <item facet="ecdh" max="25"/>
       <item facet="sourceCatalog"
             translator="db:org.fao.geonet.repository.SourceRepository:findOneByUuid"/>
       <item facet="createDateYear" sortBy="value" sortOrder="desc" max="40"/>

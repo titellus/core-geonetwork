@@ -115,6 +115,10 @@
     <facet name="ecdh"
            label="ecdh"
            indexKey="thesaurus-external.place.ec_swdemhydro50k"/>
+
+    <facet name="region" label="regions"
+           indexKey="keyword"
+           classifier="regionKeywordClassifier"/>
     <!--
     Example configuration for hierarchical facet based on
     the GeoNetwork region thesaurus or GEMET.
@@ -160,9 +164,9 @@
       <item facet="serviceType"/>
       <item facet="denominator" sortBy="numValue" sortOrder="desc"/>
       <item facet="resolution" sortBy="numValue" sortOrder="desc"/>
-      <!--
       <item facet="region"
             translator="term:http://geonetwork-opensource.org/thesaurus/naturalearth-and-seavox"/>
+      <!--
       <item facet="gemetKeyword"
             translator="term:http://geonetwork-opensource.org/gemet"/>
       -->

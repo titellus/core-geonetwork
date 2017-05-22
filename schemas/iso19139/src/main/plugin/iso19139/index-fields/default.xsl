@@ -63,7 +63,7 @@
   <xsl:variable name="inspire-theme"
                 select="if ($inspire!='false') then $inspire-thesaurus//skos:Concept else ''"/>
   <xsl:variable name="iwrm-thesaurus"
-                select="document(concat('file:///', replace($thesauriDir, '\\', '/'), '/external/thesauri/theme/ec-theme.rdf'))"/>
+                select="document(concat('file:///', replace($thesauriDir, '\\', '/'), '/external/thesauri/theme/IWRM-theme.rdf'))"/>
   <xsl:variable name="iwrm-theme"
                 select="$iwrm-thesaurus//skos:Concept"/>
 

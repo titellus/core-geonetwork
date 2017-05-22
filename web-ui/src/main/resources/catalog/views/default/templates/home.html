@@ -82,7 +82,7 @@
               <a title="{{facet['@label']}}"
                  data-ng-href="#/search?facet.q=iwrmThemeURI%2F{{facet['@name'] | encodeURIComponent | encodeURIComponent}}">
                 <span class="badge-result badge-result-inspire">
-                  <img src="../../images/icons/{{facet['@name'].slice(facet['@name'].lastIndexOf('/')+1)}}.png"/>
+                  <img src="../../images/icons/{{facet['@name'].slice(facet['@name'].lastIndexOf('/')+1) | encodeURIComponent}}.png"/>
                 </span>
               </a>
             </div>

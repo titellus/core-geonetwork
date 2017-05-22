@@ -386,7 +386,7 @@
             </xsl:for-each>
           </xsl:if>
 
-          <xsl:if test="$thesaurusIdentifier = 'geonetwork.thesaurus.external.theme.ec-theme'">
+          <xsl:if test="$thesaurusIdentifier = 'geonetwork.thesaurus.external.theme.IWRM-theme'">
             <xsl:for-each select="$listOfKeywords">
               <xsl:variable name="keyword" select="."/>
               <Field name="iwrmTheme" string="{string(.)}"

@@ -181,7 +181,7 @@
                 var keywordsAutocompleter = new Bloodhound({
                   datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
                   queryTokenizer: Bloodhound.tokenizers.whitespace,
-                  sorter: config.thesaurusKey != 'external.place.regions' ? null :
+                  sorter: config.thesaurusKey.indexOf('IWRM') === -1 ? null :
                     function (a, b) {
                     var nameA = a.props.uri.toUpperCase();
                     var nameB = b.props.uri.toUpperCase();

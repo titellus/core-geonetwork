@@ -6,10 +6,6 @@
     <dcterms:issued>12-05-2017 10:00:00</dcterms:issued>
     <dcterms:modified>12-05-2017 10:00:00</dcterms:modified>
     <skos:hasTopConcept rdf:resource="http://www.naturalearthdata.com/ne_admin#Country/ECU" />
-    <skos:hasTopConcept rdf:resource="http://www.naturalearthdata.com/ne_admin#Continent" />
-    <skos:hasTopConcept rdf:resource="http://www.naturalearthdata.com/ne_admin#Country" />
-    <skos:hasTopConcept rdf:resource="http://www.naturalearthdata.com/ne_admin#Country/Dependency" />
-    <skos:hasTopConcept rdf:resource="http://vocab.nerc.ac.uk/collection/C19/current/#SeaVoXGazetteer" />
   </skos:ConceptScheme>
   <skos:Concept rdf:about="http://193.70.117.229/ecuador#PA">
     <skos:prefLabel xml:lang="en">DH PASTAZA</skos:prefLabel>

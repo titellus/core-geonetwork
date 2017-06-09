@@ -165,7 +165,7 @@
             $.inArray(
             category['@value'],
             scope.params['facet.q'].split(/&|\//)) !== -1);
-        return category.isSelected;
+        return true; //category.isSelected;
       };
 
       function isInFilter(scope, category) {

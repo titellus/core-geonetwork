@@ -175,8 +175,8 @@
     }]);
 
   module.directive('gnFacetDimensionCategory', [
-    'gnFacetConfigService', 'RecursionHelper', '$parse',
-    function(gnFacetConfigService, RecursionHelper, $parse) {
+    'gnFacetConfigService', 'RecursionHelper', '$parse', '$timeout',
+    function(gnFacetConfigService, RecursionHelper, $parse, $timeout) {
       return {
         restrict: 'A',
         templateUrl: '../../catalog/components/search/facets/' +
@@ -200,6 +200,14 @@
                   scope.maxItems = (scope.maxItems == Infinity) ?
                       initialMaxItems : Infinity;
                 };
+
+                // scope.$watch('category', function (n, o) {
+                //   // if (o !== n) {
+                //     $timeout(function() {
+                //       scope.toggleAllNode();
+                //     }, 200);
+                //   // }
+                // });
 
                 // Facet drill down is based on facet.q parameter.
                 // The facet.q parameter contains a list of comma separated

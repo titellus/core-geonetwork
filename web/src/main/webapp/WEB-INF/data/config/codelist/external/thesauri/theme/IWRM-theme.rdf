@@ -26,26 +26,31 @@
     <skos:altLabel>AD</skos:altLabel>
     <skos:prefLabel xml:lang="en">Administrative context</skos:prefLabel>
     <skos:prefLabel xml:lang="es">Entorno administrativo</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Contexte administratif</skos:prefLabel>
   </skos:Concept>
   <skos:Concept rdf:about="http://oieau.org/iwrm/themes/ENV">
     <skos:altLabel>ENV</skos:altLabel>
     <skos:prefLabel xml:lang="en">Environmental context</skos:prefLabel>
     <skos:prefLabel xml:lang="es">Entorno Ambiental</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Contexte environnemental</skos:prefLabel>
   </skos:Concept>
   <skos:Concept rdf:about="http://oieau.org/iwrm/themes/SW">
     <skos:altLabel>SW</skos:altLabel>
     <skos:prefLabel xml:lang="en">Surface water</skos:prefLabel>
     <skos:prefLabel xml:lang="es">Agua superficial</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Eaux superficielles</skos:prefLabel>
   </skos:Concept>
   <skos:Concept rdf:about="http://oieau.org/iwrm/themes/GW">
     <skos:altLabel>GW</skos:altLabel>
     <skos:prefLabel xml:lang="en">Ground water</skos:prefLabel>
     <skos:prefLabel xml:lang="es">Agua subterránea</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Eaux souterraines</skos:prefLabel>
   </skos:Concept>
   <skos:Concept rdf:about="http://oieau.org/iwrm/themes/MO#MOQ">
     <skos:altLabel>MO</skos:altLabel>
     <skos:prefLabel xml:lang="en">Monitoring</skos:prefLabel>
     <skos:prefLabel xml:lang="es">Monitoreo</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Monitoring</skos:prefLabel>
     <skos:narrower rdf:resource="http://oieau.org/iwrm/themes/MO#MOQTT" />
     <skos:narrower rdf:resource="http://oieau.org/iwrm/themes/MO#MOQLT" />
   </skos:Concept>
@@ -53,35 +58,42 @@
     <skos:altLabel>UP</skos:altLabel>
     <skos:prefLabel xml:lang="en">Users/polluters</skos:prefLabel>
     <skos:prefLabel xml:lang="es">Usuarios/contaminadores</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Usagers/pollueurs</skos:prefLabel>
   </skos:Concept>
   <skos:Concept rdf:about="http://oieau.org/iwrm/themes/INFR">
     <skos:altLabel>INFR</skos:altLabel>
     <skos:prefLabel xml:lang="en">Hydraulic infrastructures</skos:prefLabel>
     <skos:prefLabel xml:lang="es">Infraestructuras hidráulicas</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Infrastructures secteur eau</skos:prefLabel>
   </skos:Concept>
   <skos:Concept rdf:about="http://oieau.org/iwrm/themes/IUD">
     <skos:altLabel>IUD</skos:altLabel>
     <skos:prefLabel xml:lang="en">Water intake/use/discharge</skos:prefLabel>
     <skos:prefLabel xml:lang="es">Tomas/usos/descargas</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Volumes prélevés et rejets</skos:prefLabel>
   </skos:Concept>
   <skos:Concept rdf:about="http://oieau.org/iwrm/themes/RISK">
     <skos:altLabel>RISK</skos:altLabel>
     <skos:prefLabel xml:lang="en">Risk</skos:prefLabel>
     <skos:prefLabel xml:lang="es">Riesgos</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Risques</skos:prefLabel>
   </skos:Concept>
   <skos:Concept rdf:about="http://oieau.org/iwrm/themes/IND">
     <skos:altLabel>IND</skos:altLabel>
     <skos:prefLabel xml:lang="en">Indicators</skos:prefLabel>
     <skos:prefLabel xml:lang="es">Indicadores</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Indicateurs</skos:prefLabel>
   </skos:Concept>
   <skos:Concept rdf:about="http://oieau.org/iwrm/themes/MO#MOQTT">
     <skos:prefLabel xml:lang="en">Monitoring quantity</skos:prefLabel>
     <skos:prefLabel xml:lang="es">Monitoreo de la cantidad</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Monitoring de quantité</skos:prefLabel>
     <skos:broader rdf:resource="http://oieau.org/iwrm/themes/MO#MOQ" />
   </skos:Concept>
   <skos:Concept rdf:about="http://oieau.org/iwrm/themes/MO#MOQLT">
     <skos:prefLabel xml:lang="en">Monitoring quality</skos:prefLabel>
     <skos:prefLabel xml:lang="es">Monitoreo de la calidad</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Monitoring de qualité</skos:prefLabel>
     <skos:broader rdf:resource="http://oieau.org/iwrm/themes/MO#MOQ" />
   </skos:Concept>
 </rdf:RDF>

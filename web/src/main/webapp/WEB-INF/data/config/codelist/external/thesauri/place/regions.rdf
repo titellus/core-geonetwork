@@ -14,6 +14,7 @@
     <dcterms:issued>2015-07-17 12:00:00</dcterms:issued>
     <dcterms:modified>2015-07-17 12:00:00</dcterms:modified>
     <skos:hasTopConcept rdf:resource="http://www.naturalearthdata.com/ne_admin#Continent"/>
+    <skos:hasTopConcept rdf:resource="http://geocat.semide.net/registry#ABH"/>
     <skos:hasTopConcept rdf:resource="http://www.naturalearthdata.com/ne_admin#Country"/>
     <skos:hasTopConcept rdf:resource="http://www.naturalearthdata.com/ne_admin#Country/Dependency"/>
     <skos:hasTopConcept rdf:resource="http://vocab.nerc.ac.uk/collection/C19/current/#SeaVoXGazetteer"/>
@@ -35,6 +36,133 @@
     <skos:inScheme rdf:resource="http://vocab.nerc.ac.uk/collection/C19/current/#SeaVoXGazetteer"/>
   </skos:Concept>
 
+
+
+  <skos:Concept rdf:about="http://geocat.semide.net/registry#ABH">
+    <skos:prefLabel xml:lang="en">ABH</skos:prefLabel>
+    <skos:prefLabel xml:lang="es">ABH</skos:prefLabel>
+    <skos:prefLabel xml:lang="cn">ABH</skos:prefLabel>
+    <skos:prefLabel xml:lang="ar">ABH</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">ABH</skos:prefLabel>
+    <skos:inScheme rdf:resource="http://geonetwork-opensource.org/regions" />
+    <skos:narrower rdf:resource="http://geocat.semide.net/registry#ABH1" />
+    <skos:narrower rdf:resource="http://geocat.semide.net/registry#ABH2" />
+    <skos:narrower rdf:resource="http://geocat.semide.net/registry#ABH3" />
+    <skos:narrower rdf:resource="http://geocat.semide.net/registry#ABH4" />
+    <skos:narrower rdf:resource="http://geocat.semide.net/registry#ABH5" />
+    <skos:narrower rdf:resource="http://geocat.semide.net/registry#ABH6" />
+    <skos:narrower rdf:resource="http://geocat.semide.net/registry#ABH7" />
+    <skos:narrower rdf:resource="http://geocat.semide.net/registry#ABH8" />
+    <skos:narrower rdf:resource="http://geocat.semide.net/registry#ABH9" />
+  </skos:Concept>
+  <skos:Concept rdf:about="http://geocat.semide.net/registry#ABH1">
+    <skos:prefLabel xml:lang="en">Agence du Loukkos</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Agence du Loukkos</skos:prefLabel>
+    <skos:broader rdf:resource="http://geocat.semide.net/registry#ABH" />
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-6.2831 34.710</gml:lowerCorner>
+        <gml:upperCorner>-3.7258 35.924</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://geocat.semide.net/registry#ABH2">
+    <skos:prefLabel xml:lang="en">Agence de la Moulouya</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Agence de la Moulouya</skos:prefLabel>
+    <skos:broader rdf:resource="http://geocat.semide.net/registry#ABH" />
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-5.7310 32.056</gml:lowerCorner>
+        <gml:upperCorner>-1.0136 35.444</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://geocat.semide.net/registry#ABH3">
+    <skos:prefLabel xml:lang="en">Agence du Sebou</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Agence du Sebou</skos:prefLabel>
+    <skos:broader rdf:resource="http://geocat.semide.net/registry#ABH" />
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-6.7538 33.010</gml:lowerCorner>
+        <gml:upperCorner>-3.7813 35.138</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://geocat.semide.net/registry#ABH4">
+    <skos:prefLabel xml:lang="en">Agence de Bou Regreg</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Agence de Bou Regreg</skos:prefLabel>
+    <skos:broader rdf:resource="http://geocat.semide.net/registry#ABH" />
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-7.9986 32.812</gml:lowerCorner>
+        <gml:upperCorner>-5.4695 34.131</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://geocat.semide.net/registry#ABH5">
+    <skos:prefLabel xml:lang="en">Agence de l'Oum Er-Rbia</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Agence de l'Oum Er-Rbia</skos:prefLabel>
+    <skos:broader rdf:resource="http://geocat.semide.net/registry#ABH" />
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-9.3435 31.338</gml:lowerCorner>
+        <gml:upperCorner>-5.0658 33.466</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://geocat.semide.net/registry#ABH6">
+    <skos:prefLabel xml:lang="en">Agence de Tensift</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Agence de Tensift</skos:prefLabel>
+    <skos:broader rdf:resource="http://geocat.semide.net/registry#ABH" />
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-9.8457 30.861</gml:lowerCorner>
+        <gml:upperCorner>-7.2480 32.299</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://geocat.semide.net/registry#ABH7">
+    <skos:prefLabel xml:lang="en">Agence du Souss-Massa-Draa</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Agence du Souss-Massa-Draa</skos:prefLabel>
+    <skos:broader rdf:resource="http://geocat.semide.net/registry#ABH" />
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-11.233 27.811</gml:lowerCorner>
+        <gml:upperCorner>-5.0710 32.016</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://geocat.semide.net/registry#ABH8">
+    <skos:prefLabel xml:lang="en">Agence du Sakia El Hamra et Oued Eddahab</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Agence du Sakia El Hamra et Oued Eddahab</skos:prefLabel>
+    <skos:broader rdf:resource="http://geocat.semide.net/registry#ABH" />
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-17.106 20.769</gml:lowerCorner>
+        <gml:upperCorner>-8.7510 28.685</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://geocat.semide.net/registry#ABH9">
+    <skos:prefLabel xml:lang="en">Agence de Guir-Ziz-Rhéris</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Agence de Guir-Ziz-Rhéris</skos:prefLabel>
+    <skos:broader rdf:resource="http://geocat.semide.net/registry#ABH" />
+    <skos:altLabel/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-6.0961 30.260</gml:lowerCorner>
+        <gml:upperCorner>-1.7562 32.999</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
 
 
 

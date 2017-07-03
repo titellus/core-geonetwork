@@ -635,16 +635,21 @@
                 console.warn($translate.instant('layerNotAvailableInMapProj'));
               }
               */
+              var layerParam = {LAYERS: getCapLayer.Name};
 
               // TODO: parse better legend & attribution
               if (angular.isArray(getCapLayer.Style) &&
                   getCapLayer.Style.length > 0) {
-                var legendUrl = (getCapLayer.Style[getCapLayer.
-                    Style.length - 1].LegendURL) ?
-                    getCapLayer.Style[getCapLayer.
-                        Style.length - 1].LegendURL[0] : undefined;
+                var style = getCapLayer.Style[getCapLayer.
+                  Style.length - 1];
+                var legendUrl = (style.LegendURL) ?
+                  style.LegendURL[0] : undefined;
                 if (legendUrl) {
                   legend = legendUrl.OnlineResource;
+                }
+
+                if (style.Name) {
+                  layerParam.styles = style.Name;
                 }
               }
               if (angular.isDefined(getCapLayer.Attribution)) {
@@ -661,10 +666,10 @@
                 metadata = getCapLayer.MetadataURL[0].OnlineResource;
               }
 
-              var layerParam = {LAYERS: getCapLayer.Name};
               if (getCapLayer.version) {
                 layerParam.VERSION = getCapLayer.version;
               }
+
               var layer = this.createOlWMS(map, layerParam, {
                 url: url || getCapLayer.url,
                 label: getCapLayer.Title,

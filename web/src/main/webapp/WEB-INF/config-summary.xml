@@ -139,8 +139,8 @@
       <item facet="type" translator="codelist:gmd:MD_ScopeCode"/>
       <item facet="region"
             translator="term:http://oieau.org/iwrm/country-basin"/>
-      <item facet="iwrmThemeURI" max="35"
-            translator="term:http://oieau.org/iwrm/themes"/>
+      <!--<item facet="iwrmThemeURI" max="35"
+            translator="term:http://oieau.org/iwrm/themes"/>-->
       <item facet="iwrmThemes" max="35"
             translator="term:http://oieau.org/iwrm/themes"/>
       <item facet="topicCat" translator="codelist:gmd:MD_TopicCategoryCode" max="20"/>

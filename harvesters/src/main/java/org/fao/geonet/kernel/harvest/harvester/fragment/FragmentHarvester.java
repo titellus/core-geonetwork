@@ -412,7 +412,7 @@ public class FragmentHarvester extends BaseAligner {
 
         addPrivileges(id, params.privileges, localGroups, dataMan, context, log);
 
-        dataMan.indexMetadata(id, true);
+        dataMan.indexMetadata(id, true, null);
 
         dataMan.flush();
 
@@ -578,7 +578,7 @@ public class FragmentHarvester extends BaseAligner {
         repository.deleteAllByIdAttribute(OperationAllowedId_.metadataId, iId);
         addPrivileges(id, params.privileges, localGroups, dataMan, context, log);
 
-        metadata.getCategories().clear();
+        metadata.getMetadataCategories().clear();
         addCategories(metadata, params.categories, localCateg, context, log, null, true);
 
         if (doExt) {
@@ -586,7 +586,7 @@ public class FragmentHarvester extends BaseAligner {
             dataMan.setHarvestedExt(iId, params.uuid, Optional.of(harvestUri));
         }
 
-        dataMan.indexMetadata(id, true);
+        dataMan.indexMetadata(id, true, null);
 
         dataMan.flush();
     }
@@ -623,7 +623,7 @@ public class FragmentHarvester extends BaseAligner {
             if (metadataCategory == null) {
                 throw new IllegalArgumentException("No category found with name: " + params.isoCategory);
             }
-            metadata.getCategories().add(metadataCategory);
+            metadata.getMetadataCategories().add(metadataCategory);
         }
         metadata = dataMan.insertMetadata(context, metadata, template, true, false, false, UpdateDatestamp.NO, false, false);
 
@@ -634,7 +634,7 @@ public class FragmentHarvester extends BaseAligner {
         }
         addPrivileges(id, params.privileges, localGroups, dataMan, context, log);
 
-        dataMan.indexMetadata(id, true);
+        dataMan.indexMetadata(id, true, null);
 
         if (log.isDebugEnabled()) {
             log.debug("	- Commit " + id);

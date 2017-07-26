@@ -67,6 +67,7 @@
   <xsl:template mode="mode-iso19139" priority="2000" match="*[gco:*/@uom]">
     <xsl:param name="schema" select="$schema" required="no"/>
     <xsl:param name="labels" select="$labels" required="no"/>
+    <xsl:param name="overrideLabel" select="''" required="no"/>
     <xsl:param name="refToDelete" select="gn:element" required="no"/>
 
     <xsl:variable name="xpath" select="gn-fn-metadata:getXPath(.)"/>
@@ -95,7 +96,7 @@
          id="gn-el-{*/gn:element/@ref}"
          data-gn-field-highlight="">
       <label class="col-sm-2 control-label">
-        <xsl:value-of select="$labelConfig/label"/>
+        <xsl:value-of select="if ($overrideLabel != '') then $overrideLabel else $labelConfig/label"/>
         <xsl:if test="$labelMeasureType != '' and
                       $labelMeasureType/label != $labelConfig/label">&#10;
           (<xsl:value-of select="$labelMeasureType/label"/>)
@@ -232,6 +233,8 @@
         <xsl:variable name="identifier"
                       select="../following-sibling::gmd:geographicElement[1]/gmd:EX_GeographicDescription/
                                   gmd:geographicIdentifier/gmd:MD_Identifier/gmd:code/(gmx:Anchor|gco:CharacterString)"/>
+        <xsl:variable name="description"
+                      select="../preceding-sibling::gmd:description/gco:CharacterString"/>
         <div gn-draw-bbox=""
              data-hleft="{gmd:westBoundLongitude/gco:Decimal}"
              data-hright="{gmd:eastBoundLongitude/gco:Decimal}"
@@ -243,19 +246,28 @@
              data-htop-ref="_{gmd:northBoundLatitude/gco:Decimal/gn:element/@ref}"
              data-lang="lang">
           <xsl:if test="$identifier and $isFlatMode">
-            <xsl:attribute name="data-identifier" select="$identifier"/>
-            <xsl:attribute name="data-identifier-ref" select="concat('_', $identifier/gn:element/@ref)"/>
+            <xsl:attribute name="data-identifier"
+                           select="$identifier"/>
+            <xsl:attribute name="data-identifier-ref"
+                           select="concat('_', $identifier/gn:element/@ref)"/>
+          </xsl:if>
+          <xsl:if test="$description and $isFlatMode and not($metadataIsMultilingual)">
+            <xsl:attribute name="data-description"
+                           select="$description"/>
+            <xsl:attribute name="data-description-ref"
+                           select="concat('_', $description/gn:element/@ref)"/>
           </xsl:if>
         </div>
       </xsl:with-param>
     </xsl:call-template>
   </xsl:template>
 
-  <!-- In flat mode do not display geographic identifier because it is
-  part of the map widget - see previous template. -->
+  <!-- In flat mode do not display geographic identifier and description
+  because it is part of the map widget - see previous template. -->
   <xsl:template mode="mode-iso19139"
-                match="gmd:geographicElement[
-                                $isFlatMode and
-                                preceding-sibling::gmd:geographicElement/gmd:EX_GeographicBoundingBox
-                              ]/gmd:EX_GeographicDescription"/>
+                match="gmd:extent/*/gmd:description[$isFlatMode]|
+                       gmd:geographicElement[
+                          $isFlatMode and
+                          preceding-sibling::gmd:geographicElement/gmd:EX_GeographicBoundingBox
+                        ]/gmd:EX_GeographicDescription" priority="2000"/>
 </xsl:stylesheet>

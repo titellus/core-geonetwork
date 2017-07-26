@@ -88,6 +88,7 @@ import org.fao.geonet.exceptions.SchematronValidationErrorEx;
 import org.fao.geonet.exceptions.ServiceNotAllowedEx;
 import org.fao.geonet.exceptions.XSDValidationErrorEx;
 import org.fao.geonet.kernel.schema.MetadataSchema;
+import org.fao.geonet.kernel.search.ISearchManager;
 import org.fao.geonet.kernel.search.SearchManager;
 import org.fao.geonet.kernel.search.index.IndexingList;
 import org.fao.geonet.kernel.setting.SettingManager;
@@ -115,7 +116,7 @@ import org.fao.geonet.repository.specification.MetadataStatusSpecs;
 import org.fao.geonet.repository.specification.OperationAllowedSpecs;
 import org.fao.geonet.repository.specification.UserGroupSpecs;
 import org.fao.geonet.repository.specification.UserSpecs;
-import org.fao.geonet.repository.statistic.PathSpec;
+import org.fao.geonet.repository.PathSpec;
 import org.fao.geonet.resources.Resources;
 import org.fao.geonet.util.ThreadUtils;
 import org.fao.geonet.utils.IO;
@@ -415,7 +416,7 @@ public class DataManager implements ApplicationEventPublisherAware {
 
         // remove from index metadata not in DBMS
         for (String id : docs.keySet()) {
-            getSearchManager().delete("_id", id);
+            getSearchManager().delete(id);
 
             if (Log.isDebugEnabled(Geonet.DATA_MANAGER)) {
                 Log.debug(Geonet.DATA_MANAGER, "- removed record (" + id + ") from index");
@@ -451,6 +452,7 @@ public class DataManager implements ApplicationEventPublisherAware {
      * Reindex all records in current selection.
      */
     public synchronized void rebuildIndexForSelection(final ServiceContext context,
+                                                      String bucket,
                                                       boolean clearXlink)
         throws Exception {
 
@@ -459,8 +461,8 @@ public class DataManager implements ApplicationEventPublisherAware {
         UserSession session = context.getUserSession();
         SelectionManager sm = SelectionManager.getManager(session);
 
-        synchronized (sm.getSelection("metadata")) {
-            for (Iterator<String> iter = sm.getSelection("metadata").iterator();
+        synchronized (sm.getSelection(bucket)) {
+            for (Iterator<String> iter = sm.getSelection(bucket).iterator();
                  iter.hasNext(); ) {
                 String uuid = (String) iter.next();
                 String id = getMetadataId(uuid);
@@ -557,7 +559,7 @@ public class DataManager implements ApplicationEventPublisherAware {
 
     public void indexMetadata(final List<String> metadataIds) throws Exception {
         for (String metadataId : metadataIds) {
-            indexMetadata(metadataId, false);
+            indexMetadata(metadataId, false, null);
         }
 
         getSearchManager().forceIndexChanges();
@@ -566,7 +568,7 @@ public class DataManager implements ApplicationEventPublisherAware {
     /**
      * TODO javadoc.
      */
-    public void indexMetadata(final String metadataId, boolean forceRefreshReaders) throws Exception {
+    public void indexMetadata(final String metadataId, boolean forceRefreshReaders, ISearchManager searchManager) throws Exception {
         indexLock.lock();
         try {
             if (waitForIndexing.contains(metadataId)) {
@@ -724,7 +726,7 @@ public class DataManager implements ApplicationEventPublisherAware {
                 }
             }
 
-            for (MetadataCategory category : fullMd.getCategories()) {
+            for (MetadataCategory category : fullMd.getMetadataCategories()) {
                 moreFields.add(SearchManager.makeField(Geonet.IndexFieldNames.CAT, category.getName(), true, true));
             }
 
@@ -762,7 +764,12 @@ public class DataManager implements ApplicationEventPublisherAware {
                 }
                 moreFields.add(SearchManager.makeField(Geonet.IndexFieldNames.VALID, isValid, true, true));
             }
-            getSearchManager().index(getSchemaManager().getSchemaDir(schema), md, metadataId, moreFields, metadataType, root, forceRefreshReaders);
+
+            if (searchManager == null) {
+                getSearchManager().index(getSchemaManager().getSchemaDir(schema), md, metadataId, moreFields, metadataType, root, forceRefreshReaders);
+            } else {
+                searchManager.index(getSchemaManager().getSchemaDir(schema), md, metadataId, moreFields, metadataType, root, forceRefreshReaders);
+            }
         } catch (Exception x) {
             Log.error(Geonet.DATA_MANAGER, "The metadata document index with id=" + metadataId + " is corrupt/invalid - ignoring it. Error: " + x.getMessage(), x);
             fullMd = null;
@@ -1283,7 +1290,7 @@ public class DataManager implements ApplicationEventPublisherAware {
      */
     public void setTemplate(final int id, final MetadataType type, final String title) throws Exception {
         setTemplateExt(id, type);
-        indexMetadata(Integer.toString(id), true);
+        indexMetadata(Integer.toString(id), true, null);
     }
 
     /**
@@ -1304,7 +1311,7 @@ public class DataManager implements ApplicationEventPublisherAware {
      */
     public void setHarvested(int id, String harvestUuid) throws Exception {
         setHarvestedExt(id, harvestUuid);
-        indexMetadata(Integer.toString(id), true);
+        indexMetadata(Integer.toString(id), true, null);
     }
 
     /**
@@ -1436,7 +1443,7 @@ public class DataManager implements ApplicationEventPublisherAware {
             }
         });
 
-        indexMetadata(Integer.toString(metadataId), true);
+        indexMetadata(Integer.toString(metadataId), true, null);
 
         return rating;
     }
@@ -1497,9 +1504,9 @@ public class DataManager implements ApplicationEventPublisherAware {
             .getBean(GroupRepository.class)
             .findOne(Integer.valueOf(groupOwner));
         if (group.getDefaultCategory() != null) {
-            newMetadata.getCategories().add(group.getDefaultCategory());
+            newMetadata.getMetadataCategories().add(group.getDefaultCategory());
         }
-        Collection<MetadataCategory> filteredCategories = Collections2.filter(templateMetadata.getCategories(),
+        Collection<MetadataCategory> filteredCategories = Collections2.filter(templateMetadata.getMetadataCategories(),
             new Predicate<MetadataCategory>() {
                 @Override
                 public boolean apply(@Nullable MetadataCategory input) {
@@ -1507,7 +1514,7 @@ public class DataManager implements ApplicationEventPublisherAware {
                 }
             });
 
-        newMetadata.getCategories().addAll(filteredCategories);
+        newMetadata.getMetadataCategories().addAll(filteredCategories);
 
         int finalId = insertMetadata(context, newMetadata, xml, false, true, true, UpdateDatestamp.YES,
             fullRightsForGroup, true).getId();
@@ -1569,14 +1576,14 @@ public class DataManager implements ApplicationEventPublisherAware {
             if (metadataCategory == null) {
                 throw new IllegalArgumentException("No category found with name: " + category);
             }
-            newMetadata.getCategories().add(metadataCategory);
+            newMetadata.getMetadataCategories().add(metadataCategory);
         } else if (StringUtils.isNotEmpty(groupOwner)) {
             //If the group has a default category, use it
             Group group = getApplicationContext()
                 .getBean(GroupRepository.class)
                 .findOne(Integer.valueOf(groupOwner));
             if (group.getDefaultCategory() != null) {
-                newMetadata.getCategories().add(group.getDefaultCategory());
+                newMetadata.getMetadataCategories().add(group.getDefaultCategory());
             }
         }
 
@@ -1614,7 +1621,7 @@ public class DataManager implements ApplicationEventPublisherAware {
         copyDefaultPrivForGroup(context, stringId, groupId, fullRightsForGroup);
 
         if (index) {
-            indexMetadata(stringId, forceRefreshReaders);
+            indexMetadata(stringId, forceRefreshReaders, null);
         }
 
         if (notifyChange) {
@@ -1745,12 +1752,13 @@ public class DataManager implements ApplicationEventPublisherAware {
      * Returns all the keywords in the system.
      */
     public Element getKeywords() throws Exception {
-        Collection<String> keywords = getSearchManager().getTerms("keyword");
+        // TODO ES
+//        Collection<String> keywords = getSearchManager().getTerms("keyword");
         Element el = new Element("keywords");
 
-        for (Object keyword : keywords) {
-            el.addContent(new Element("keyword").setText((String) keyword));
-        }
+//        for (Object keyword : keywords) {
+//            el.addContent(new Element("keyword").setText((String) keyword));
+//        }
         return el;
     }
 
@@ -1787,7 +1795,19 @@ public class DataManager implements ApplicationEventPublisherAware {
         if (ufo) {
             String parentUuid = null;
             Integer intId = Integer.valueOf(metadataId);
-            metadataXml = updateFixedInfo(schema, Optional.of(intId), null, metadataXml, parentUuid, (updateDateStamp ? UpdateDatestamp.YES : UpdateDatestamp.NO), context);
+
+            // Notifies the metadata change to metatada notifier service
+            final Metadata metadata = getMetadataRepository().findOne(metadataId);
+
+            String uuid = null;
+
+            if (getSchemaManager().getSchema(schema).isReadwriteUUID()
+                && metadata.getDataInfo().getType() != MetadataType.SUB_TEMPLATE
+                && metadata.getDataInfo().getType() != MetadataType.TEMPLATE_OF_SUB_TEMPLATE) {
+                uuid = extractUUID(schema, metadataXml);
+            }
+
+            metadataXml = updateFixedInfo(schema, Optional.of(intId), uuid, metadataXml, parentUuid, (updateDateStamp ? UpdateDatestamp.YES : UpdateDatestamp.NO), context);
         }
 
         //--- force namespace prefix for iso19139 metadata
@@ -1798,7 +1818,8 @@ public class DataManager implements ApplicationEventPublisherAware {
 
         String uuid = null;
         if (getSchemaManager().getSchema(schema).isReadwriteUUID()
-            && metadata.getDataInfo().getType() != MetadataType.SUB_TEMPLATE) {
+            && metadata.getDataInfo().getType() != MetadataType.SUB_TEMPLATE
+            && metadata.getDataInfo().getType() != MetadataType.TEMPLATE_OF_SUB_TEMPLATE) {
             uuid = extractUUID(schema, metadataXml);
         }
 
@@ -1817,7 +1838,7 @@ public class DataManager implements ApplicationEventPublisherAware {
         } finally {
             if (index) {
                 //--- update search criteria
-                indexMetadata(metadataId, true);
+                indexMetadata(metadataId, true, null);
             }
         }
         // Return an up to date metadata record
@@ -2127,7 +2148,7 @@ public class DataManager implements ApplicationEventPublisherAware {
         }
 
         //--- update search criteria
-        getSearchManager().delete("_id", metadataId + "");
+        getSearchManager().delete(metadataId + "");
 //        _entityManager.flush();
 //        _entityManager.clear();
     }
@@ -2141,7 +2162,7 @@ public class DataManager implements ApplicationEventPublisherAware {
     public synchronized void deleteMetadataGroup(ServiceContext context, String metadataId) throws Exception {
         deleteMetadataFromDB(context, metadataId);
         //--- update search criteria
-        getSearchManager().deleteGroup("_id", metadataId + "");
+        getSearchManager().delete(metadataId + "");
     }
 
     /**
@@ -2303,7 +2324,7 @@ public class DataManager implements ApplicationEventPublisherAware {
             notifyMetadataChange(md, metadataId);
 
             //--- update search criteria
-            indexMetadata(metadataId, true);
+            indexMetadata(metadataId, true, null);
         }
     }
 
@@ -2619,7 +2640,7 @@ public class DataManager implements ApplicationEventPublisherAware {
      */
     public MetadataStatus setStatus(ServiceContext context, int id, int status, ISODate changeDate, String changeMessage) throws Exception {
         MetadataStatus statusObject = setStatusExt(context, id, status, changeDate, changeMessage);
-        indexMetadata(Integer.toString(id), true);
+        indexMetadata(Integer.toString(id), true, null);
         return statusObject;
     }
 
@@ -2652,7 +2673,7 @@ public class DataManager implements ApplicationEventPublisherAware {
      * then set status to draft to enable workflow.
      */
     public void activateWorkflowIfConfigured(ServiceContext context, String newId, String groupOwner) throws Exception {
-        if (groupOwner == null) {
+        if (StringUtils.isEmpty(groupOwner)) {
             return;
         }
         String groupMatchingRegex =
@@ -2689,8 +2710,8 @@ public class DataManager implements ApplicationEventPublisherAware {
         getMetadataRepository().update(Integer.valueOf(mdId), new Updater<Metadata>() {
             @Override
             public void apply(@Nonnull Metadata entity) {
-                changed[0] = !entity.getCategories().contains(newCategory);
-                entity.getCategories().add(newCategory);
+                changed[0] = !entity.getMetadataCategories().contains(newCategory);
+                entity.getMetadataCategories().add(newCategory);
             }
         });
 
@@ -2709,7 +2730,7 @@ public class DataManager implements ApplicationEventPublisherAware {
      * @throws Exception
      */
     public boolean isCategorySet(final String mdId, final int categId) throws Exception {
-        Set<MetadataCategory> categories = getMetadataRepository().findOne(mdId).getCategories();
+        Set<MetadataCategory> categories = getMetadataRepository().findOne(mdId).getMetadataCategories();
         for (MetadataCategory category : categories) {
             if (category.getId() == categId) {
                 return true;
@@ -2731,10 +2752,10 @@ public class DataManager implements ApplicationEventPublisherAware {
             return;
         }
         boolean changed = false;
-        for (MetadataCategory category : metadata.getCategories()) {
+        for (MetadataCategory category : metadata.getMetadataCategories()) {
             if (category.getId() == categId) {
                 changed = true;
-                metadata.getCategories().remove(category);
+                metadata.getMetadataCategories().remove(category);
                 break;
             }
         }
@@ -2759,7 +2780,7 @@ public class DataManager implements ApplicationEventPublisherAware {
             throw new IllegalArgumentException("No metadata found with id: " + mdId);
         }
 
-        return metadata.getCategories();
+        return metadata.getMetadataCategories();
     }
 
     /**
@@ -2987,7 +3008,7 @@ public class DataManager implements ApplicationEventPublisherAware {
         }
 
 
-        for (MetadataCategory category : metadata.getCategories()) {
+        for (MetadataCategory category : metadata.getMetadataCategories()) {
             addElement(info, Edit.Info.Elem.CATEGORY, category.getName());
         }
 
@@ -3210,7 +3231,7 @@ public class DataManager implements ApplicationEventPublisherAware {
         }
 
         // Remove records from the index
-        getSearchManager().delete("_id", Lists.transform(idsOfMetadataToDelete, new Function<Integer, String>() {
+        getSearchManager().delete(Lists.transform(idsOfMetadataToDelete, new Function<Integer, String>() {
             @Nullable
             @Override
             public String apply(@Nonnull Integer input) {
@@ -3236,7 +3257,7 @@ public class DataManager implements ApplicationEventPublisherAware {
         return getApplicationContext().getBean(requiredType);
     }
 
-    private SearchManager getSearchManager() {
+    private ISearchManager getSearchManager() {
         return getBean(SearchManager.class);
     }
 

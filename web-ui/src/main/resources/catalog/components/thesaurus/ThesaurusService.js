@@ -224,7 +224,6 @@
                   thesaurus: thesaurus,
                   id: keywordUris instanceof Array ?
                       keywordUris.join(',') : keywordUris || '',
-                  multiple: keywordUris instanceof Array ? 'true' : 'false',
                   transformation: transformation || 'to-iso19139-keyword'
                 };
                 if (lang) {
@@ -233,7 +232,8 @@
                 if (textgroupOnly) {
                   params.textgroupOnly = textgroupOnly;
                 }
-                var url = gnUrlUtils.append('thesaurus.keyword',
+                var url = gnUrlUtils.append(
+                '../api/registries/vocabularies/keyword',
                     gnUrlUtils.toKeyValue(params)
                     );
                 $http.get(url, { cache: true }).

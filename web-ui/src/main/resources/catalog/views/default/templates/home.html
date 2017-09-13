@@ -59,13 +59,13 @@
     <div class="col-sm-8" data-ng-show="browse !== ''">
       <span data-translate="">browseBy</span>
       <span>
-        <label data-ng-show="searchInfo.facet['inspireThemes'].length > 0">
-          <input type="radio" name="browse" value="inspire" data-ng-model="browse"/>
-          <span data-translate="">inspireThemes</span>
-        </label>
         <label data-ng-show="searchInfo.facet['iwrmThemeURI'].length > 0">
           <input type="radio" name="browse" value="iwrmThemeURI" data-ng-model="browse"/>
           <span data-translate="">iwrmTheme</span>
+        </label>
+        <label data-ng-show="searchInfo.facet['inspireThemes'].length > 0">
+          <input type="radio" name="browse" value="inspire" data-ng-model="browse"/>
+          <span data-translate="">inspireThemes</span>
         </label>
         <label data-ng-show="searchInfo.facet['topicCats'].length > 0">
           <input type="radio" name="browse" value="topics" data-ng-model="browse"/>

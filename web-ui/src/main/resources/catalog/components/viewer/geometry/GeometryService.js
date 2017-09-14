@@ -133,6 +133,7 @@
             })
           ]
         });
+        commonLayer.setZIndex(100);
 
         // add our layer to the map
         map.addLayer(commonLayer);
@@ -209,7 +210,7 @@
             });
 
             if (options.outputAsWFSFeaturesCollection) {
-              outputValue = 
+              outputValue =
                   '<wfs:FeatureCollection ' +
                   'xmlns:wfs="http://www.opengis.net/wfs">' +
                   format.writeFeatures([outputFeature]) +

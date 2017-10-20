@@ -54,7 +54,7 @@
           function($scope, $http, gnGetCoordinate) {
 
             var parent = $scope.$parent;
-            var lang = parent.langs[parent.lang];
+            var lang = gnGlobalSettings.lang;
 
             $scope.modelOptions =
                 angular.copy(gnGlobalSettings.modelOptions);
@@ -116,8 +116,7 @@
                 return (props.length == 0) ? '' : '—' + props.join(', ');
               };
 
-              //TODO: move api url and username to config
-              var url = 'http://api.geonames.org/searchJSON';
+              var url = gnViewerSettings.geocoder;
               $http.get(url, {
                 params: {
                   lang: lang,

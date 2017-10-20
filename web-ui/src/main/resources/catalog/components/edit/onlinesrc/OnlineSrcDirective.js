@@ -830,14 +830,20 @@
                   $timeout(function() {
                     if (angular.isArray(scope.gnCurrentEdit.extent)) {
                       // FIXME : only first extent is took into account
-                      var extent = scope.gnCurrentEdit.extent[0],
-                          proj = ol.proj.get(gnMap.getMapConfig().projection),
-                          projectedExtent =
-                          ol.extent.containsExtent(
+                      var projectedExtent;
+                      var extent = scope.gnCurrentEdit.extent &&
+                        scope.gnCurrentEdit.extent[0];
+                      var proj = ol.proj.get(gnMap.getMapConfig().projection);
+
+                      if(!extent || !ol.extent.containsExtent(
                           proj.getWorldExtent(),
-                          extent) ?
-                          gnMap.reprojExtent(extent, 'EPSG:4326', proj) :
-                          proj.getExtent();
+                          extent)) {
+                        projectedExtent = proj.getExtent();
+                      }
+                      else {
+                        projectedExtent =
+                          gnMap.reprojExtent(extent, 'EPSG:4326', proj)
+                      }
                       scope.map.getView().fit(
                           projectedExtent,
                           scope.map.getSize());
@@ -1014,8 +1020,8 @@
                         fields[field] = e;
                       }
                       else {
-                        fields[field] = $filter('gnLocalized');
-                        (linkToEdit[fields[field]]);
+                        fields[field] =
+                          $filter('gnLocalized')(linkToEdit[fields[field]]);
                       }
                     });
 
@@ -1372,14 +1378,9 @@
                       url: rsrc.url
                     };
                     ['url', 'name'].forEach(function(pName) {
-                      var value = o[pName];
-                      if (scope.isFieldMultilingual(pName)) {
-                        scope.params[pName][scope.ctrl.urlCurLang] = value;
-                      }
-                      else {
-                        scope.params[pName] = value;
-                      }
+                      setParameterValue(pName, o[pName]);
                     });
+                    scope.params.protocol = 'WWW:DOWNLOAD-1.0-http--download';
                   }
                 });
 

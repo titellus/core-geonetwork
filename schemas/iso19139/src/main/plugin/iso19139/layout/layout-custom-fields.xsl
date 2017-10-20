@@ -41,7 +41,7 @@
   <xsl:include href="layout-custom-fields-sds.xsl"/>
 
   <!-- Readonly elements -->
-  <xsl:template mode="mode-iso19139" priority="2000" match="gmd:fileIdentifier|gmd:dateStamp">
+  <xsl:template mode="mode-iso19139" priority="2100" match="gmd:fileIdentifier|gmd:dateStamp">
 
     <xsl:variable name="xpath" select="gn-fn-metadata:getXPath(.)"/>
     <xsl:variable name="isoType" select="if (../@gco:isoType) then ../@gco:isoType else ''"/>
@@ -236,6 +236,8 @@
                                   gmd:geographicIdentifier/gmd:MD_Identifier/gmd:code/(gmx:Anchor|gco:CharacterString)"/>
         <xsl:variable name="description"
                       select="../preceding-sibling::gmd:description/gco:CharacterString"/>
+        <xsl:variable name="readonly" select="ancestor-or-self::node()[@xlink:href] != ''"/>
+
         <div gn-draw-bbox=""
              data-hleft="{gmd:westBoundLongitude/gco:Decimal}"
              data-hright="{gmd:eastBoundLongitude/gco:Decimal}"
@@ -245,7 +247,8 @@
              data-hright-ref="_{gmd:eastBoundLongitude/gco:Decimal/gn:element/@ref}"
              data-hbottom-ref="_{gmd:southBoundLatitude/gco:Decimal/gn:element/@ref}"
              data-htop-ref="_{gmd:northBoundLatitude/gco:Decimal/gn:element/@ref}"
-             data-lang="lang">
+             data-lang="lang"
+             data-read-only="{$readonly}">
           <xsl:if test="$identifier and $isFlatMode">
             <xsl:attribute name="data-identifier"
                            select="$identifier"/>
@@ -278,7 +281,11 @@
       <xsl:with-param name="cls" select="local-name()"/>
       <xsl:with-param name="subTreeSnippet">
 
-        <xsl:variable name="geometry" select="gmd:polygon/gml:MultiSurface|gmd:polygon/gml:LineString"/>
+        <xsl:variable name="geometry">
+          <xsl:apply-templates select="gmd:polygon/gml:MultiSurface|gmd:polygon/gml:LineString"
+                               mode="gn-element-cleaner"/>
+        </xsl:variable>
+        
         <xsl:variable name="identifier"
                       select="concat('_X', gmd:polygon/gn:element/@ref, '_replace')"/>
         <xsl:variable name="readonly" select="ancestor-or-self::node()[@xlink:href] != ''"/>

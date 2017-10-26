@@ -395,9 +395,16 @@
               <Field name="iwrmTheme" string="{string(.)}"
                      store="true" index="true"/>
               <xsl:variable name="iwrmThemeURI"
-                            select="$iwrm-theme[skos:prefLabel = $keyword]"/>
-              <Field name="iwrmthemeuri" string="{$iwrmThemeURI/@rdf:about}" store="true"
-                     index="true"/>
+                            select="$iwrm-theme[
+                                          skos:prefLabel = $keyword and
+                                          not(skos:broader)
+                                               ]"/>
+              <xsl:if test="$iwrmThemeURI">
+                <Field name="iwrmthemeuri"
+                       string="{$iwrmThemeURI/@rdf:about}"
+                       store="true"
+                       index="true"/>
+              </xsl:if>
 
             </xsl:for-each>
           </xsl:if>

@@ -1,5 +1,9 @@
 {
     "iwrmThemeURI": "Theme",
+    "iwrmThemes_eng": "IWRM themes",
+    "iwrmThemes_spa": "IWRM themes",
+    "regions_spa": "Regionses",
+    "regions_eng": "Regions",
     "ecdh": "Demarcacion hidrographica",
     "iwrmTheme": "IWRM theme",
     "ecuphl": "UPHL",

@@ -1,6 +1,10 @@
 {
     "iwrmThemeURI": "Theme",
     "iwrmTheme": "IWRM theme",
+    "iwrmThemes_eng": "IWRM themes",
+    "iwrmThemes_spa": "IWRM themes",
+    "regions_spa": "Regions",
+    "regions_eng": "Regions",
     "ecdh": "River basin",
     "ecuphl": "UPHL",
     "all": "all",

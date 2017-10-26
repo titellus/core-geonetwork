@@ -1,6 +1,10 @@
 {
     "all": "Tout sélectionner",
-    "iwrmTheme": "IWRM theme",
+    "iwrmTheme": "IWRM themes",
+    "iwrmThemes_eng": "IWRM themes",
+    "iwrmThemes_spa": "IWRM themes",
+    "regions_spa": "Regions",
+    "regions_eng": "Regions",
     "allInPage": "Tout sélectionner dans la page",
     "addToSelection": "Ajouter à ...",
     "removeFromSelection": "Supprimer de ...",

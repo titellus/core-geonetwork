@@ -121,6 +121,7 @@
     <facet name="iwrmThemes_spa" label="iwrmThemes_spa"
            indexKey="keyword"
            classifier="iwrmThemeKeywordClassifierSpa"/>
+    <facet name="isPublishedToAll" indexKey="_isPublishedToAll" label="isPublishedToAll" />
     <!--
     Example configuration for hierarchical facet based on
     the GeoNetwork region thesaurus or GEMET.
@@ -138,6 +139,7 @@
 
     <facet name="maintenanceAndUpdateFrequency" indexKey="cl_maintenanceAndUpdateFrequency"
            label="maintenanceAndUpdateFrequencies"/>
+    <facet name="mdActions" indexKey="_mdActions" label="mdActions"/>
   </facets>
 
   <summaryTypes>
@@ -160,6 +162,7 @@
       <!--<item facet="inspireThemeWithAc" sortBy="value" sortOrder="asc" max="35"/>-->
       <!--<item facet="keyword" max="15"/>-->
       <item facet="orgName" max="25"/>
+      <item facet="mdActions"/>
       <!--<item facet="sourceCatalog"
             translator="db:org.fao.geonet.repository.SourceRepository:findOneByUuid"/>-->
       <!--<item facet="createDateYear" sortBy="value" sortOrder="desc" max="40"/>-->
@@ -196,6 +199,7 @@
       <item facet="standard" max="15" sortBy="value"/>
       <item facet="isHarvested" max="2" sortBy="value" translator="apploc:"/>
       <item facet="metadataType" max="3" sortBy="value" translator="apploc:recordType-"/>
+	    <item facet="isPublishedToAll" max="2" sortBy="value" translator="apploc:"/>
     </summaryType>
 
     <!-- (deprecated) old-style configuration supporting only

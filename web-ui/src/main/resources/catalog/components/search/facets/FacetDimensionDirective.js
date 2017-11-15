@@ -197,7 +197,7 @@
           // And return the linking function(s) which it returns
           return RecursionHelper.compile(element,
               function(scope, element, attrs) {
-                var initialMaxItems = 5;
+                var initialMaxItems = 25;
                 scope.initialMaxItems = initialMaxItems;
                 scope.maxItems = initialMaxItems;
                 scope.toggleAll = function() {

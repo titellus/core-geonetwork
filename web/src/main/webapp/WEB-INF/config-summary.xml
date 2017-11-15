@@ -183,6 +183,8 @@
 
     <summaryType name="manager" format="DIMENSION">
       <item facet="type" translator="codelist:gmd:MD_ScopeCode"/>
+      <item facet="regions_eng"
+            translator="term:http://oieau.org/iwrm/country-basin"/>
       <item facet="iwrmThemeURI" max="35"
             translator="term:http://oieau.org/iwrm/themes"/>
       <item facet="category" max="99" sortBy="value"

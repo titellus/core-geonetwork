@@ -25,6 +25,13 @@
                 </a>
               </li>
 
+              <li>
+                <div data-gn-layer-styles="layer.get('style')"
+                     data-gn-layer-styles-on-click="setLayerStyle(layer, style)"
+                     data-gn-layer-styles-current="layer.get('currentStyle')"
+                     data-gn-layer-styles-layout="select"/>
+              </li>
+
               <!--Opacity slide-->
               <li class="" title="{{'opacity' | translate}}">
                 <input class="" type="range"
@@ -98,12 +105,16 @@
              title="{{'layerDelete'|translate}}"></a>
         </span>
         <span data-ng-class="layer.get('errors').length > 0 ? 'text-danger' : ''">
-          {{layer.get('label')}}
+          {{layer.get('label')}}&nbsp;
+          <small><em>
+            {{layer.get('currentStyle') ? '(' + layer.get('currentStyle').Title || layer.get('currentStyle').Name + ')' : ''}}
+          </em></small>
         </span>
       </div>
       <a href class="width-100 text-right small"
-         ng-if="::layer.get('legend') && layer.get('attribution')"
-         data-ng-click="showInfo(layer)" title="{{'Legend'|translate}}">
+         ng-if="layer.get('legend') || layer.get('attribution')"
+         data-ng-click="showInfo(layer)"
+         title="{{'Legend'|translate}}">
         <i class="fa fa-caret-down" ng-if="!layer.showInfo"/>
         <i class="fa fa-caret-up" ng-if="layer.showInfo"/>
         <span translate ng-if="!layer.showInfo">{{'showLegend' | translate}}</span>

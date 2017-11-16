@@ -740,9 +740,10 @@
            * @param {Object} getCapLayer object to convert
            * @param {string} url of the wms service (we want this one instead
            *  of the one from the capabilities to be sure its persistent)
+           * @param {string} name of the style to use
            * @return {ol.Layer} the created layer
            */
-          createOlWMSFromCap: function(map, getCapLayer, url) {
+          createOlWMSFromCap: function(map, getCapLayer, url, style) {
 
             var legend, attribution, attributionUrl, metadata, errors = [];
             if (getCapLayer) {
@@ -773,20 +774,33 @@
               var layerParam = {LAYERS: getCapLayer.Name};
 
               // TODO: parse better legend & attribution
-              if (angular.isArray(getCapLayer.Style) &&
+              var requestedStyle = null;
+              var legendUrl;
+              if (style && angular.isArray(getCapLayer.Style) &&
                   getCapLayer.Style.length > 0) {
-                var style = getCapLayer.Style[getCapLayer.
-                  Style.length - 1];
-                var legendUrl = (style.LegendURL) ?
-                  style.LegendURL[0] : undefined;
-                if (legendUrl) {
-                  legend = legendUrl.OnlineResource;
-                }
-
-                if (style.Name) {
-                  layerParam.styles = style.Name;
+                for (var i = 0; i < getCapLayer.Style.length; i++) {
+                  var s = getCapLayer.Style[i];
+                  if (s.Name === style.Name) {
+                    requestedStyle = s;
+                    legendUrl = s.LegendURL[0];
+                    break;
+                  }
                 }
               }
+
+              if (!requestedStyle &&
+                  angular.isArray(getCapLayer.Style) &&
+                  getCapLayer.Style.length > 0) {
+                legendUrl = (getCapLayer.Style[getCapLayer.
+                    Style.length - 1].LegendURL) ?
+                    getCapLayer.Style[getCapLayer.
+                        Style.length - 1].LegendURL[0] : undefined;
+              }
+
+              if (legendUrl) {
+                legend = legendUrl.OnlineResource;
+              }
+
               if (angular.isDefined(getCapLayer.Attribution)) {
                 if (angular.isArray(getCapLayer.Attribution)) {
 
@@ -803,6 +817,9 @@
 
               if (getCapLayer.version) {
                 layerParam.VERSION = getCapLayer.version;
+              }
+              if (requestedStyle) {
+                layerParam.STYLES = requestedStyle.Name;
               }
 
               var projCode = map.getView().getProjection().getCode();
@@ -854,6 +871,9 @@
               if (angular.isArray(getCapLayer.Style) &&
                   getCapLayer.Style.length > 1) {
                 layer.set('style', getCapLayer.Style);
+              }
+              if (requestedStyle) {
+                layer.set('currentStyle', requestedStyle);
               }
 
               layer.set('advanced', !!(layer.get('elevation') ||
@@ -1070,9 +1090,10 @@
            *
            * @param {ol.map} map to add the layer
            * @param {Object} getCapLayer object to convert
+           * @param {string} name of the style to use
            */
-          addWmsToMapFromCap: function(map, getCapLayer) {
-            var layer = this.createOlWMSFromCap(map, getCapLayer);
+          addWmsToMapFromCap: function(map, getCapLayer, style) {
+            var layer = this.createOlWMSFromCap(map, getCapLayer, null, style);
             map.addLayer(layer);
             return layer;
           },
@@ -1168,7 +1189,11 @@
                   var o = {
                     url: url,
                     name: name,
-                    msg: 'layerNotInCap'
+                    msg: $translate.instant(
+                        'layerNotfoundInCapability', {
+                          layer: name,
+                          url: url
+                        })
                   }, errors = [];
                   if (version) {
                     o.version = version;

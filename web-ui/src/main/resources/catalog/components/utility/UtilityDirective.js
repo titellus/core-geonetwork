@@ -907,6 +907,7 @@
 
                       // call the change function if the value was changed
                       if (changed) {
+                        scope.internalChange = true;
                         scope.onChangeFn();
                       }
                     }
@@ -947,6 +948,11 @@
             scope.$watchCollection('date', function(newValue, oldValue) {
               if (!scope.date) {
                 scope.date = {};
+                return;
+              }
+              // skip if internal change
+              if (scope.internalChange) {
+                scope.internalChange = false;
                 return;
               }
               var dateFrom = (newValue && newValue.from) || '';
@@ -1283,18 +1289,28 @@
     return {
       restrict: 'A',
       link: function(scope, element, attr, ngModel) {
+        var modalElt;
 
         element.bind('click', function() {
           var img = scope.$eval(attr['gnImgModal']);
+
+          // Toggle the modal if already displayed
+          if (modalElt) {
+            modalElt.modal('hide');
+            modalElt = null;
+            return;
+          }
           if (img) {
             var label = (img.label || (
                 $filter('gnLocalized')(img.title, scope.lang)) || '');
             var labelDiv =
                 '<div class="gn-img-background">' +
-                '  <div class="gn-img-thumbnail-caption">' + label + '</div>' +
+                '  <div class="gn-img-thumbnail-caption">' +
+                label + '</div>' +
                 '</div>';
-            var modalElt = angular.element('' +
-                '<div class="modal fade in">' +
+            modalElt = angular.element('' +
+                '<div class="modal fade in"' +
+                '     id="gn-img-modal-"' + img.id + '>' +
                 '<div class="modal-dialog gn-img-modal in">' +
                 '  <button type=button class="btn btn-link gn-btn-modal-img">' +
                 '<i class="fa fa-times text-danger"/></button>' +
@@ -1306,7 +1322,9 @@
             $(document.body).append(modalElt);
             modalElt.modal();
             modalElt.on('hidden.bs.modal', function() {
-              modalElt.remove();
+              if (modalElt) {
+                modalElt.remove();
+              }
             });
             modalElt.find('.gn-btn-modal-img').on('click', function() {
               modalElt.modal('hide');

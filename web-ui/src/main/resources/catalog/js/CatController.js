@@ -225,7 +225,7 @@
       requireProxy: [],
       gnCfg: angular.copy(defaultConfig),
       gnUrl: '',
-      docUrl: 'http://geonetwork-opensource.org/manuals/trunk/',
+      docUrl: 'http://geonetwork-opensource.org/manuals/3.4.x/',
       //docUrl: '../../doc/',
       modelOptions: {
         updateOn: 'default blur',
@@ -481,6 +481,16 @@
       // login url for inline signin form in top toolbar
       $scope.signInFormAction = '../../signin#' + $location.path();
 
+      // when the login input have focus, do not close the dropdown/popup
+      $scope.focusLoginPopup = function() {
+        $('.signin-dropdown #inputUsername, .signin-dropdown #inputPassword').one('focus',function() {
+          $(this).parents('.dropdown-menu').addClass('show');
+        });
+        $('.signin-dropdown #inputUsername, .signin-dropdown #inputPassword').one('blur',function() {
+          $(this).parents('.dropdown-menu').removeClass('show');
+        });
+      };
+
       /**
        * Catalog facet summary providing
        * a global overview of the catalog content.
@@ -572,8 +582,10 @@
 
 
         // Retrieve user information if catalog is online
+        // append a random number to avoid caching in IE11
         var userLogin = catInfo.then(function(value) {
-          return $http.get('../api/me').
+          return $http.get('../api/me?_random=' +
+            Math.floor(Math.random() * 10000)).
               success(function(me, status) {
                 if (angular.isObject(me)) {
                   angular.extend($scope.user, me);

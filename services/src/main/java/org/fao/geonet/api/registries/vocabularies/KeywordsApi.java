@@ -208,7 +208,7 @@ public class KeywordsApi {
 
         KeywordSearchParamsBuilder builder = parseBuilder(
             lang, q, rows, start,
-            targetLangs, Arrays.asList(thesaurus),
+            targetLangs, thesaurus != null ? Arrays.asList(thesaurus) : null,
             thesauriDomainName, type, uri, languagesMapper);
 
 //            if (checkModified(webRequest, thesaurusMan, builder)) {

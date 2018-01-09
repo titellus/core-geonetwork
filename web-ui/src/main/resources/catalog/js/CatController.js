@@ -129,7 +129,7 @@
           'formatter': {
             'list': [{
               'label': 'full',
-              'url' : '../api/records/{{md.getUuid()}}/' +
+              'url' : '../api/records/{{uuid}}/' +
                   'formatters/xsl-view?root=div&view=advanced'
             }]
           },
@@ -149,6 +149,7 @@
           'appUrl': '../../srv/{{lang}}/catalog.search#/map',
           'is3DModeAllowed': true,
           'isSaveMapInCatalogAllowed': true,
+          'isExportMapAsImageEnabled': false,
           'storage': 'sessionStorage',
           'listOfServices': {
             'wms': [],
@@ -186,9 +187,9 @@
             'layers': []
           },
           'map-editor': {
-            'context': '../../map/config-viewer.xml',
+            'context': '',
             'extent': [0, 0, 0, 0],
-            'layers': []
+            'layers': [{'type': 'osm'}]
           }
         },
         'geocoder': 'https://secure.geonames.org/searchJSON',
@@ -479,12 +480,14 @@
 
       // when the login input have focus, do not close the dropdown/popup
       $scope.focusLoginPopup = function() {
-        $('.signin-dropdown #inputUsername, .signin-dropdown #inputPassword').one('focus',function() {
-          $(this).parents('.dropdown-menu').addClass('show');
-        });
-        $('.signin-dropdown #inputUsername, .signin-dropdown #inputPassword').one('blur',function() {
-          $(this).parents('.dropdown-menu').removeClass('show');
-        });
+        $('.signin-dropdown #inputUsername, .signin-dropdown #inputPassword')
+            .one('focus', function() {
+              $(this).parents('.dropdown-menu').addClass('show');
+            });
+        $('.signin-dropdown #inputUsername, .signin-dropdown #inputPassword')
+            .one('blur', function() {
+              $(this).parents('.dropdown-menu').removeClass('show');
+            });
       };
 
       /**
@@ -581,7 +584,7 @@
         // append a random number to avoid caching in IE11
         var userLogin = catInfo.then(function(value) {
           return $http.get('../api/me?_random=' +
-            Math.floor(Math.random() * 10000)).
+              Math.floor(Math.random() * 10000)).
               success(function(me, status) {
                 if (angular.isObject(me)) {
                   angular.extend($scope.user, me);

@@ -94,6 +94,7 @@
   module.controller('gnsDefault', [
     '$scope',
     '$location',
+    '$filter',
     'suggestService',
     '$http',
     '$translate',
@@ -108,7 +109,8 @@
     'gnOwsContextService',
     'hotkeys',
     'gnGlobalSettings',
-    function($scope, $location, suggestService, $http, $translate,
+    function($scope, $location, $filter,
+             suggestService, $http, $translate,
              gnUtilityService, gnSearchSettings, gnViewerSettings,
              gnMap, gnMdView, mdView, gnWmsQueue,
              gnSearchLocation, gnOwsContextService,
@@ -256,14 +258,24 @@
       $scope.resultviewFns = {
         addMdLayerToMap: function (link, md) {
           var config = {
-            uuid: md.getUuid(),
+            uuid: md ? md.getUuid() : null,
             type: link.protocol.indexOf('WMTS') > -1 ? 'wmts' : 'wms',
-            url: link.url
+            url: $filter('gnLocalized')(link.url) || link.url
           };
 
-          if (link.name !== '') {
+          if (angular.isObject(link.title)) {
+            link.title = $filter('gnLocalized')(link.title);
+          }
+          if (angular.isObject(link.name)) {
+            link.name = $filter('gnLocalized')(link.name);
+          }
+
+          if (link.name && link.name !== '') {
             config.name = link.name;
             config.group = link.group;
+            // Related service return a property title for the name
+          } else if (link.title) {
+            config.name = link.title;
           }
 
           // This is probably only a service
@@ -281,6 +293,10 @@
           gnOwsContextService.loadContextFromUrl(map.url, viewerMap);
         }
       };
+
+      // Share map loading functions
+      gnViewerSettings.resultviewFns = $scope.resultviewFns;
+
 
       // Manage route at start and on $location change
       // depending on configuration

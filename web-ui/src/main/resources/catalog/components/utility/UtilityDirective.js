@@ -360,7 +360,7 @@
               // used in the common metadata standards.
               // By the way check Z which may be used in GML times
               var date = null;
-              if (originalDate.match("[Zz]$") !== null) {
+              if (originalDate.match('[Zz]$') !== null) {
                 date = moment(originalDate, 'YYYY-MM-DDtHH-mm-SSSZ');
               } else {
                 date = moment(originalDate);
@@ -1239,7 +1239,8 @@
 
       } else if (angular.isString(value)) {
         if (value) {
-          return value.replace(/(\r)?\n/g, '<br/>').replace(/(&#13;)?&#10;/g, '<br/>');
+          return value.replace(/(\r)?\n/g, '<br/>')
+              .replace(/(&#13;)?&#10;/g, '<br/>');
         } else {
           return value;
         }
@@ -1429,11 +1430,11 @@
             scope.value = scope.text.split('|')[2];
 
             element.replaceWith($compile('<a data-ng-href="{{link}}" ' +
-                'data-ng-bind-html="value"></a>')(scope));
+                'data-ng-bind-html="value | newlines"></a>')(scope));
           } else {
 
             element.replaceWith($compile('<span ' +
-                'data-ng-bind-html="text"></span>')(scope));
+                'data-ng-bind-html="text | linky | newlines"></span>')(scope));
           }
         }
 

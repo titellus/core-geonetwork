@@ -1,7 +1,7 @@
 <div ng-if="::!layer.get('loading')" class="flex-col">
   <div class="flex-row width-100 flex-align-stretch">
     <div class="flex-col">
-      <input type="checkbox" ng-model="layer.visible" title="{{'layerVisible'|translate}}"/>
+      <input type="checkbox" id="layer-{{$index}}" ng-model="layer.visible" title="{{'layerVisible'|translate}}"/>
 
       <div class="gn-layer-actions">
         <div ngeo-popover ngeo-popover-placement="bottom">
@@ -26,6 +26,8 @@
               </li>
 
               <li>
+
+                <label data-translate="">selectStyle</label>
                 <div data-gn-layer-styles="layer.get('style')"
                      data-gn-layer-styles-on-click="setLayerStyle(layer, style)"
                      data-gn-layer-styles-current="layer.get('currentStyle')"
@@ -33,7 +35,8 @@
               </li>
 
               <!--Opacity slide-->
-              <li class="" title="{{'opacity' | translate}}">
+              <li class="" title="{{'opacity' | translate}}">
+                <label data-translate="">setOpacity</label>
                 <input class="" type="range"
                        min="0" max="1" step="0.05"
                        ng-model="layer.opacity"/>
@@ -104,12 +107,14 @@
               data-ng-click="removeLayer(layer, map)"
              title="{{'layerDelete'|translate}}"></a>
         </span>
-        <span data-ng-class="layer.get('errors').length > 0 ? 'text-danger' : ''">
-          {{layer.get('label')}}&nbsp;
-          <small><em>
-            {{layer.get('currentStyle') ? '(' + layer.get('currentStyle').Title || layer.get('currentStyle').Name + ')' : ''}}
-          </em></small>
-        </span>
+        <label for="layer-{{$index}}">
+          <span data-ng-class="layer.get('errors').length > 0 ? 'text-danger' : ''">
+            {{layer.get('label')}}&nbsp;
+            <small><em>
+              {{layer.get('currentStyle') ? '(' + layer.get('currentStyle').Title || layer.get('currentStyle').Name + ')' : ''}}
+            </em></small>
+          </span>
+        </label>
       </div>
       <a href class="width-100 text-right small"
          ng-if="layer.get('legend') || layer.get('attribution')"

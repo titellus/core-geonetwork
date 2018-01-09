@@ -40,11 +40,12 @@
     'gnMetadataManager',
     'gnSearchSettings',
     'gnViewerSettings',
+    'gnAlertService',
     'gnMeasure',
     'gnViewerService',
     '$location', '$q', '$translate',
     function(gnMap, gnConfig, gnSearchLocation, gnMetadataManager,
-             gnSearchSettings, gnViewerSettings, gnMeasure,
+             gnSearchSettings, gnViewerSettings, gnAlertService, gnMeasure,
              gnViewerService, $location, $q, $translate) {
       return {
         restrict: 'A',
@@ -162,26 +163,39 @@
               };
 
               function addLayerFromLocation(config) {
-                if (angular.isUndefined(config.layer)) {
+                if (angular.isUndefined(config.name)) {
                   // This is a service without a layer name
                   // Display the add layer from service panel
+
+                  gnViewerService.openTool('addLayers', 'services');
                   scope.activeTools.addLayers = true;
                   scope.addLayerTabs.services = true;
                   scope.addLayerUrl[config.type || 'wms'] = config.url;
-                } else if (config.layer) {
-                  scope.activeTools.layers = true;
+                } else if (config.name) {
+                  gnViewerService.openTool('layers');
 
                   var loadLayerPromise = gnMap[
                       config.type === 'wmts' ?
                       'addWmtsFromScratch' : 'addWmsFromScratch'
                       ](
                       scope.map, config.url,
-                      config.layer, undefined, config.md);
+                      config.name, undefined, config.md);
 
                   loadLayerPromise.then(function(layer) {
                     if (layer) {
                       gnMap.feedLayerWithRelated(layer, config.group);
+
+                      var extent = layer.get('cextent') || layer.get('extent');
+                      gnAlertService.addAlert({
+                        msg: $translate.instant('layerAdded', {
+                          layer: layer.get('label'),
+                          extent: extent ? extent.join(',') : ''
+                        }),
+                        type: 'success'
+                      }, 5000);
                     }
+
+
                   }, function(error) {
                     console.log(error);
                   });
@@ -199,19 +213,22 @@
 
                   angular.forEach(addCmd, function(config) {
 
-                    if (gnMap.isLayerInMap(scope.map,
-                        config.name, config.url)) {
-                      scope.$emit('StatusUpdated', {
+                    var layer = gnMap.getLayerInMap(scope.map,
+                        config.name, config.url);
+                    if (layer !== null) {
+                      var extent = layer.get('cextent') || layer.get('extent');
+                      gnAlertService.addAlert({
                         msg: $translate.instant('layerIsAlreadyInMap', {
                           layer: config.name,
-                          url: config.url
+                          url: config.url,
+                          extent: extent ? extent.join(',') : ''
                         }),
-                        timeout: 0,
+                        delay: 5000,
                         type: 'warning'});
                       // TODO: You may want to add more than one time
                       // a layer with different styling for example ?
                       // Ask confirmation to the user ?
-                      $location.path('/map').search({activeTools: 'layers'});
+                      gnViewerService.openTool('layers');
                       return;
                     }
 
@@ -243,12 +260,37 @@
                       addLayerFromLocation(config);
                     }
                   });
-                  $location.search('add', null);
                 }
+
+                var activateCmd = $location.search()['activate'];
+                if (activateCmd) {
+                  var layers = activateCmd.split(',');
+                  for (var i = 0; i < layers.length; i++) {
+                    var layer = gnMap.getLayerInMap(scope.map, layers[i]);
+                    layer.visible = true;
+                  }
+                }
+
+                if (activateCmd || addCmd) {
+                  // Replace location with action by a stateless path
+                  // to not being able to replay the action with browser
+                  // history.
+                  $location.path('/map')
+                      .search('add', null)
+                      .search('activate', null)
+                      .replace();
+                }
+
 
                 // Define which tool is active
                 if ($location.search()['tool']) {
                   scope.activeTools[$location.search()['tool']] = true;
+                }
+
+                if ($location.search()['extent']) {
+                  scope.map.getView().fit(
+                      $location.search()['extent'].split(','),
+                      scope.map.getSize());
                 }
               };
 
@@ -276,7 +318,7 @@
               // watch open tool specified by the service; this will allow code
               // from anywhere to interact with the viewer tabs
               // note: this uses a deep equality to check the tool properties
-              scope.$watch(function() {
+              scope.$watchCollection(function() {
                 return gnViewerService.getOpenedTool();
               }, function(openedTool) {
                 // open the correct tool using gi-btn magic
@@ -304,10 +346,10 @@
                   switch (openedTool.tab) {
                     case 'wms':
                     case 'wmts':
-                      scope.addLayerTabs[openedTool.tab] = true;
                       scope.addLayerUrl[openedTool.tab] = openedTool.url;
                       break;
                   }
+                  scope.addLayerTabs.services = true;
                 }
 
                 // handle processes tool
@@ -315,6 +357,9 @@
                   scope.wpsTabs.byUrl = true;
                   scope.selectedWps.url = openedTool.url;
                 }
+
+
+                openedTool.name = '';
               }, true);
 
               // ogc graticule

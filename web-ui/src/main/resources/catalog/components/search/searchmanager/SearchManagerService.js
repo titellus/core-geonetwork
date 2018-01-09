@@ -32,9 +32,8 @@
     '$rootScope',
     '$http',
     'gnHttp',
-    'Metadata',
     function(gnUtilityService, $q, $rootScope,
-             $http, gnHttp, Metadata) {
+             $http, gnHttp) {
       /**
        * Utility to format a search response. JSON response
        * when containing one element will not make an array.
@@ -224,6 +223,8 @@
           } else {
             defer.reject('No records to index');
           }
+        }, function(reason) {
+          defer.reject("error: " + reason);
         });
         return defer.promise;
       };

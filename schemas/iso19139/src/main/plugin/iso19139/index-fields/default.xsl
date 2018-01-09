@@ -864,13 +864,13 @@
     <xsl:choose>
       <xsl:when test="$isDataset and $isMapDigital and
                             ($isStatic or $isInteractive or $isPublishedWithWMCProtocol)">
-        <Field name="type" string="map" store="true" index="true"/>
+        <!--<Field name="type" string="map" store="true" index="true"/>-->
         <xsl:choose>
           <xsl:when test="$isStatic">
-            <Field name="maptype" string="staticMap" store="true" index="true"/>
+            <Field name="type" string="staticMap" store="true" index="true"/>
           </xsl:when>
           <xsl:when test="$isInteractive or $isPublishedWithWMCProtocol">
-            <Field name="maptype" string="interactiveMap" store="true" index="true"/>
+            <Field name="type" string="interactiveMap" store="true" index="true"/>
           </xsl:when>
         </xsl:choose>
       </xsl:when>

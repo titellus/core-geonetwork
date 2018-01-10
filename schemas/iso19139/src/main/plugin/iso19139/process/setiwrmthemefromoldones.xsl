@@ -32,51 +32,89 @@
 
   <xsl:variable name="map">
     <entry>
-      <keyword>environment</keyword>
+      <keyword>AD</keyword>
+      <iwrmtheme>Administrative context</iwrmtheme>
+    </entry>
+    <entry>
+      <keyword>ENV</keyword>
       <iwrmtheme>Environmental context</iwrmtheme>
     </entry>
     <entry>
-      <keyword>biota</keyword>
-      <iwrmtheme>Environmental context</iwrmtheme>
+      <keyword>INFR</keyword>
+      <iwrmtheme>Hydraulic infrastructures</iwrmtheme>
     </entry>
     <entry>
-      <keyword>transportation</keyword>
-      <iwrmtheme>Environmental context</iwrmtheme>
+      <keyword>IUD</keyword>
+      <iwrmtheme>Water intake/use/discharge</iwrmtheme>
     </entry>
     <entry>
-      <keyword>farming</keyword>
-      <iwrmtheme>Environmental context</iwrmtheme>
+      <keyword>MQ</keyword>
+      <iwrmtheme>Monitoring quality</iwrmtheme>
     </entry>
     <entry>
-      <keyword>farming</keyword>
+      <keyword>MO-QTT</keyword>
+      <iwrmtheme>Monitoring quantity</iwrmtheme>
+    </entry>
+    <entry>
+      <keyword>MO-QLT</keyword>
+      <iwrmtheme>Monitoring quality</iwrmtheme>
+    </entry>
+    <entry>
+      <keyword>MO-MET</keyword>
+      <iwrmtheme>Monitoring</iwrmtheme>
+    </entry>
+    <entry>
+      <keyword>RISK</keyword>
       <iwrmtheme>Risk</iwrmtheme>
     </entry>
     <entry>
-      <keyword>elevation</keyword>
-      <iwrmtheme>Environmental context</iwrmtheme>
+      <keyword>MO</keyword>
+      <iwrmtheme>Monitoring</iwrmtheme>
     </entry>
     <entry>
-      <keyword>boundaries</keyword>
-      <iwrmtheme>Administrative context</iwrmtheme>
+      <keyword>UP</keyword>
+      <iwrmtheme>Users/polluters</iwrmtheme>
     </entry>
     <entry>
-      <keyword>location</keyword>
-      <iwrmtheme>Administrative context</iwrmtheme>
+      <keyword>IND</keyword>
+      <iwrmtheme>Indicators</iwrmtheme>
     </entry>
     <entry>
-      <keyword>inlandWaters</keyword>
+      <keyword>IN</keyword>
+      <iwrmtheme>Indicators</iwrmtheme>
+    </entry>
+    <entry>
+      <keyword>ECO</keyword>
+      <iwrmtheme>Indicators</iwrmtheme>
+    </entry>
+    <entry>
+      <keyword>GW</keyword>
+      <iwrmtheme>Ground water</iwrmtheme>
+    </entry>
+    <entry>
+      <keyword>SW</keyword>
+      <iwrmtheme>Surface water</iwrmtheme>
+    </entry>
+    <entry>
+      <keyword>HYE</keyword>
       <iwrmtheme>Surface water</iwrmtheme>
     </entry>
   </xsl:variable>
 
+  <xsl:variable name="asIwrmTheme"
+                select="count(//gmd:descriptiveKeywords[*/gmd:thesaurusName/*/gmd:title/* = 'IWRM themes']) != 0"/>
+
   <!-- Map all keywords to new value.
       If no new value define, current value is used. -->
+  <xsl:template match="gmd:descriptiveKeywords[*/gmd:keyword/* = ('AD', 'HYE', 'ENV', 'MO', 'MQ-QTT', 'MQ-MET', 'MQ-QLT', 'IN', 'UP', 'IUD', 'RISK', 'ECO')]" priority="200"/>
+
   <xsl:template match="gmd:descriptiveKeywords" priority="2">
     <xsl:copy-of select="."/>
-    <xsl:if test="following-sibling::*/name() != 'gmd:descriptiveKeywords'">
+    <xsl:if test="following-sibling::*/name() != 'gmd:descriptiveKeywords'
+                  and not($asIwrmTheme)">
       <gmd:descriptiveKeywords>
         <gmd:MD_Keywords>
-          <xsl:for-each select="..//gmd:topicCategory/gmd:MD_TopicCategoryCode">
+          <xsl:for-each select="..//gmd:keyword/gco:CharacterString">
             <xsl:variable name="keyword"
                           select="."/>
             <xsl:variable name="iwrmtheme"

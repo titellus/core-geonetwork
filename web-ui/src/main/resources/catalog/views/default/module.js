@@ -80,7 +80,7 @@
       $scope.searchObj = {
         permalink: false,
         filters: {
-          'maptype': 'interactiveMap'
+          'type': 'interactiveMap'
         },
         params: {
           sortBy: 'changeDate',

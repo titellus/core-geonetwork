@@ -34,7 +34,7 @@
   <xsl:output indent="yes"/>
 
   <xsl:variable name="places"
-                select="document(concat('file:///', replace(util:getConfigValue('codeListDir'), '\\', '/'), '/external/thesauri/place/IWRM-country-basin.rdf')"/>
+                select="document(concat('file:///', replace(util:getConfigValue('codeListDir'), '\\', '/'), '/external/thesauri/place/IWRM-country-basin.rdf'))"/>
  <!--<xsl:variable name="places"
                 select="document('/data/dev/gn/oieau/web/src/main/webapp/WEB-INF/data/config/codelist/external/thesauri/place/IWRM-country-basin.rdf')"/>
 -->

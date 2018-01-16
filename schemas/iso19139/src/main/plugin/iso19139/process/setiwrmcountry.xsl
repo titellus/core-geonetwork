@@ -26,6 +26,7 @@
                 xmlns:exslt="http://exslt.org/common" xmlns:geonet="http://www.fao.org/geonetwork"
                 xmlns:gco="http://www.isotc211.org/2005/gco"
                 xmlns:gmd="http://www.isotc211.org/2005/gmd"
+                xmlns:gml="http://www.opengis.net/gml#"
                 xmlns:skos="http://www.w3.org/2004/02/skos/core#"
                 xmlns:util="java:org.fao.geonet.util.XslUtil"
                 version="2.0" exclude-result-prefixes="#all">
@@ -34,9 +35,16 @@
 
   <xsl:variable name="places"
                 select="document(concat('file:///', replace(util:getConfigValue('codeListDir'), '\\', '/'), '/external/thesauri/place/IWRM-country-basin.rdf')"/>
- <!-- <xsl:variable name="places"
+ <!--<xsl:variable name="places"
                 select="document('/data/dev/gn/oieau/web/src/main/webapp/WEB-INF/data/config/codelist/external/thesauri/place/IWRM-country-basin.rdf')"/>
 -->
+
+  <xsl:variable name="hasIwrmPlaces"
+                select="count(//gmd:descriptiveKeywords[
+                          not(*/gmd:thesaurusName)
+                          and */gmd:keyword/*/lower-case(.) = $places//skos:Concept/skos:prefLabel/lower-case(.)]) > 0"/>
+
+
   <!-- Map all keywords to new value.
       If no new value define, current value is used. -->
   <xsl:template match="gmd:descriptiveKeywords[
@@ -46,7 +54,7 @@
 
     <gmd:descriptiveKeywords>
       <gmd:MD_Keywords>
-        <xsl:for-each select="..//gmd:keyword/gco:CharacterString">
+        <xsl:for-each select=".//gmd:keyword/gco:CharacterString">
           <xsl:variable name="keyword"
                         select="."/>
           <xsl:variable name="iwrmPlace"
@@ -92,7 +100,48 @@
         </gmd:thesaurusName>
       </gmd:MD_Keywords>
     </gmd:descriptiveKeywords>
+
   </xsl:template>
+
+
+  <xsl:template match="gmd:extent[$hasIwrmPlaces and */gmd:geographicElement]">
+    <xsl:variable name="keywords"
+                  select="../gmd:descriptiveKeywords[
+                          not(*/gmd:thesaurusName)
+                          and */gmd:keyword/*/lower-case(.) = $places//skos:Concept/skos:prefLabel/lower-case(.)]/*/gmd:keyword/gco:CharacterString/lower-case(.)"/>
+
+    <xsl:for-each select="$places//skos:Concept[skos:prefLabel/lower-case(.) = $keywords]">
+      <gmd:extent>
+        <gmd:EX_Extent>
+          <gmd:geographicElement>
+            <gmd:EX_GeographicBoundingBox>
+              <gmd:westBoundLongitude>
+                <gco:Decimal>
+                  <xsl:value-of select="tokenize(gml:BoundedBy/gml:Envelope/gml:lowerCorner, ' ')[1]"/>
+                </gco:Decimal>
+              </gmd:westBoundLongitude>
+              <gmd:eastBoundLongitude>
+                <gco:Decimal>
+                  <xsl:value-of select="tokenize(gml:BoundedBy/gml:Envelope/gml:upperCorner, ' ')[1]"/>
+                </gco:Decimal>
+              </gmd:eastBoundLongitude>
+              <gmd:southBoundLatitude>
+                <gco:Decimal>
+                  <xsl:value-of select="tokenize(gml:BoundedBy/gml:Envelope/gml:lowerCorner, ' ')[2]"/>
+                </gco:Decimal>
+              </gmd:southBoundLatitude>
+              <gmd:northBoundLatitude>
+                <gco:Decimal>
+                  <xsl:value-of select="tokenize(gml:BoundedBy/gml:Envelope/gml:upperCorner, ' ')[2]"/>
+                </gco:Decimal>
+              </gmd:northBoundLatitude>
+            </gmd:EX_GeographicBoundingBox>
+          </gmd:geographicElement>
+        </gmd:EX_Extent>
+      </gmd:extent>
+    </xsl:for-each>
+  </xsl:template>
+
 
   <!-- Do a copy of every nodes and attributes -->
   <xsl:template match="@*|node()">

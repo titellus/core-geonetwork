@@ -56,6 +56,10 @@
 
   <xsl:variable name="inspire-thesaurus" select="if ($inspire!='false') then document(concat('file:///', $thesauriDir, '/external/thesauri/theme/inspire-theme.rdf')) else ''"/>
   <xsl:variable name="inspire-theme" select="if ($inspire!='false') then $inspire-thesaurus//skos:Concept else ''"/>
+  <xsl:variable name="iwrm-thesaurus"
+                select="document(concat('file:///', replace($thesauriDir, '\\', '/'), '/external/thesauri/theme/IWRM-theme.rdf'))"/>
+  <xsl:variable name="iwrm-theme"
+                select="$iwrm-thesaurus//skos:Concept"/>
 
   <!-- ========================================================================================= -->
   <xsl:variable name="isoDocLangId">
@@ -286,6 +290,10 @@
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 
       <xsl:for-each select="*/gmd:MD_Keywords">
+
+        <xsl:variable name="thesaurusIdentifier"
+                      select="gmd:thesaurusName/*/gmd:identifier/gmd:MD_Identifier/gmd:code/gmx:Anchor/text()"/>
+
         <xsl:for-each select="gmd:keyword//gmd:LocalisedCharacterString[@locale=$langId]">
           <xsl:variable name="keyword" select="string(.)"/>
 
@@ -332,6 +340,23 @@
                 <!-- FIXME : inspirecat field will be set multiple time if one record has many themes -->
                 <Field name="inspirecat" string="true" store="false" index="true"/>
               </xsl:if>
+            </xsl:if>
+          </xsl:if>
+
+
+
+
+          <xsl:if test="$thesaurusIdentifier = 'geonetwork.thesaurus.external.theme.IWRM-theme'">
+            <xsl:variable name="iwrmThemeURI"
+                          select="$iwrm-theme[
+                                        skos:prefLabel = $keyword and
+                                        not(skos:broader)
+                                             ]"/>
+            <xsl:if test="$iwrmThemeURI">
+              <Field name="iwrmthemeuri"
+                     string="{$iwrmThemeURI/@rdf:about}"
+                     store="true"
+                     index="true"/>
             </xsl:if>
           </xsl:if>
         </xsl:for-each>

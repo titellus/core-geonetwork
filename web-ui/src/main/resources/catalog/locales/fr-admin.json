@@ -379,7 +379,7 @@
     "geonetwork-useChangeDateForUpdate": "Utiliser la date de mise à jour pour la comparaison",
     "geonetwork-useChangeDateForUpdateHelp": "Utiliser la date de mise à jour pour détecter les changements sur le serveur distant. Cela ne mettra pas à jour les changements mineures, mais améliorera les performances.",
     "geonetwork-xslfilter": "Filtre XSL à appliquer",
-    "geonetwork-xslfilterHelp": "La transformation XSL correspondate est appliquée à chaque fiche récupérée",
+    "geonetwork-xslfilterHelp": "La transformation XSL correspondante est appliquée à chaque fiche récupérée",
     "groupDeleteError": "Erreur lors de la suppression du groupe",
     "groupDescription": "Description",
     "groupDescriptionHelp": "Rapide description du groupe.",

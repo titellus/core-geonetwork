@@ -1433,6 +1433,11 @@
       <label>Attribute</label>
       <description>Information applies to the attribute class</description>
     </entry>
+    <entry>
+      <code>application</code>
+      <label>Application</label>
+      <description>Information applies to the attribute class</description>
+    </entry>
     <!-- - - - - - - - - - - - - - - - - - - - - - - - - -->
     <entry>
       <code>attributeType</code>

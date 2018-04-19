@@ -132,6 +132,7 @@
     var $filter = this.$injector.get('$filter');
 
     return this.promise.then(function(features) {
+      var httpLink = null;
       if (!features || features.length == 0) {
         return;
       }
@@ -141,6 +142,12 @@
         Object.keys(obj).forEach(function(key) {
           if (exclude.indexOf(key) == -1) {
             var value = obj[key];
+            if (value.indexOf &&
+              value.indexOf('http') === 0) {
+              httpLink = value;
+              // Open a link if one found.
+              window.open(httpLink);
+            }
             if (!(obj[key] instanceof Object)) {
               obj[key] = $filter('linky')(obj[key], '_blank');
               if (obj[key]) {
@@ -153,6 +160,8 @@
             }
           }
         });
+
+
         return obj;
       });
 

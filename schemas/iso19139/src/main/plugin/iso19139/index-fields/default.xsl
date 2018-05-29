@@ -66,6 +66,11 @@
   <xsl:variable name="iwrm-theme"
                 select="$iwrm-thesaurus//skos:Concept"/>
 
+  <xsl:variable name="iwrm-basin-thesaurus"
+                select="document(concat('file:///', replace($thesauriDir, '\\', '/'), '/external/thesauri/place/IWRM-country-basin.rdf'))"/>
+  <xsl:variable name="iwrm-basin"
+                select="$iwrm-basin-thesaurus//skos:Concept"/>
+
   <!-- If identification creation, publication and revision date
     should be indexed as a temporal extent information (eg. in INSPIRE
     metadata implementing rules, those elements are defined as part
@@ -421,7 +426,26 @@
 
             </xsl:for-each>
           </xsl:if>
-        </xsl:for-each>
+
+          <xsl:if test="$thesaurusIdentifier = 'geonetwork.thesaurus.external.place.IWRM-country-basin'">
+            <xsl:for-each select="$listOfKeywords">
+              <xsl:variable name="keyword" select="normalize-space(.)"/>
+              <xsl:variable name="englishBasin"
+                            select="$iwrm-basin[
+                                            skos:prefLabel = $keyword
+                                                 ]/skos:prefLabel[@xml:lang='en']"/>
+              <!--<xsl:message>==<xsl:copy-of select="$keyword"/> </xsl:message>
+              <xsl:message>==<xsl:value-of select="$englishBasin[1]"/> </xsl:message>-->
+              <xsl:if test="$englishBasin != ''">
+                <Field name="keyword"
+                       string="{$englishBasin[1]}"
+                       store="true"
+                       index="true"/>
+              </xsl:if>
+
+            </xsl:for-each>
+          </xsl:if>
+      </xsl:for-each>
 
         <!-- Index thesaurus type -->
         <xsl:for-each select="gmd:type/gmd:MD_KeywordTypeCode/@codeListValue">

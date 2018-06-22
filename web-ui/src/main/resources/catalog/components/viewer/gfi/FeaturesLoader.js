@@ -27,9 +27,9 @@
   var module = angular.module('gn_featurestable_loader', []);
 
   var linkTpl = '<span class="fa-stack">' +
-      '<i class="fa fa-square fa-stack-2x"></i>' +
-      '<i class="fa fa-link fa-stack-1x fa-inverse"></i>' +
-      '</span>';
+    '<i class="fa fa-square fa-stack-2x"></i>' +
+    '<i class="fa fa-link fa-stack-1x fa-inverse"></i>' +
+    '</span>';
 
   geonetwork.inherits = function(childCtor, parentCtor) {
     function tempCtor() {
@@ -77,12 +77,12 @@
   };
 
   geonetwork.inherits(geonetwork.GnFeaturesGFILoader,
-      geonetwork.GnFeaturesLoader);
+    geonetwork.GnFeaturesLoader);
 
   geonetwork.GnFeaturesGFILoader.prototype.loadAll = function() {
     var layer = this.layer,
-        map = this.map,
-        coordinates = this.coordinates;
+      map = this.map,
+      coordinates = this.coordinates;
 
     var uuid;
     if(layer.get('md')) {
@@ -92,7 +92,7 @@
     }
 
     var infoFormat = layer.ncInfo ? 'text/xml' :
-                'application/vnd.ogc.gml';
+      'application/vnd.ogc.gml';
 
     //check if infoFormat is available in getCapabilities
     if(layer.get('capRequest') &&
@@ -100,13 +100,13 @@
       angular.isArray(layer.get('capRequest').GetFeatureInfo.Format) &&
       layer.get('capRequest').GetFeatureInfo.Format.length > 0) {
       if($.inArray(infoFormat,
-          layer.get('capRequest').GetFeatureInfo.Format) == -1) {
+        layer.get('capRequest').GetFeatureInfo.Format) == -1) {
         //use a valid format
         infoFormat = layer.get('capRequest').GetFeatureInfo.Format[0];
 
         //if xml available, use it:
         if(!$.inArray('text/xml',
-            layer.get('capRequest').GetFeatureInfo.Format) >= 0) {
+          layer.get('capRequest').GetFeatureInfo.Format) >= 0) {
           infoFormat = 'text/xml';
         }
       }
@@ -115,10 +115,10 @@
     layer.infoFormat = infoFormat;
 
     var uri = layer.getSource().getGetFeatureInfoUrl(
-        coordinates,
-        map.getView().getResolution(),
-        map.getView().getProjection(),
-        { INFO_FORMAT: infoFormat });
+      coordinates,
+      map.getView().getResolution(),
+      map.getView().getProjection(),
+      { INFO_FORMAT: infoFormat });
     uri += '&FEATURE_COUNT=2147483647';
 
     this.loading = true;
@@ -139,7 +139,7 @@
           }
         });
         this.features = (props.value && props.value != 'none') ?
-                [new ol.Feature(props)] : [];
+          [new ol.Feature(props)] : [];
       } else {
         var format = new ol.format.WMSGetFeatureInfo();
         this.features = format.readFeatures(response.data, {
@@ -156,20 +156,20 @@
 
     }.bind(this));
 
-        this.dictionary = null;
+    this.dictionary = null;
 
-        if(uuid) {
-          this.dictionary = this.$http.get('../api/records/'+uuid+'/featureCatalog?_content_type=json')
-          .then(function(response) {
-            if(response.data['decodeMap']!=null) {
-              return response.data['decodeMap'];
-            } else {
-              return null;
-        	}
-          }.bind(this), function(err) {
-        	return null;
-          }.bind(this));
-        }
+    if(uuid) {
+      this.dictionary = this.$http.get('../api/records/'+uuid+'/featureCatalog?_content_type=json')
+        .then(function(response) {
+          if(response.data['decodeMap']!=null) {
+            return response.data['decodeMap'];
+          } else {
+            return null;
+          }
+        }.bind(this), function(err) {
+          return null;
+        }.bind(this));
+    }
 
   };
 
@@ -182,18 +182,17 @@
     var promises = [
       this.promise,
       this.dictionary
-      ];
+    ];
 
     return $q.all(promises).then(function(data) {
 
       features = data[0];
       dictionary = data[1];
 
-    return this.promise.then(function(features) {
-      var httpLink = null;
       if (!features || features.length == 0) {
         return;
       }
+      var httpLink = null;
 
       var data = features.map(function(f) {
         var obj = f.getProperties();
@@ -210,7 +209,7 @@
               obj[key] = $filter('linky')(obj[key], '_blank');
               if (obj[key]) {
                 obj[key] = obj[key].replace(/>(.)*</, ' ' +
-                    'target="_blank">' + linkTpl + '<');
+                  'target="_blank">' + linkTpl + '<');
               }
             } else {
               // Exclude objects which will not be displayed properly
@@ -218,8 +217,6 @@
             }
           }
         });
-
-
         return obj;
       });
 
@@ -274,9 +271,9 @@
         }
         if (this.projection) {
           geom = geom.transform(
-              this.projection,
-              this.map.getView().getProjection()
-              );
+            this.projection,
+            this.map.getView().getProjection()
+          );
         }
       }
       if (geom instanceof ol.geom.Geometry) {
@@ -300,7 +297,7 @@
   };
 
   geonetwork.inherits(geonetwork.GnFeaturesINDEXLoader,
-      geonetwork.GnFeaturesLoader);
+    geonetwork.GnFeaturesLoader);
 
   /**
    * Format an url type attribute to a html link <a href=...">.
@@ -314,8 +311,8 @@
     var link = $filter('linky')(url, '_blank');
     if (link != url) {
       link = link.replace(/>(.)*</,
-          ' ' + 'target="_blank">' + linkTpl + '<'
-          );
+        ' ' + 'target="_blank">' + linkTpl + '<'
+      );
     }
     return link;
   };
@@ -332,36 +329,36 @@
    * @private
    */
   geonetwork.GnFeaturesINDEXLoader.prototype.fillUrlWithFilter_ =
-      function(url) {
+    function(url) {
 
-    var indexFilters = this.indexObject.getState();
+      var indexFilters = this.indexObject.getState();
 
-    var URL_SUBSTITUTE_PREFIX = 'filtre_';
-    var regex = /\$\{(\w+)\}/g;
-    var placeholders = [];
-    var urlFilters = [];
-    var paramsToAdd = {};
-    var match;
+      var URL_SUBSTITUTE_PREFIX = 'filtre_';
+      var regex = /\$\{(\w+)\}/g;
+      var placeholders = [];
+      var urlFilters = [];
+      var paramsToAdd = {};
+      var match;
 
-    while (match = regex.exec(url)) {
-      placeholders.push(match[0]);
-      urlFilters.push(match[1].substring(
+      while (match = regex.exec(url)) {
+        placeholders.push(match[0]);
+        urlFilters.push(match[1].substring(
           URL_SUBSTITUTE_PREFIX.length, match[1].length));
-    }
-
-    urlFilters.forEach(function(p, i) {
-      var name = p;
-      var idxName = this.indexObject.getIdxNameObj_(name).idxName;
-      var fValue = indexFilters.qParams[idxName];
-      url = url.replace(placeholders[i], '');
-
-      if (fValue) {
-        paramsToAdd[name] = Object.keys(fValue.values)[0];
       }
-    }.bind(this));
 
-    return this.urlUtils.append(url, this.urlUtils.toKeyValue(paramsToAdd));
-  };
+      urlFilters.forEach(function(p, i) {
+        var name = p;
+        var idxName = this.indexObject.getIdxNameObj_(name).idxName;
+        var fValue = indexFilters.qParams[idxName];
+        url = url.replace(placeholders[i], '');
+
+        if (fValue) {
+          paramsToAdd[name] = Object.keys(fValue.values)[0];
+        }
+      }.bind(this));
+
+      return this.urlUtils.append(url, this.urlUtils.toKeyValue(paramsToAdd));
+    };
 
   geonetwork.GnFeaturesINDEXLoader.prototype.getBsTableConfig = function() {
     var $q = this.$injector.get('$q');
@@ -369,10 +366,10 @@
     var $filter = this.$injector.get('$filter');
 
     var pageList = [5, 10, 50, 100],
-        columns = [],
-        index = this.indexObject,
-        map = this.map,
-        fields = index.indexFields || index.filteredDocTypeFieldsInfo;
+      columns = [],
+      index = this.indexObject,
+      map = this.map,
+      fields = index.indexFields || index.filteredDocTypeFieldsInfo;
 
     fields.forEach(function(field) {
       if ($.inArray(field.idxName, this.excludeCols) === -1) {
@@ -405,7 +402,7 @@
       method: 'POST',
       queryParams: function(p) {
         var queryObject = this.indexObject.buildESParams(state, {},
-            p.offset || 0, p.limit || 10000);
+          p.offset || 0, p.limit || 10000);
         if (p.sort) {
           queryObject.sort = [];
           var sort = {};

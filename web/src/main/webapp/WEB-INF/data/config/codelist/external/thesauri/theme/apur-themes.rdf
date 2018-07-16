@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:foaf="http://xmlns.com/foaf/0.1/"
+         xmlns:dcterms="http://purl.org/dc/terms/"
+         xmlns:skos="http://www.w3.org/2004/02/skos/core#">
+  <skos:ConceptScheme rdf:about="https://www.apur.org/registre/themes">
+    <dc:title>Thèmes de l'Apur</dc:title>
+    <dc:description></dc:description>
+    <dc:creator>
+      <foaf:Organization>
+        <foaf:name>APUR</foaf:name>
+      </foaf:Organization>
+    </dc:creator>
+    <dc:rights />
+    <dcterms:issued>2018-07-11</dcterms:issued>
+    <dcterms:modified>2018-07-11</dcterms:modified>
+  </skos:ConceptScheme>
+  <skos:Concept rdf:about="https://www.apur.org/registre/themes/REF">
+    <skos:altLabel>REF</skos:altLabel>
+    <skos:prefLabel xml:lang="fr">Données de référence</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://www.apur.org/registre/themes/ENV">
+    <skos:altLabel>ENV</skos:altLabel>
+    <skos:prefLabel xml:lang="fr">Environnement, nature et réseaux</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://www.apur.org/registre/themes/HAB">
+    <skos:altLabel>HAB</skos:altLabel>
+    <skos:prefLabel xml:lang="fr">Habitat et logement</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://www.apur.org/registre/themes/EQP">
+    <skos:altLabel>EQP</skos:altLabel>
+    <skos:prefLabel xml:lang="fr">Equipements et services</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://www.apur.org/registre/themes/HIS">
+    <skos:altLabel>HIS</skos:altLabel>
+    <skos:prefLabel xml:lang="fr">Histoire et patrimoine</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://www.apur.org/registre/themes/PAY">
+    <skos:altLabel>PAY</skos:altLabel>
+    <skos:prefLabel xml:lang="fr">Paysage et aménagement urbain</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://www.apur.org/registre/themes/SOC">
+    <skos:altLabel>SOC</skos:altLabel>
+    <skos:prefLabel xml:lang="fr">Social et sociétal</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://www.apur.org/registre/themes/ESP">
+    <skos:altLabel>ESP</skos:altLabel>
+    <skos:prefLabel xml:lang="fr">Espace public et mobilité</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://www.apur.org/registre/themes/ECO">
+    <skos:altLabel>ECO</skos:altLabel>
+    <skos:prefLabel xml:lang="fr">Economie, emploi, commerce</skos:prefLabel>
+  </skos:Concept>
+</rdf:RDF>

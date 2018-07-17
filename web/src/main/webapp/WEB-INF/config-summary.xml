@@ -119,10 +119,11 @@
     <facet name="region" label="regions"
            indexKey="keyword"
            classifier="regionKeywordClassifier"/>
+         -->
+
     <facet name="gemetKeyword" label="gemetKeywords"
            indexKey="keyword"
            classifier="gemetKeywordClassifier"/>
-         -->
 
     <facet name="maintenanceAndUpdateFrequency" indexKey="cl_maintenanceAndUpdateFrequency"
            label="maintenanceAndUpdateFrequencies"/>
@@ -155,9 +156,9 @@
       <!--
       <item facet="region"
             translator="term:http://geonetwork-opensource.org/thesaurus/naturalearth-and-seavox"/>
+      -->
       <item facet="gemetKeyword"
             translator="term:http://geonetwork-opensource.org/gemet"/>
-      -->
     </summaryType>
 
     <summaryType name="manager" format="DIMENSION">

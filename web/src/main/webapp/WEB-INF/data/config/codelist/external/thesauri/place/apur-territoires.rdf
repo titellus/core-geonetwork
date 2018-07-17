@@ -9,7 +9,7 @@
          xmlns:xdt="http://www.w3.org/2005/02/xpath-datatypes" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
   <skos:ConceptScheme rdf:about="https://www.apur.org/registre/territoires">
-    <dc:title>Territoires de l'Apur</dc:title>
+    <dc:title>Emprises géographiques</dc:title>
     <dc:description></dc:description>
     <dc:creator>
       <foaf:Organization>
@@ -25,29 +25,39 @@
     <skos:prefLabel xml:lang="fr">Métropole</skos:prefLabel>
     <gml:BoundedBy>
       <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
-        <gml:lowerCorner>-61.798 -21.371</gml:lowerCorner>
-        <gml:upperCorner>55.855 51.088</gml:upperCorner>
+        <gml:lowerCorner>2.146 48.646</gml:lowerCorner>
+        <gml:upperCorner>2.615 49.012</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+
+  <skos:Concept rdf:about="https://www.apur.org/registre/territoires/metropole+">
+    <skos:prefLabel xml:lang="fr">Métropole+</skos:prefLabel>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>1.904 48.499</gml:lowerCorner>
+        <gml:upperCorner>2.781 49.081</gml:upperCorner>
       </gml:Envelope>
     </gml:BoundedBy>
   </skos:Concept>
 
   <skos:Concept rdf:about="https://www.apur.org/registre/territoires/paris-et-petite-couronne">
-    <skos:prefLabel xml:lang="fr">Paris et départements de la petite couronne (92, 93, 94)</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Paris et Petite Couronne</skos:prefLabel>
     <gml:BoundedBy>
       <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
-        <gml:lowerCorner>-61.798 -21.371</gml:lowerCorner>
-        <gml:upperCorner>55.855 51.088</gml:upperCorner>
+        <gml:lowerCorner>2.146 48.688</gml:lowerCorner>
+        <gml:upperCorner>2.616 49.012</gml:upperCorner>
       </gml:Envelope>
     </gml:BoundedBy>
   </skos:Concept>
 
   <skos:Concept rdf:about="http://geonetwork-opensource.org/adminstrativeAreaFr#REG_11">
-    <skos:prefLabel xml:lang="fr">ILE-DE-FRANCE</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Ile-de-France</skos:prefLabel>
     <skos:altLabel xml:lang="fr">IDF</skos:altLabel>
     <gml:BoundedBy>
       <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
         <gml:lowerCorner>1.448 48.132</gml:lowerCorner>
-        <gml:upperCorner>3.539 49.207</gml:upperCorner>
+        <gml:upperCorner>3.539 49.242</gml:upperCorner>
       </gml:Envelope>
     </gml:BoundedBy>
     <skos:narrower rdf:resource="http://geonetwork-opensource.org/adminstrativeAreaFr#DEP_94"/>
@@ -61,7 +71,7 @@
   </skos:Concept>
 
   <skos:Concept rdf:about="http://geonetwork-opensource.org/adminstrativeAreaFr#DEP_94">
-    <skos:prefLabel xml:lang="fr">VAL-DE-MARNE</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Val-de-Marne</skos:prefLabel>
     <gml:BoundedBy>
       <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
         <gml:lowerCorner>2.306 48.699</gml:lowerCorner>
@@ -72,7 +82,7 @@
   </skos:Concept>
 
   <skos:Concept rdf:about="http://geonetwork-opensource.org/adminstrativeAreaFr#DEP_95">
-    <skos:prefLabel xml:lang="fr">VAL-D'OISE</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Val-d'Oise</skos:prefLabel>
     <gml:BoundedBy>
       <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
         <gml:lowerCorner>1.644 48.928</gml:lowerCorner>
@@ -84,7 +94,7 @@
 
 
   <skos:Concept rdf:about="http://geonetwork-opensource.org/adminstrativeAreaFr#DEP_77">
-    <skos:prefLabel xml:lang="fr">SEINE-ET-MARNE</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Seine-et-Marne</skos:prefLabel>
     <gml:BoundedBy>
       <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
         <gml:lowerCorner>2.374 48.126</gml:lowerCorner>
@@ -95,18 +105,18 @@
   </skos:Concept>
 
   <skos:Concept rdf:about="http://geonetwork-opensource.org/adminstrativeAreaFr#DEP_75">
-    <skos:prefLabel xml:lang="fr">PARIS</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Paris</skos:prefLabel>
     <gml:BoundedBy>
       <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
-        <gml:lowerCorner>2.234 48.822</gml:lowerCorner>
-        <gml:upperCorner>2.403 48.948</gml:upperCorner>
+        <gml:lowerCorner>2.224 48.815</gml:lowerCorner>
+        <gml:upperCorner>2.469 48.902</gml:upperCorner>
       </gml:Envelope>
     </gml:BoundedBy>
     <skos:broader rdf:resource="http://geonetwork-opensource.org/adminstrativeAreaFr#DEP"/>
   </skos:Concept>
 
   <skos:Concept rdf:about="http://geonetwork-opensource.org/adminstrativeAreaFr#DEP_78">
-    <skos:prefLabel xml:lang="fr">YVELINES</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Yvelines</skos:prefLabel>
     <gml:BoundedBy>
       <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
         <gml:lowerCorner>1.478 48.447</gml:lowerCorner>
@@ -117,7 +127,7 @@
   </skos:Concept>
 
   <skos:Concept rdf:about="http://geonetwork-opensource.org/adminstrativeAreaFr#DEP_91">
-    <skos:prefLabel xml:lang="fr">ESSONNE</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Essonne</skos:prefLabel>
     <gml:BoundedBy>
       <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
         <gml:lowerCorner>1.907 48.294</gml:lowerCorner>
@@ -129,7 +139,7 @@
 
 
   <skos:Concept rdf:about="http://geonetwork-opensource.org/adminstrativeAreaFr#DEP_92">
-    <skos:prefLabel xml:lang="fr">HAUTS-DE-SEINE</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Hauts-de-Seine</skos:prefLabel>
     <gml:BoundedBy>
       <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
         <gml:lowerCorner>2.153 48.747</gml:lowerCorner>
@@ -140,7 +150,7 @@
   </skos:Concept>
 
   <skos:Concept rdf:about="http://geonetwork-opensource.org/adminstrativeAreaFr#DEP_93">
-    <skos:prefLabel xml:lang="fr">SEINE-SAINT-DENIS</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Seine-Saint-Denis</skos:prefLabel>
     <gml:BoundedBy>
       <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
         <gml:lowerCorner>2.33 48.832</gml:lowerCorner>

@@ -80,6 +80,7 @@
 
   <facets>
     <facet name="keyword" indexKey="keyword" label="keywords" localized="true"/>
+    <facet name="protocol" indexKey="protocol" label="protocols"/>
     <facet name="topicCat" indexKey="topicCat" label="topicCats" localized="true"/>
     <facet name="category" indexKey="_cat" label="categories" localized="true"/>
     <facet name="inspireTheme" indexKey="inspiretheme" label="inspireThemes"/>
@@ -139,10 +140,12 @@
             translator="term:http://inspire.ec.europa.eu/theme"/>
       <!--<item facet="inspireTheme" sortBy="value" sortOrder="asc" max="35"/>-->
       <!--<item facet="inspireThemeWithAc" sortBy="value" sortOrder="asc" max="35"/>-->
+      <item facet="gemetKeyword"
+            translator="term:http://geonetwork-opensource.org/gemet"/>
       <item facet="keyword" max="15"/>
       <item facet="orgName" max="25"/>
-      <item facet="sourceCatalog"
-            translator="db:org.fao.geonet.repository.SourceRepository:findOneByUuid"/>
+      <!--<item facet="sourceCatalog"
+            translator="db:org.fao.geonet.repository.SourceRepository:findOneByUuid"/>-->
       <item facet="createDateYear" sortBy="value" sortOrder="desc" max="40"/>
       <item facet="format" max="15" sortBy="value" sortOrder="asc"/>
       <item facet="spatialRepresentationType"
@@ -152,13 +155,12 @@
       <item facet="status" translator="codelist:gmd:MD_ProgressCode"/>
       <item facet="serviceType"/>
       <item facet="denominator" sortBy="numValue" sortOrder="desc"/>
+      <item facet="protocol" sortBy="value" sortOrder="desc"/>
       <item facet="resolution" sortBy="value" sortOrder="desc"/>
       <!--
       <item facet="region"
             translator="term:http://geonetwork-opensource.org/thesaurus/naturalearth-and-seavox"/>
       -->
-      <item facet="gemetKeyword"
-            translator="term:http://geonetwork-opensource.org/gemet"/>
     </summaryType>
 
     <summaryType name="manager" format="DIMENSION">

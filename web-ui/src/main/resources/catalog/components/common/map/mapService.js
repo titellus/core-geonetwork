@@ -83,23 +83,35 @@
           if (gnWmsQueue.isPending(url, name)) {
             return true;
           }
+
+          if(getTheLayerFromMap(map, name, url) != null) {
+            return true;
+          }
+          return null;
+        };
+
+        /**
+         * @description
+         * Returns a Layer already added to the map.
+         *
+         * @param {ol.Map} map obj
+         * @param {string} name of the layer
+         * @param {string} url of the service
+         */
+        var getTheLayerFromMap = function(map, name, url) {
           for (var i = 0; i < map.getLayers().getLength(); i++) {
             var l = map.getLayers().item(i);
             var source = l.getSource();
-            if (url && source instanceof ol.source.WMTS &&
+            if (source instanceof ol.source.WMTS &&
                 l.get('url') == url) {
               if (l.get('name') == name) {
                 return l;
               }
             }
-            else if (url && (source instanceof ol.source.TileWMS ||
-                source instanceof ol.source.ImageWMS)) {
+            else if (source instanceof ol.source.TileWMS ||
+                source instanceof ol.source.ImageWMS) {
               if (source.getParams().LAYERS == name &&
                   l.get('url').split('?')[0] == url.split('?')[0]) {
-                return l;
-              }
-            } else if (angular.isUndefined(url)) {
-              if (l.get('name') == name) {
                 return l;
               }
             }
@@ -451,6 +463,16 @@
            * @return {Object} defaultMapConfig mapconfig
            */
           getMapConfig: function() {
+
+            // Check for unsupported projections
+            // To avoid to break the search page and map
+            if(gnViewerSettings.mapConfig.projection && !ol.proj.get(gnViewerSettings.mapConfig.projection)) {
+              console.warn('The map projection ' + gnViewerSettings.mapConfig.projection + ' is not supported.');
+              console.log('Now using default projection EPSG:3857.');
+              // Switching to default
+              gnViewerSettings.mapConfig.projection = 'EPSG:3857';
+            }
+
             return gnViewerSettings.mapConfig;
           },
 
@@ -658,6 +680,12 @@
               });
             }
 
+            if(layerParams.useProxy 
+                && options.url.indexOf(gnGlobalSettings.proxyUrl) != 0) {
+              options.url = gnGlobalSettings.proxyUrl 
+                              + encodeURIComponent(options.url);
+            }
+
             var layerOptions = {
               url: options.url,
               type: 'WMS',
@@ -784,8 +812,8 @@
               // TODO: parse better legend & attribution
               var requestedStyle = null;
               var legendUrl;
-              if (style && angular.isArray(getCapLayer.Style) &&
-                  getCapLayer.Style.length > 0) {
+
+              if (style && this.containsStyles(getCapLayer)) {
                 for (var i = 0; i < getCapLayer.Style.length; i++) {
                   var s = getCapLayer.Style[i];
                   if (s.Name === style.Name) {
@@ -796,9 +824,7 @@
                 }
               }
 
-              if (!requestedStyle &&
-                  angular.isArray(getCapLayer.Style) &&
-                  getCapLayer.Style.length > 0) {
+              if (!requestedStyle && this.containsStyles(getCapLayer)) {
                 legendUrl = (getCapLayer.Style[getCapLayer.
                     Style.length - 1].LegendURL) ?
                     getCapLayer.Style[getCapLayer.
@@ -829,11 +855,20 @@
               if (requestedStyle) {
                 layerParam.STYLES = requestedStyle.Name;
               } else {
-                // STYLES is mandatory parameter.
-                // ESRI will complain on this.
-                // Even &STYLES&... return an error on ESRI.
-                // TODO: Fix or workaround
-                layerParam.STYLES = '';
+                // The first style element is the default style
+                var defaultStyle;
+                if (this.containsStyles(getCapLayer)) {
+                  defaultStyle = getCapLayer.Style[0];
+                }
+                if(defaultStyle) {
+                  // Set a casual style if available
+                  // to avoid issues on ESRI services
+                  layerParam.STYLES = defaultStyle.Name;
+                } else {
+                  // This is a problem for ESRI services
+                  // where STYLES is a mandatory field
+                  layerParam.STYLES = '';
+                }
               }
 
               var projCode = map.getView().getProjection().getCode();
@@ -847,9 +882,14 @@
                   }
                 }
               }
-
+              
+              url = url || getCapLayer.url;
+              if(getCapLayer.useProxy 
+                  && url.indexOf(gnGlobalSettings.proxyUrl) != 0) {
+                url = gnGlobalSettings.proxyUrl + encodeURIComponent(url);
+              }
               var layer = this.createOlWMS(map, layerParam, {
-                url: url || getCapLayer.url,
+                url: url,
                 label: getCapLayer.Title,
                 attribution: attribution,
                 attributionUrl: attributionUrl,
@@ -894,11 +934,35 @@
                   layer.get('time') || layer.get('style')));
 
               layer.set('errors', errors);
+
+              //add the capabilities info, having available formats
+              layer.set('capRequest', getCapLayer.capRequest||null);
+
               return layer;
             }
 
           },
 
+          /**
+           * @ngdoc method
+           * @methodOf gn_map.service:gnMap
+           * @name gnMap#containsStyles
+           *
+           * @description
+           * Check if CapabilityLayer contains a not empty
+           * styles array
+           *
+           * @param {getCapLayer} Capability Layer
+           * @return {boolean} true if contains a not empty Style array
+           */
+          containsStyles: function(capLayer) {
+            if (angular.isArray(capLayer.Style) &&
+                capLayer.Style.length > 0) {
+              return true;
+            } else {
+              return false;
+            }
+          },
 
           /**
            * @ngdoc method
@@ -992,21 +1056,24 @@
                 metadata = layer.MetadataURL[0].OnlineResource;
               }
 
-              var vectorFormat = new ol.format.WFS();
 
-              if (getCapLayer.outputFormats) {
-                $.each(getCapLayer.outputFormats.format,
-                    function(f, output) {
-                      if (output.indexOf('json') > 0 ||
-                         output.indexOf('JSON') > 0) {
-                        vectorFormat = ol.format.JSONFeature(
-                           {srsName_: getCapLayer.defaultSRS});
-                      }
-                    });
+              var vectorFormat = null;
+              
+              if(getCapLayer.version == '1.0.0') {
+                vectorFormat = new ol.format.WFS( 
+                {
+                    gmlFormat : new ol.format.GML2({
+                        featureNS: getCapLayer.name.prefix,
+                        featureType: getCapLayer.name.localPart,
+                        srsName: map.getView().getProjection().getCode()
+                      }) 
+                  }
+               );
+              } else {
+                  //Default format
+                  var vectorFormat = new ol.format.WFS();
               }
-
-              //TODO different strategy depending on the format
-
+              
               var vectorSource = new ol.source.Vector({
                 format: vectorFormat,
                 loader: function(extent, resolution, projection) {
@@ -1022,11 +1089,32 @@
                       gnUrlUtils.toKeyValue({
                         service: 'WFS',
                         request: 'GetFeature',
-                        version: '1.1.0',
+                        version: getCapLayer.version,
                         srsName: map.getView().getProjection().getCode(),
                         bbox: extent.join(','),
                         typename: getCapLayer.name.prefix + ':' +
                                    getCapLayer.name.localPart}));
+                  
+                  //Fix, ArcGIS fails if there is a bbox:
+                  if(getCapLayer.version == '1.1.0') {
+                    urlGetFeature = gnUrlUtils.append(parts[0],
+                        gnUrlUtils.toKeyValue({
+                          service: 'WFS',
+                          request: 'GetFeature',
+                          version: getCapLayer.version,
+                          srsName: map.getView().getProjection().getCode(),
+                          typename: getCapLayer.name.prefix + ':' +
+                                     getCapLayer.name.localPart}));
+                  }
+                  
+
+                  
+                  //If this goes through the proxy, don't remove parameters
+                  if(getCapLayer.useProxy 
+                      && urlGetFeature.indexOf(gnGlobalSettings.proxyUrl) != 0) {
+                    urlGetFeature = gnGlobalSettings.proxyUrl 
+                                        + encodeURIComponent(urlGetFeature);
+                  }
 
                   $.ajax({
                     url: urlGetFeature
@@ -1035,19 +1123,6 @@
                         // TODO: Check WFS exception
                         vectorSource.addFeatures(vectorFormat.
                             readFeatures(response));
-
-                        var extent = ol.extent.createEmpty();
-                        var features = vectorSource.getFeatures();
-                        for (var i = 0; i < features.length; ++i) {
-                          var feature = features[i];
-                          var geometry = feature.getGeometry();
-                          if (!goog.isNull(geometry)) {
-                            ol.extent.extend(extent, geometry.getExtent());
-                          }
-                        }
-
-                        map.getView().fit(extent, map.getSize());
-
                       })
                       .then(function() {
                         this.loadingLayer = false;
@@ -1084,6 +1159,7 @@
               });
               layer.set('errors', errors);
               layer.set('featureTooltip', true);
+              layer.set('url', url);
               ngeoDecorateLayer(layer);
               layer.displayInLayerManager = true;
               layer.set('label', getCapLayer.name.prefix + ':' +
@@ -1187,13 +1263,14 @@
           addWmsFromScratch: function(map, url, name, createOnly, md, version) {
             var defer = $q.defer();
             var $this = this;
-
+            
             if (!isLayerInMap(map, name, url)) {
               gnWmsQueue.add(url, name);
               gnOwsCapabilities.getWMSCapabilities(url).then(function(capObj) {
                 var capL = gnOwsCapabilities.getLayerInfoFromCap(
                     name, capObj, md && md.getUuid && md.getUuid()),
                     olL;
+
                 if (!capL) {
                   // If layer not found in the GetCapabilities
                   // Try to add the layer from the metadata
@@ -1215,6 +1292,10 @@
                   }
                   olL = $this.addWmsToMap(map, o);
 
+                  if(olL && md) {
+                    olL.set('md', md);
+                  }
+
                   if (!angular.isArray(olL.get('errors'))) {
                     olL.set('errors', []);
                   }
@@ -1227,6 +1308,15 @@
                   o.layer = olL;
                   defer.reject(o);
                 } else {
+                	
+                  //check if proxy is needed
+                  var _url = url.split('/');
+                  _url = _url[0] + '/' + _url[1] + '/' + _url[2] + '/';
+                  if ($.inArray(_url, gnGlobalSettings.requireProxy) >= 0
+                    && url.indexOf(gnGlobalSettings.proxyUrl) != 0) {
+              	       capL.useProxy = true;
+  	              }
+
                   olL = $this.createOlWMSFromCap(map, capL, url);
 
                   var finishCreation = function() {
@@ -1244,9 +1334,9 @@
                   };
 
                   var feedMdPromise = md ?
-                      $q.resolve(md).then(function(md) {
-                        olL.set('md', md);
-                      }) : $this.feedLayerMd(olL);
+                    $q.resolve(md).then(function(md) {
+                      olL.set('md', md);
+                    }) : $this.feedLayerMd(olL);
 
                   feedMdPromise.then(finishCreation);
                 }
@@ -1260,6 +1350,11 @@
                 gnWmsQueue.error(o);
                 defer.reject(o);
               });
+            } else {
+            	var olL = getTheLayerFromMap(map, name, url);
+                if(olL && md) {
+                  olL.set('md', md);
+                }
             }
             return defer.promise;
           },
@@ -1481,40 +1576,26 @@
           createOlWMTSFromCap: function(map, getCapLayer, capabilities) {
 
             var legend, attribution, metadata;
-            if (getCapLayer) {
-              var layer = getCapLayer;
+            if (getCapLayer && capabilities) {
 
-              var url, urls = capabilities.operationsMetadata.GetTile.
-                  DCP.HTTP.Get;
+              //Asking WMTS service about capabilities
+              var cap = {
+                  Contents: capabilities,
+                  OperationsMetadata: capabilities.operationsMetadata
+              };
 
-              var useKvp = false;
-              var useRest = false;
+              var options = ol.source.WMTS.optionsFromCapabilities(cap, {
+                layer: getCapLayer.Identifier,
+                matrixSet: map.getView().getProjection()
+              });
 
-              for (var i = 0; i < urls.length; i++) {
-                if (urls[i].Constraint[0].AllowedValues.Value[0].
-                    toLowerCase() == 'kvp') {
-                  url = urls[i].href;
-                  useKvp = true;
-                  break;
-                }
-              }
+              //Configuring url for service
+              var url = capabilities.operationsMetadata.GetCapabilities.DCP.HTTP.Get[0].href;
 
-              if (!useKvp) {
-                for (var i = 0; i < urls.length; i++) {
-                  if (urls[i].Constraint[0].AllowedValues.Value[0].
-                      toLowerCase() == 'restful') {
-                    useRest = true;
-                    break;
-                  }
-                }
-              }
-
-              var urlCap = capabilities.operationsMetadata.GetCapabilities.
-                  DCP.HTTP.Get[0].href;
-
+              //Configuring url for capabilities
+              var urlCap = capabilities.operationsMetadata.GetCapabilities.DCP.HTTP.Get[0].href;
               var urlCapType = capabilities.operationsMetadata.GetCapabilities.
-                  DCP.HTTP.Get[0].
-                  Constraint[0].AllowedValues.Value[0].toLowerCase();
+              DCP.HTTP.Get[0].Constraint[0].AllowedValues.Value[0].toLowerCase();
 
               if (urlCapType == 'restful') {
                 if (urlCap.indexOf('/1.0.0/WMTSCapabilities.xml') == -1) {
@@ -1530,116 +1611,26 @@
                       version: '1.0.0'}));
               }
 
-              var style = layer.Style[0].Identifier;
-
-              var projection = map.getView().getProjection();
-
-              // Try to guess which matrixId to use depending projection
-              var matrixSetsId;
-              for (var i = 0; i < layer.TileMatrixSetLink.length; i++) {
-                if (layer.TileMatrixSetLink[i].TileMatrixSet ==
-                    projection.getCode()) {
-                  matrixSetsId = layer.TileMatrixSetLink[i].TileMatrixSet;
-                  break;
-                }
-              }
-              if (!matrixSetsId) {
-                matrixSetsId = layer.TileMatrixSetLink[0].TileMatrixSet;
-              }
-
-              var matrixSet;
-              for (var i = 0; i < capabilities.TileMatrixSet.length; i++) {
-                if (capabilities.TileMatrixSet[i].Identifier == matrixSetsId) {
-                  matrixSet = capabilities.TileMatrixSet[i];
-                }
-              }
-              var nbMatrix = matrixSet.TileMatrix.length;
-
-              var projectionExtent = projection.getExtent();
-              var resolutions = new Array(nbMatrix);
-              var matrixIds = new Array(nbMatrix);
-
-              // sort tile resolutions if number
-              var tileMatrices;
-              if (matrixSet.TileMatrix.length &&
-                  Number.isInteger(matrixSet.TileMatrix[0].Identifier)) {
-                tileMatrices = matrixSet.TileMatrix.splice(0)
-                    .sort(function(a, b) {
-                      var id1 = parseInt(a.Identifier);
-                      var id2 = parseInt(b.Identifier);
-                      return id1 > id2 ? 1 :
-                      (id1 < id2 ? -1 : 0);
-                    });
-              }
-              else {
-                tileMatrices = matrixSet.TileMatrix;
-              }
-
-              for (var z = 0; z < nbMatrix; ++z) {
-                var matrix = tileMatrices[z];
-                var size = ol.extent.getWidth(projectionExtent) /
-                    matrix.TileWidth;
-                resolutions[z] = matrix.ScaleDenominator * 0.00028 /
-                    projection.getMetersPerUnit();
-                matrixIds[z] = matrix.Identifier;
-              }
-
-              var sourceConfig = {
-                layer: layer.Identifier,
-                matrixSet: matrixSet.Identifier,
-                format: layer.Format[0] || 'image/png',
-                projection: projection,
-                tileGrid: new ol.tilegrid.WMTS({
-                  origin: ol.extent.getTopLeft(projection.getExtent()),
-                  resolutions: resolutions,
-                  matrixIds: matrixIds
-                }),
-                style: style
-              };
-
-              if (useRest) {
-                var urls = [];
-                for (var i = 0; i < layer.ResourceURL.length; i++) {
-                  urls.push(layer.ResourceURL[i].template);
-                }
-                if (layer.ResourceURL.length > 0) {
-                  url = encodeURI(layer.ResourceURL[0].template);
-                }
-
-                if (layer.ResourceURL.length > 0) {
-                  url = encodeURI(layer.ResourceURL[0].template);
-                }
-
-                angular.extend(sourceConfig, {
-                  urls: urls,
-                  requestEncoding: 'REST'
-                });
-              } else {
-                angular.extend(sourceConfig, {
-                  url: url
-                });
-
-              }
-
-              var source = new ol.source.WMTS(sourceConfig);
-
+              //Create layer
               var olLayer = new ol.layer.Tile({
-                extent: projection.getExtent(),
-                name: layer.Identifier,
-                title: layer.Title,
-                label: layer.Title,
-                source: source,
+                extent: map.getView().getProjection().getExtent(),
+                name: getCapLayer.Identifier,
+                title: getCapLayer.Title,
+                label: getCapLayer.Title,
+                source: new ol.source.WMTS(options),
                 url: url,
                 urlCap: urlCap,
                 cextent: gnOwsCapabilities.getLayerExtentFromGetCap(map,
                     getCapLayer)
               });
+
+              //Add GN extras to layer
               ngeoDecorateLayer(olLayer);
               olLayer.displayInLayerManager = true;
 
-              // add link to metadata
-              if (angular.isArray(layer.MetadataURL)) {
-                var metadata = layer.MetadataURL[0].OnlineResource;
+              //Like add a link to metadata
+              if (angular.isArray(getCapLayer.MetadataURL)) {
+                var metadata = getCapLayer.MetadataURL[0].OnlineResource;
                 olLayer.set('metadataUrl', metadata);
 
                 var params = gnUrlUtils.parseKeyValue(
@@ -1647,7 +1638,7 @@
                 var uuid = params.uuid || params.id;
                 if (!uuid) {
                   var res = new RegExp(/\#\/metadata\/(.*)/g).
-                      exec(metadata);
+                  exec(metadata);
                   if (angular.isArray(res) && res.length == 2) {
                     uuid = res[1];
                   }
@@ -1658,6 +1649,10 @@
               }
 
               return olLayer;
+            } else {
+              //With no capabilities, how are we supposed to...?
+              //Should we show something on screen?
+              console.warn("Called createOlWMTSFromCap with no capabilities...");
             }
           },
 

@@ -290,6 +290,8 @@
     "uploadFile": "Upload a file from your computer",
     "uuidAction": "Procesando identificador de la entrada",
     "validate-help": "Comprobar la entrada con las reglas de validación estándar",
+    "validate-inspire": "Validación Inspire",
+    "validate-inspire-help": "Verificar el registro sin cumplir con las reglas de validación de Inspire",
     "validationReport": "Validación",
     "runValidation": "Ejecutar validación",
     "whoCanAccess": "Quién tiene acceso",
@@ -302,6 +304,7 @@
     "noFileSelected": "¡Escoge un fichero a cargar!",
     "yourMetadata": "Tus metadatos",
     "searchKeyword": "Buscar...",
+    "searchTopicCategory": "Buscar...",
     "searchOrTypeKeyword": "Escribe o busca...",
     "tagsAllowed": "etiqueta(s) permitidas",
     "suggestionListError": "¡Oh! ¡Algo salió mal mientras cargábamos las sugerencias!",
@@ -360,5 +363,10 @@
     "selectKeyword": "Añadir palabras clave",
     "saveLinkToSibling": "Guardar un enlace a otro recurso",
     "confirmCloseInvalidTitle": "Confirmar cierre del editor",
-    "confirmCloseInvalidMetadata": "Se ha encontrado que los metadato actuales no son válidos. Cerrar el editor hará que no se publique (esto se puede cambiar en la configuración de la aplicación). <br> <br> ¿Está seguro de que desea continuar?"
+    "confirmCloseInvalidMetadata": "Se ha encontrado que los metadato actuales no son válidos. Cerrar el editor hará que no se publique (esto se puede cambiar en la configuración de la aplicación). <br> <br> ¿Está seguro de que desea continuar?",
+    "hotkeyDirectory": "Administrar directorios (por ejemplo, contacto)",
+    "hotkeyImportRecord": "Importar nuevas entradas",
+    "hotkeyAddRecord": "Añadir una nueva entrada",
+    "hotkeyBatchEdit": "Edición por lotes",
+    "hotkeyEditorBoard": "Tablero del editor"
 }

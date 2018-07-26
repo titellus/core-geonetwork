@@ -290,6 +290,8 @@
     "uploadFile": "Lataa tiedosto",
     "uuidAction": "Resurssitunnisteen prosessointi",
     "validate-help": "Validoi dokumentti",
+    "validate-inspire": "Inspire validation",
+    "validate-inspire-help": "Check record against inspire validation rules",
     "validationReport": "Validointi",
     "runValidation": "Validoi",
     "whoCanAccess": "Tarkista pääsyoikeudet",
@@ -302,6 +304,7 @@
     "noFileSelected": "Valitse ladattava tiedosto!",
     "yourMetadata": "Metatietosi",
     "searchKeyword": "Haku ...",
+    "searchTopicCategory": "Haku ...",
     "searchOrTypeKeyword": "Kirjoita tai hae ...",
     "tagsAllowed": "sallitut tagi(t)",
     "suggestionListError": "Hupsistakeikkaa, joku meni vikaan ehdotuksia haettaessa!",
@@ -360,5 +363,10 @@
     "selectKeyword": "Add keywords",
     "saveLinkToSibling": "Save link to other resource",
     "confirmCloseInvalidTitle": "Confirm editor close",
-    "confirmCloseInvalidMetadata": "The current metadata has been found to be invalid. Closing the editor will cause it to be unpublished (this can be changed in the application settings).<br><br>Are you sure you want to proceed?"
+    "confirmCloseInvalidMetadata": "The current metadata has been found to be invalid. Closing the editor will cause it to be unpublished (this can be changed in the application settings).<br><br>Are you sure you want to proceed?",
+    "hotkeyDirectory": "Manage directories (eg. contact)",
+    "hotkeyImportRecord": "Tuo tietueita",
+    "hotkeyAddRecord": "Lisää tietue",
+    "hotkeyBatchEdit": "Erämuokkaus",
+    "hotkeyEditorBoard": "Editor board"
 }

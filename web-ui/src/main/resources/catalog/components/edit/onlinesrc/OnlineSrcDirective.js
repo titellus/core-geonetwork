@@ -818,10 +818,10 @@
                           })
                         }));
                       });
-                  
+
                   var listenerExtent = scope.$watch(
                 		  'angular.isArray(scope.gnCurrentEdit.extent)', function() {
-                			  
+
                 	  if (angular.isArray(scope.gnCurrentEdit.extent)) {
                           // FIXME : only first extent is took into account
                           var projectedExtent;
@@ -841,25 +841,25 @@
                           scope.map.getView().fit(
                               projectedExtent,
                               scope.map.getSize());
-                          
+
                           //unregister
                           listenerExtent();
                         }
                   });
-            	  
+
                   // Trigger init of print directive
                   scope.mode = 'thumbnailMaker';
                 }
 
                 scope.generateThumbnail = function() {
-                  //Added mandatory custom params here to avoid 
+                  //Added mandatory custom params here to avoid
                   //changing other printing services
                   jsonSpec = angular.extend(
                 		  scope.jsonSpec,
                 		  {
                 			  hasNoTitle: true
                 		  });
-                	
+
                   return $http.put('../api/0.1/records/' +
                       scope.gnCurrentEdit.uuid +
                       '/attachments/print-thumbnail', null, {
@@ -1228,28 +1228,45 @@
                           });
                     } else if (scope.OGCProtocol === 'WFS') {
                       return gnWfsService.getCapabilities(url)
-                          .then(function(capabilities) {
-                            scope.layers = [];
-                            scope.isUrlOk = true;
-                            angular.forEach(
-                               capabilities.featureTypeList.featureType,
-                               function(l) {
-                                 if (angular.isDefined(l.name)) {
-                                   scope.layers.push({
-                                     Name: l.name.localPart,
-                                     abstract: l._abstract,
-                                     Title: l.title
-                                   });
-                                 }
+                        .then(function(capabilities) {
+                          scope.layers = [];
+                          scope.isUrlOk = true;
+                          angular.forEach(
+                           capabilities.featureTypeList.featureType,
+                           function(l) {
+                             if (angular.isDefined(l.name)) {
+                               scope.layers.push({
+                                 Name: l.name.prefix+':'+l.name.localPart,
+                                 abstract: angular.isArray(l._abstract)?l._abstract[0].value:l._abstract,
+                                 Title: angular.isArray(l.title)?l.title[0].value:l.title
                                });
+                             }
+                           });
+                      }).catch(function(error) {
+                        scope.isUrlOk = error === 200;
+                      });
+                    } else if (scope.OGCProtocol === 'WCS') {
+                      return gnOwsCapabilities.getWCSCapabilities(url)
+                        .then(function(capabilities) {
+                          scope.layers = [];
+                          scope.isUrlOk = true;
+                          angular.forEach(
+                             capabilities.contents.coverageSummary,
+                             function(l) {
+                               if (angular.isDefined(l.identifier)) {
+                                 scope.layers.push({
+                                   Name: l.identifier,
+                                   abstract: angular.isArray(l._abstract)?l._abstract[0]["value"]:'',
+                                   Title: angular.isArray(l.title)?l.title[0]["value"]:l.identifier
+                                 });
+                               }
+                             });
                           }).catch(function(error) {
                             scope.isUrlOk = error === 200;
                           });
                     }
                   } else if (url.indexOf('http') === 0) {
-                    return $http.get(url, {
-                      gnNoProxy: false
-                    }).then(function(response) {
+                    return $http.get(url).then(function(response) {
                       scope.isUrlOk = response.status === 200;
                     },
                     function(response) {
@@ -1270,6 +1287,9 @@
                   }
                   else if (protocol && protocol.indexOf('OGC:WMTS') >= 0) {
                     return 'WMTS';
+                  }
+                  else if (protocol && protocol.indexOf('OGC:WCS') >= 0) {
+                    return 'WCS';
                   }
                   else {
                     return null;

@@ -848,7 +848,6 @@
                 console.warn($translate.instant('layerNotAvailableInMapProj'));
               }
               */
-              var layerParam = {LAYERS: getCapLayer.Name};
 
               // TODO: parse better legend & attribution
               var requestedStyle = null;
@@ -890,6 +889,7 @@
                 metadata = getCapLayer.MetadataURL[0].OnlineResource;
               }
 
+              var layerParam = {LAYERS: getCapLayer.Name};
               if (getCapLayer.version) {
                 layerParam.VERSION = getCapLayer.version;
               }
@@ -1205,10 +1205,11 @@
               layer.set('errors', errors);
               layer.set('featureTooltip', true);
               layer.set('url', url);
+              layer.set('wfs', url);
               ngeoDecorateLayer(layer);
               layer.displayInLayerManager = true;
-              layer.set('label', getCapLayer.name.prefix + ':' +
-                  getCapLayer.name.localPart);
+              layer.set('label', getCapLayer.title ||
+                (getCapLayer.name.prefix + ':' + getCapLayer.name.localPart));
               return layer;
             }
 
@@ -1631,8 +1632,7 @@
 
               var options = ol.source.WMTS.optionsFromCapabilities(cap, {
                 layer: getCapLayer.Identifier,
-                matrixSet: map.getView().getProjection().getCode(),
-                projection: map.getView().getProjection().getCode()
+                matrixSet: map.getView().getProjection().getCode()
               });
 
               //Configuring url for service

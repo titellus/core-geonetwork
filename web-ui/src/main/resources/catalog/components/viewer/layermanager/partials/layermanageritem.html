@@ -27,7 +27,8 @@
                 </a>
               </li>
 
-              <li role="menuitem">
+              <!-- TODO ? No style selector for WFS-->
+              <li role="menuitem" data-ng-if="::!layer.get('wfs') && layer.get('style').length > 0">
                 <label data-translate="">selectStyle</label>
                 <div data-gn-layer-styles="layer.get('style')"
                      data-gn-layer-styles-on-click="setLayerStyle(layer, style)"
@@ -120,7 +121,7 @@
           <span data-ng-class="layer.get('errors').length > 0 ? 'text-danger' : ''">
             {{layer.get('label')}}
             <small><em>
-              {{layer.get('currentStyle') ? '(' + layer.get('currentStyle').Title || layer.get('currentStyle').Name + ')' : ''}}
+              {{layer.get('currentStyle') ? '(' + (layer.get('currentStyle').Title || layer.get('currentStyle').Name) + ')' : ''}}
             </em></small>
           </span>
         </label>

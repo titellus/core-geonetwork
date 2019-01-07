@@ -7,6 +7,10 @@ INSERT INTO Settings (name, value, datatype, position, internal) VALUES ('system
 INSERT INTO Settings (name, value, datatype, position, internal) VALUES ('system/publication/doi/doilandingpagetemplate', 'http://localhost:8080/geonetwork/srv/resources/records/{{uuid}}', 0, 195, 'n');
 INSERT INTO Settings (name, value, datatype, position, internal) VALUES ('system/metadata/history/enabled', 'true', 2, 9171, 'n');
 
+
+ALTER TABLE StatusValues ADD type varchar(255);
+ALTER TABLE StatusValues ADD notificationLevel varchar(255);
+
 UPDATE StatusValues SET type = 'workflow';
 
 UPDATE StatusValues SET notificationLevel = 'recordUserAuthor' WHERE name = 'approved';

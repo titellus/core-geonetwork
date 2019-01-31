@@ -220,7 +220,7 @@
         Object.keys(obj).forEach(function(key) {
           if (exclude.indexOf(key) == -1) {
             var value = obj[key];
-            if (value.indexOf &&
+            if (value && value.indexOf &&
               value.indexOf('http') === 0) {
               httpLink = value;
               // Open a link if one found.

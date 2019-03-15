@@ -34,11 +34,11 @@
        function($http) {
 
           // Enable login in third party app. eg. geoserver
-          // var thirdPartyAuthApp = {
-          //   signin: '/geoserver/j_spring_security_check',
-          //   signout: '/geoserver/j_spring_security_logout'
-          // };
-          var thirdPartyAuthApp = undefined;
+          var thirdPartyAuthApp = {
+            signin: '/geoserver/j_spring_security_check',
+            signout: '/geoserver/j_spring_security_logout'
+          };
+          // var thirdPartyAuthApp = undefined;
 
           return {
             /**

@@ -154,7 +154,6 @@
               }
 
             };
-            http://localhost:8080/geonetwork/srv/api/records/01788925-ea24-4a7e-ac0d-aa10f8210b8c/attachments/oldmaps.jpeg
             scope.$watch('gnCurrentEdit.uuid', function(n, o) {
               if (angular.isUndefined(scope.uuid) ||
                 n != o) {
@@ -407,8 +406,11 @@
                       fileStoreFilter: '*.{jpg,JPG,jpeg,JPEG,png,PNG,gif,GIF}',
                       process: 'thumbnail-add',
                       fields: {
-                        'url': {isMultilingual: false},
-                        'name': {param: 'desc'}
+                        'url': {
+                          param: 'thumbnail_url',
+                          isMultilingual: false
+                        },
+                        'name': {param: 'thumbnail_desc'}
                       }
                     }, {
                       group: 'onlineDiscover',
@@ -725,7 +727,8 @@
                       process: 'fcats-file-add',
                       fields: {
                         'url': {isMultilingual: false},
-                        'name': {}
+                        'name': {},
+                        'desc': {}
                       }
                     }, {
                       group: 'onlineUse',
@@ -787,7 +790,8 @@
                       process: 'legend-add',
                       fields: {
                         'url': {isMultilingual: false},
-                        'name': {}
+                        'name': {},
+                        'desc': {}
                       }
                     }, {
                       group: 'onlineUse',
@@ -801,7 +805,8 @@
                       process: 'legend-add',
                       fields: {
                         'url': {isMultilingual: false},
-                        'name': {}
+                        'name': {},
+                        'desc': {}
                       }
                     }, {
                       group: 'onlineUse',
@@ -815,7 +820,8 @@
                       process: 'legend-add',
                       fields: {
                         'url': {isMultilingual: false},
-                        'name': {}
+                        'name': {},
+                        'desc': {}
                       }
                       //},{
                       //  group: 'onlineUse',
@@ -1297,6 +1303,7 @@
                  * passed to the layers grid directive.
                  */
                 scope.loadCurrentLink = function(reportError) {
+                  var withGroupLayers = true;
 
                   // If multilingual or not
                   var url = scope.params.url;
@@ -1310,12 +1317,12 @@
                   if (scope.OGCProtocol) {
                     scope.layers = [];
                     if (scope.OGCProtocol === 'WMS') {
-                      return gnOwsCapabilities.getWMSCapabilities(url)
+                      return gnOwsCapabilities.getWMSCapabilities(url, true)
                           .then(function(capabilities) {
                             scope.layers = [];
                             scope.isUrlOk = true;
                             angular.forEach(capabilities.layers, function(l) {
-                              if (angular.isDefined(l.Name)) {
+                              if (withGroupLayers || (!withGroupLayers && angular.isDefined(l.Name))) {
                                 scope.layers.push(l);
                               }
                             });

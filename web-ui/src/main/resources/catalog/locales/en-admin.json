@@ -11,6 +11,7 @@
     "addNewLogo": "Add new logo",
     "addOrUpdateStandards": "Add or update standards",
     "addStandard": "Add",
+    "configureYourAvatar": "To associate an image to your account, define a globally recognized avatar for your email on <a href='https://en.gravatar.com/'>gravatar</a>.",
     "addThesaurus": "Add thesaurus",
     "advancedCssProps": "Advanced properties",
     "allowedCategories": "Allowed Categories",
@@ -58,6 +59,14 @@
     "appMajorVersionSupported": "Major version supported:",
     "readwriteUUID": "UUID mode read/write:",
     "schematronRules": "Standard schematron rules available",
+    "chooseAUiConfiguration": "Choose UI configuration",
+    "addUiSettings": "Add a new UI configuration",
+    "createNewUiConfiguration": "Create a new configuration.",
+    "uiConfiguration-help": "The identifier can be used in the URL to enable one config using the ui parameter.",
+    "uiConfigurationName": "UI configuration identifier",
+    "noConfigDefinedUsingTheDefault": "No UI configuration defined. The default is used.",
+    "createDefaultUiConfig": "Create a default UI configuration",
+    "deleteUiSettings": "Delete UI configuration",
     "vacuum-none": "None (ie. preserve empty element)",
     "vacuum-element": "Remove elements having empty value after replacement",
     "vacuum-record": "Remove all empty elements in the record after replacement",
@@ -1344,5 +1353,9 @@
     "ui-editorIndentType-colored": "Colored indents",
     "filterSettings": "Filter settings ",
     "filterPlaceHolder": "e.g. INSPIRE",
-    "filterReset": "Reset the filter"
+    "filterReset": "Reset the filter",
+    "distributedSearch": "Distributed search",
+    "distributedSearchHelp": "Enables the distributed search in remote server (if the remote server supports it). When this option is enabled, the remote catalog cascades the search to the Federated CSW servers that has configured.",
+    "hopCount": "Hop count",
+    "hopCountHelp": "Control the maximum number of message hops (default to 2) before the search is terminated in a distributed search."
 }

@@ -24,18 +24,26 @@
 (function() {
   goog.provide('gn_cat_controller');
 
-  goog.require('gn_admin_menu');
-  goog.require('gn_saved_selections');
-  goog.require('gn_search_manager');
-  goog.require('gn_session_service');
-  goog.require('gn_external_viewer');
-  goog.require('gn_history');
+  
+  
+  
+  
+  
+  
+goog.require('gn_admin_menu');
+goog.require('gn_external_viewer');
+goog.require('gn_history');
+goog.require('gn_saved_selections');
+goog.require('gn_search_manager');
+goog.require('gn_session_service');
+goog.require('gn_alert');
+goog.require('gn_login_service');
 
 
   var module = angular.module('gn_cat_controller',
       ['gn_search_manager', 'gn_session_service',
         'gn_admin_menu', 'gn_saved_selections',
-        'gn_external_viewer', 'gn_history']);
+        'gn_external_viewer', 'gn_history', 'gn_alert', 'gn_login_service']);
 
 
   module.constant('gnSearchSettings', {});
@@ -282,7 +290,7 @@
             }
           }, config).mods.header.languages;
         }
-        
+
         this.gnUrl = gnUrl || '../';
         this.proxyUrl = this.gnUrl + '../proxy?url=';
         gnViewerSettings.mapConfig = this.gnCfg.mods.map;
@@ -305,13 +313,13 @@
         copy.mods.search.grid.related = [];
         return copy;
       },
-      getProxyUrl: function () {
+      getProxyUrl: function() {
         return this.proxyUrl;
       },
       // Removes the proxy path and decodes the layer url,
       // so the layer can be printed with MapFish.
       // Otherwise Mapfish rejects it, due to relative url.
-      getNonProxifiedUrl: function (url) {
+      getNonProxifiedUrl: function(url) {
         if (url.indexOf(this.proxyUrl) > -1) {
           return decodeURIComponent(
             url.replace(this.proxyUrl, ''));
@@ -411,12 +419,14 @@
     'gnSearchManagerService', 'gnConfigService', 'gnConfig',
     'gnGlobalSettings', '$location', 'gnUtilityService',
     'gnSessionService', 'gnLangs', 'gnAdminMenu',
-    'gnViewerSettings', 'gnSearchSettings', '$cookies', 'gnExternalViewer',
+    'gnViewerSettings', 'gnSearchSettings', '$cookies',
+    'gnExternalViewer', 'gnAlertService', 'gnLoginService',
     function($scope, $http, $q, $rootScope, $translate,
              gnSearchManagerService, gnConfigService, gnConfig,
              gnGlobalSettings, $location, gnUtilityService,
              gnSessionService, gnLangs, gnAdminMenu,
-             gnViewerSettings, gnSearchSettings, $cookies, gnExternalViewer) {
+             gnViewerSettings, gnSearchSettings, $cookies,
+             gnExternalViewer, gnAlertService, gnLoginService) {
       $scope.version = '0.0.1';
 
 
@@ -467,7 +477,7 @@
       $scope.nodeId = detectNode(gnGlobalSettings.gnCfg.nodeDetector);
       $scope.service = detectService(gnGlobalSettings.gnCfg.serviceDetector);
       gnGlobalSettings.nodeId = $scope.nodeId;
-      gnConfig.env = gnConfig.env || {};
+      gnConfig.env = gnConfig.env ||  {};
       gnConfig.env.node = $scope.nodeId;
       gnConfig.env.baseURL = detectBaseURL(gnGlobalSettings.gnCfg.baseURLDetector);
 
@@ -566,7 +576,6 @@
        */
       $scope.searchInfo = {};
 
-      $scope.status = null;
       var defaultStatus = {
         title: '',
         link: '',
@@ -635,6 +644,7 @@
           }
         };
         // Build is<ProfileName> and is<ProfileName>OrMore functions
+        // This are not group specific, so not usable on metadata
         angular.forEach($scope.profiles, function(profile) {
           userFn['is' + profile] = function() {
             return profile === this.profile;
@@ -654,17 +664,31 @@
         // append a random number to avoid caching in IE11
         var userLogin = catInfo.then(function(value) {
           return $http.get('../api/me?_random=' +
-              Math.floor(Math.random() * 10000)).
-              success(function(me, status) {
-                if (angular.isObject(me)) {
-                  angular.extend($scope.user, me);
-                  angular.extend($scope.user, userFn);
-                  $scope.authenticated = true;
-                } else {
-                  $scope.authenticated = false;
-                  $scope.user = undefined;
-                }
-              });
+            Math.floor(Math.random() * 10000)).
+            success(function(me, status) {
+              if (angular.isObject(me)) {
+                angular.forEach($scope.profiles, function(profile) {
+                  // Builds is<ProfileName>ForGroup methods
+                  // to check the profile in the group
+                  me['is' + profile + 'ForGroup'] = function(groupId) {
+                    if('Administrator' == profile) {
+                      return me.admin;
+                    }
+                    if(me['groupsWith' + profile] &&
+                       me['groupsWith' + profile].indexOf(Number(groupId)) !== -1) {
+                      return true;
+                    }
+                    return false;
+                  };
+                });
+                angular.extend($scope.user, me);
+                angular.extend($scope.user, userFn);
+                $scope.authenticated = true;
+              } else {
+                $scope.authenticated = false;
+                $scope.user = undefined;
+              }
+           });
         });
 
 
@@ -687,25 +711,15 @@
         $scope.loadCatalogInfo();
       });
 
-      $scope.clearStatusMessage = function() {
-        $scope.status = null;
-        $('.gn-info').hide();
-      };
-
       $scope.allowPublishInvalidMd = function() {
         return gnConfig['metadata.workflow.allowPublishInvalidMd'];
       };
 
       $scope.$on('StatusUpdated', function(event, status) {
-        $scope.status = {};
-        $.extend($scope.status, defaultStatus, status);
-        $('.gn-info').show();
-        // TODO : handle multiple messages
-        if ($scope.status.timeout > 0) {
-          setTimeout(function() {
-            $scope.clearStatusMessage();
-          }, $scope.status.timeout * 1000);
-        }
+        var statusToApply = {};
+        $.extend(statusToApply, defaultStatus, status);
+
+        gnAlertService.addAlert(statusToApply, statusToApply.timeout);
       });
 
       gnSessionService.scheduleCheck($scope.user);
@@ -723,6 +737,9 @@
       $http.get('../../warninghealthcheck')
         .success(healthCheckStatus)
         .error(healthCheckStatus);
+
+      $scope.signin = gnLoginService.signin;
+      $scope.signout = gnLoginService.signout;
     }]);
 
 })();

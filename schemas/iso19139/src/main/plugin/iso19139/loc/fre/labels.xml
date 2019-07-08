@@ -4366,6 +4366,7 @@ la non-évaluation</b>, dans le cadre de métadonnées INSPIRE
       <option value="FILE:GEO">Fichier SIG</option>
       <option value="FILE:RASTER">Fichier SIG RASTER</option>
       <option value="WWW:LINK-1.0-http--link" default="">Adresse Internet (URL)</option>
+      <option value="DOI">Digital Object Identifier (DOI)</option>
       <option value="DB:POSTGIS">Base de données / Table PostGIS</option>
       <option value="DB:ORACLE">Base de données / ORACLE</option>
     </helper>
@@ -6371,7 +6372,7 @@ http://www.sandre.eaufrance.fr/?urn=urn:sandre:ensembledonnees:BDCarthage:FXX:::
     <description></description>
   </element>
   <element name="xlink:href">
-    <label>Link href</label>
+    <label>URL</label>
     <description>Supplies the data that allows an XLink application to find a remote resource (or
       resource fragment) [W3C XLINK]
     </description>
@@ -6456,6 +6457,10 @@ http://www.sandre.eaufrance.fr/?urn=urn:sandre:ensembledonnees:BDCarthage:FXX:::
     <label>Minimum</label>
     <description/>
   </element>
+  <element name="gco:upper">
+    <label>Maximum</label>
+    <description></description>
+  </element>
   <element name="gmx:language">
     <label>Langue des métadonnées</label>
     <description></description>
@@ -6502,7 +6507,13 @@ http://www.sandre.eaufrance.fr/?urn=urn:sandre:ensembledonnees:BDCarthage:FXX:::
   <element name="gco:Measure">
     <label>Mesure</label>
   </element>
+  <element name="gco:Integer">
+    <label>Nombre entier</label>
+  </element>
   <element name="gco:Scale">
     <label>Échelle</label>
+  </element>
+  <element name="gco:Boolean">
+    <label>Booléen</label>
   </element>
 </labels>

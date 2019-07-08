@@ -29,11 +29,13 @@
 
   goog.require('gn_catalog_service');
   goog.require('gn_searchsuggestion_service');
+  goog.require('gn_static_pages');
 
   var module = angular.module('gn_search_controller', [
     'ui.bootstrap.typeahead',
     'gn_searchsuggestion_service',
-    'gn_catalog_service'
+    'gn_catalog_service',
+    'gn_static_pages'
   ]);
 
   /**
@@ -78,7 +80,7 @@
           gnSearchSettings.resultViewTpls[0].tplUrl;
       /* Default advanced search form template */
       $scope.advancedSearchTemplate = gnSearchSettings.advancedSearchTemplate ||
-        "../../catalog/views/default/templates/advancedSearchForm/defaultAdvancedSearchForm.html";
+        '../../catalog/views/default/templates/advancedSearchForm/defaultAdvancedSearchForm.html';
 
       $scope.getAnySuggestions = function(val) {
         return suggestService.getAnySuggestions(val);
@@ -145,11 +147,5 @@
        * @return {*}
        */
       $scope.getCatScope = function() {return $scope};
-
-      // TODO: see if not redondant with CatController event management
-      $scope.$on('StatusUpdated', function(e, status) {
-        gnAlertService.addAlert(status);
-      });
-
     }]);
 })();

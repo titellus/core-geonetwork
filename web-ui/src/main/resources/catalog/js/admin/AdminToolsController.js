@@ -41,6 +41,7 @@
         sortbyValues: gnSearchSettings.sortbyValues,
         hitsperpageValues: gnSearchSettings.hitsperpageValues,
         selectionBucket: 'b101',
+        filters: gnSearchSettings.filters,
         params: {
           sortBy: 'changeDate',
           _isTemplate: 'y or n',
@@ -196,6 +197,9 @@
                 var key = g.groupId + '-' + g.userId;
                 if (!uniqueUserGroups[key]) {
                   uniqueUserGroups[key] = g;
+                  uniqueUserGroups[key].groupNameTranslated = g.groupName === 'allAdmins' ?
+                    $translate.instant(g.groupName) :
+                    $translate.instant('group-' + g.groupId);
                 }
               });
               $scope.userGroups = uniqueUserGroups;

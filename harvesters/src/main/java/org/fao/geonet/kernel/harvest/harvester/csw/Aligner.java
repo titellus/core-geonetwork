@@ -23,13 +23,31 @@
 
 package org.fao.geonet.kernel.harvest.harvester.csw;
 
-import jeeves.server.context.ServiceContext;
+import static org.fao.geonet.utils.AbstractHttpRequest.Method.GET;
+import static org.fao.geonet.utils.AbstractHttpRequest.Method.POST;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.transaction.Transactional;
+import javax.transaction.Transactional.TxType;
+
 import org.fao.geonet.GeonetContext;
+import org.fao.geonet.Logger;
 import org.fao.geonet.constants.Geonet;
 import org.fao.geonet.csw.common.CswOperation;
 import org.fao.geonet.csw.common.CswServer;
 import org.fao.geonet.csw.common.ElementSetName;
 import org.fao.geonet.csw.common.requests.GetRecordByIdRequest;
+import org.fao.geonet.domain.AbstractMetadata;
 import org.fao.geonet.domain.ISODate;
 import org.fao.geonet.domain.Metadata;
 import org.fao.geonet.domain.MetadataType;
@@ -38,6 +56,9 @@ import org.fao.geonet.domain.Pair;
 import org.fao.geonet.exceptions.OperationAbortedEx;
 import org.fao.geonet.kernel.DataManager;
 import org.fao.geonet.kernel.UpdateDatestamp;
+import org.fao.geonet.kernel.datamanager.IMetadataIndexer;
+import org.fao.geonet.kernel.datamanager.IMetadataManager;
+import org.fao.geonet.kernel.datamanager.IMetadataUtils;
 import org.fao.geonet.kernel.harvest.BaseAligner;
 import org.fao.geonet.kernel.harvest.harvester.CategoryMapper;
 import org.fao.geonet.kernel.harvest.harvester.GroupMapper;
@@ -47,49 +68,47 @@ import org.fao.geonet.kernel.harvest.harvester.HarvesterUtil;
 import org.fao.geonet.kernel.harvest.harvester.RecordInfo;
 import org.fao.geonet.kernel.harvest.harvester.UUIDMapper;
 import org.fao.geonet.kernel.search.LuceneSearcher;
-import org.fao.geonet.repository.MetadataRepository;
+import org.fao.geonet.kernel.search.index.LuceneIndexLanguageTracker;
 import org.fao.geonet.repository.OperationAllowedRepository;
 import org.fao.geonet.utils.Xml;
 import org.jdom.Element;
 import org.jdom.xpath.XPath;
-import org.slf4j.LoggerFactory;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.fao.geonet.utils.AbstractHttpRequest.Method.GET;
-import static org.fao.geonet.utils.AbstractHttpRequest.Method.POST;
+import jeeves.server.context.ServiceContext;
 
 public class Aligner extends BaseAligner<CswParams> {
-
-    private static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(Geonet.HARVESTER);
 
     private ServiceContext context;
     private DataManager dataMan;
     private CategoryMapper localCateg;
     private GroupMapper localGroups;
     private UUIDMapper localUuids;
-    private MetadataRepository metadataManager;
+
+    private IMetadataUtils metadataUtils;
+    private IMetadataManager metadataManager;
+    private IMetadataIndexer metadataIndexer;
+    //--------------------------------------------------------------------------
+    //---
+    //--- Variables
+    //---
+    //--------------------------------------------------------------------------
     private HarvestResult result;
     private GetRecordByIdRequest request;
     private String processName;
     private Map<String, Object> processParams = new HashMap<String, Object>();
+    private Logger log;
 
-    public Aligner(AtomicBoolean cancelMonitor, ServiceContext sc, CswServer server, CswParams params) throws OperationAbortedEx {
+    public Aligner(AtomicBoolean cancelMonitor, ServiceContext sc, CswServer server, CswParams params, Logger log) throws OperationAbortedEx {
         super(cancelMonitor);
         this.context = sc;
         this.params = params;
+        this.log = log;
 
         GeonetContext gc = (GeonetContext) context.getHandlerContext(Geonet.CONTEXT_NAME);
         dataMan = gc.getBean(DataManager.class);
-        metadataManager = gc.getBean(MetadataRepository.class);
+        metadataUtils = gc.getBean(IMetadataUtils.class);
+        metadataManager = gc.getBean(IMetadataManager.class);
+        metadataIndexer = gc.getBean(IMetadataIndexer.class);
         result = new HarvestResult();
         result.unretrievable = 0;
         result.uuidSkipped = 0;
@@ -137,12 +156,12 @@ public class Aligner extends BaseAligner<CswParams> {
 
     }
 
-    public HarvestResult align(Set<RecordInfo> records, List<HarvestError> errors) throws Exception {
+    public HarvestResult align(Collection<RecordInfo> records, Collection<HarvestError> errors) throws Exception {
         if (cancelMonitor.get()) {
             return result;
         }
 
-        LOGGER.info("Start of alignment for : {}", params.getName());
+        log.debug("Start of alignment for : " + params.getName());
 
         //-----------------------------------------------------------------------
         //--- retrieve all local categories and groups
@@ -150,65 +169,49 @@ public class Aligner extends BaseAligner<CswParams> {
 
         localCateg = new CategoryMapper(context);
         localGroups = new GroupMapper(context);
-        localUuids = new UUIDMapper(context.getBean(MetadataRepository.class), params.getUuid());
-
-        dataMan.flush();
+        localUuids = new UUIDMapper(context.getBean(IMetadataUtils.class), params.getUuid());
 
         Pair<String, Map<String, Object>> filter = HarvesterUtil.parseXSLFilter(params.xslfilter);
         processName = filter.one();
         processParams = filter.two();
 
-        //-----------------------------------------------------------------------
-        //--- remove old metadata
+        insertOrUpdate(records, errors);
+        log.debug("End of alignment for : " + params.getName());
 
-        for (String uuid : localUuids.getUUIDs()) {
-            if (cancelMonitor.get()) {
-                return result;
-            }
+        return result;
+    }
 
-            if (!exists(records, uuid)) {
-                String id = localUuids.getID(uuid);
-                LOGGER.debug("  - Removing old metadata with local id:{}", id);
-                dataMan.deleteMetadata(context, id);
-
-                dataMan.flush();
-
-                result.locallyRemoved++;
-            }
-        }
-
-        //-----------------------------------------------------------------------
-        //--- insert/update new metadata
-
+	private void insertOrUpdate(Collection<RecordInfo> records, Collection<HarvestError> errors) {
         for (RecordInfo ri : records) {
+            
             if (cancelMonitor.get()) {
-                return result;
+                return;
             }
-
+            
             try {
 
-                String id = dataMan.getMetadataId(ri.uuid);
+                String id = metadataUtils.getMetadataId(ri.uuid);
 
                 if (id == null) {
                     //record doesn't exist (so it doesn't belong to this harvester)
-                    LOGGER.info("Adding record with uuid {}", ri.uuid);
-                    addMetadata(ri, getOwnerId(params), getOwnerGroupId(params), ri.uuid);
+                    log.debug("Adding record with uuid " + ri.uuid);
+                    addMetadata(ri, ri.uuid);
                 } else if (localUuids.getID(ri.uuid) == null) {
                     //Record does not belong to this harvester
                     result.datasetUuidExist++;
 
                     switch (params.getOverrideUuid()) {
                         case OVERRIDE:
-                            updateMetadata(ri, Integer.toString(metadataManager.findOneByUuid(ri.uuid).getId()), true);
-                            LOGGER.debug("Overriding record with uuid {}", ri.uuid);
+                            updateMetadata(ri, Integer.toString(metadataUtils.findOneByUuid(ri.uuid).getId()), true);
+                            log.debug("Overriding record with uuid " + ri.uuid);
                             result.updatedMetadata++;
                             break;
                         case RANDOM:
-                            LOGGER.debug("Generating random uuid for remote record with uuid {}", ri.uuid);
-                            addMetadata(ri, getOwnerId(params), getOwnerGroupId(params), UUID.randomUUID().toString());
+                            log.debug("Generating random uuid for remote record with uuid " + ri.uuid);
+                            addMetadata(ri, UUID.randomUUID().toString());
                             break;
                         case SKIP:
-                            LOGGER.debug("Skipping record with uuid {}", ri.uuid);
+                            log.debug("Skipping record with uuid " + ri.uuid);
                             result.uuidSkipped++;
                         default:
                             break;
@@ -218,25 +221,49 @@ public class Aligner extends BaseAligner<CswParams> {
                     updateMetadata(ri, id, false);
 
                 }
-
+                
+                context.getBean(LuceneIndexLanguageTracker.class).commit();
+                
                 result.totalMetadata++;
             } catch (Throwable t) {
                 errors.add(new HarvestError(this.context, t));
-                LOGGER.error("Unable to process record from csw ({})",  this.params.getName());
-                LOGGER.error("   Record failed: {}. Error is: {}", ri.uuid, t.getMessage());
+                log.error("Unable to process record from csw (" + this.params.getName() + ")");
+                log.error("   Record failed: " +  ri.uuid + ". Error is: " + t.getMessage());
+				log.error(t);
             } finally {
                 result.originalMetadata++;
             }
         }
+	}
+
+    /**
+     * Remove records no longer on the remote CSW server
+     * 
+     * @param records
+     * @throws Exception
+     */
+	@Transactional(value=TxType.REQUIRES_NEW)
+	public HarvestResult cleanupRemovedRecords(Set<String> records) throws Exception {
+		
+        if (cancelMonitor.get()) {
+            return result;
+        }
+
+        for (String uuid : localUuids.getUUIDs()) {
+            if (!records.contains(uuid)) {
+                String id = localUuids.getID(uuid);
+                log.debug("  - Removing old metadata with local id:" + id);
+                metadataManager.deleteMetadata(context, id);
+                result.locallyRemoved++;
+            }
+        }
         dataMan.forceIndexChanges();
-
-        LOGGER.debug("End of alignment for : {}", params.getName());
-
+        
         return result;
-    }
+	}
 
 
-    private void addMetadata(RecordInfo ri, Integer ownerId, Integer groupId, String uuid) throws Exception {
+    private void addMetadata(RecordInfo ri, String uuid) throws Exception {
         if (cancelMonitor.get()) {
             return;
         }
@@ -251,18 +278,19 @@ public class Aligner extends BaseAligner<CswParams> {
         String schema = dataMan.autodetectSchema(md, null);
 
         if (schema == null) {
-            LOGGER.debug("  - Metadata skipped due to unknown schema. uuid:{}", ri.uuid);
+            log.debug("  - Metadata skipped due to unknown schema. uuid:" + ri.uuid);
             result.unknownSchema++;
+
             return;
         }
 
-        LOGGER.info("  - Adding metadata with remote uuid:{} schema:{}", ri.uuid, schema);
+        log.debug("  - Adding metadata with remote uuid:" + ri.uuid + " schema:" + schema);
 
         String mdUuid = ri.uuid;
         if (!params.xslfilter.equals("")) {
             md = processMetadata(context, md, processName, processParams);
             // Get new uuid if modified by XSLT process
-            mdUuid = dataMan.extractUUID(schema, md);
+            mdUuid = metadataUtils.extractUUID(schema, md);
             if(mdUuid == null) {
                 mdUuid = ri.uuid;
             }
@@ -271,10 +299,9 @@ public class Aligner extends BaseAligner<CswParams> {
         //
         // insert metadata
         //
-
-        ownerId = getOwner();
-        Metadata metadata = new Metadata().setUuid(mdUuid);
-
+        AbstractMetadata metadata = new Metadata();
+        metadata.setUuid(uuid);
+        Integer ownerId = getOwner();
         metadata.getDataInfo().
             setSchemaId(schema).
             setRoot(md.getQualifiedName()).
@@ -283,25 +310,22 @@ public class Aligner extends BaseAligner<CswParams> {
             setCreateDate(new ISODate(ri.changeDate));
         metadata.getSourceInfo().
             setSourceId(params.getUuid()).
-            setOwner(ownerId);
+            setOwner(ownerId).
+            setGroupOwner(getGroupOwner());
         metadata.getHarvestInfo().
             setHarvested(true).
             setUuid(params.getUuid());
 
-        try {
-            metadata.getSourceInfo().setGroupOwner(Integer.valueOf(params.getOwnerIdGroup()));
-        } catch (NumberFormatException e) {
-        }
+        metadata.getSourceInfo().setGroupOwner(getGroupOwner());
+        addCategories(metadata, params.getCategories(), localCateg, context, log, null, false);
 
-        addCategories(metadata, params.getCategories(), localCateg, context, null, false);
-
-        metadata = dataMan.insertMetadata(context, metadata, md, true, false, false, UpdateDatestamp.NO, false, false);
+        metadata = metadataManager.insertMetadata(context, metadata, md, true, false, false, UpdateDatestamp.NO, false, false);
 
         String id = String.valueOf(metadata.getId());
 
-        addPrivileges(id, params.getPrivileges(), localGroups, dataMan, context);
+        addPrivileges(id, params.getPrivileges(), localGroups, dataMan, context, log);
 
-        dataMan.indexMetadata(id, Math.random() < 0.01, null);
+        metadataIndexer.indexMetadata(id, true, null);
         result.addedMetadata++;
     }
 
@@ -314,68 +338,63 @@ public class Aligner extends BaseAligner<CswParams> {
         String date = localUuids.getChangeDate(ri.uuid);
 
         if (date == null && !force) {
-            LOGGER.debug("  - Skipped metadata managed by another harvesting node. uuid:{}, name:{}", ri.uuid, params.getName());
+            log.debug("  - Skipped metadata managed by another harvesting node. uuid:" + ri.uuid + ", name:" + params.getName());
         } else {
             if (!force && !ri.isMoreRecentThan(date)) {
-                LOGGER.debug("  - Metadata XML not changed for uuid:{}", ri.uuid);
+                log.debug("  - Metadata XML not changed for uuid:" + ri.uuid);
                 result.unchangedMetadata++;
             } else {
-                LOGGER.debug("  - Updating local metadata for uuid:{}", ri.uuid);
-                Element md = retrieveMetadata(ri.uuid);
-
-                if (md == null) {
-                    result.unchangedMetadata++;
-                    return;
+                log.debug("  - Updating local metadata for uuid:" + ri.uuid);
+                if(updatingLocalMetadata(ri, id, force)) {
+                	metadataIndexer.indexMetadata(id, true, null);
+                    result.updatedMetadata++;
                 }
-                
-                if (!params.xslfilter.equals("")) {
-                    md = processMetadata(context, md, processName, processParams);
-                }
-
-                //
-                // update metadata
-                //
-                boolean validate = false;
-                boolean ufo = false;
-                boolean index = false;
-                String language = context.getLanguage();
-                final Metadata metadata = dataMan.updateMetadata(context, id, md, validate, ufo, index, language, ri.changeDate, true);
-                
-                if(force) {
-                    //change ownership of metadata to new harvester
-                    metadata.getHarvestInfo().setUuid(params.getUuid());
-                    metadata.getSourceInfo().setSourceId(params.getUuid());
-
-                    context.getBean(MetadataRepository.class).save(metadata);
-                }
-
-                OperationAllowedRepository repository = context.getBean(OperationAllowedRepository.class);
-                repository.deleteAllByIdAttribute(OperationAllowedId_.metadataId, Integer.parseInt(id));
-
-                addPrivileges(id, params.getPrivileges(), localGroups, dataMan, context);
-
-                metadata.getMetadataCategories().clear();
-                addCategories(metadata, params.getCategories(), localCateg, context, null, true);
-
-                dataMan.flush();
-
-                dataMan.indexMetadata(id, true, null);
-                result.updatedMetadata++;
             }
         }
     }
 
-    /**
-     * Returns true if the uuid is present in the remote node.
-     */
-    private boolean exists(Set<RecordInfo> records, String uuid) {
-        for (RecordInfo ri : records)
-            if (uuid.equals(ri.uuid))
-                return true;
+    @Transactional(value=TxType.REQUIRES_NEW)
+	private boolean updatingLocalMetadata(RecordInfo ri, String id, Boolean force) throws Exception {
+		Element md = retrieveMetadata(ri.uuid);
 
-        return false;
-    }
+		if (md == null) {
+		    result.unchangedMetadata++;
+		    return false;
+		}
+		
+		if (!params.xslfilter.equals("")) {
+		    md = processMetadata(context, md, processName, processParams);
+		}
 
+		//
+		// update metadata
+		//
+		boolean validate = false;
+		boolean ufo = false;
+		boolean index = false;
+		String language = context.getLanguage();
+
+		final AbstractMetadata metadata = metadataManager.updateMetadata(context, id, md, validate, ufo, index, language, ri.changeDate, true);
+		
+		if(force) {
+		    //change ownership of metadata to new harvester
+		    metadata.getHarvestInfo().setUuid(params.getUuid());
+		    metadata.getSourceInfo().setSourceId(params.getUuid());
+
+		    metadataManager.save((Metadata) metadata);
+		}
+
+		OperationAllowedRepository repository = context.getBean(OperationAllowedRepository.class);
+		repository.deleteAllByIdAttribute(OperationAllowedId_.metadataId, Integer.parseInt(id));
+
+		addPrivileges(id, params.getPrivileges(), localGroups, dataMan, context, log);
+
+		metadata.getMetadataCategories().clear();
+		addCategories(metadata, params.getCategories(), localCateg, context, log, null, true);
+		
+		return true;
+	}
+    
     /**
      * Does CSW GetRecordById request. If validation is requested and the metadata does not
      * validate, null is returned.
@@ -388,11 +407,11 @@ public class Aligner extends BaseAligner<CswParams> {
         request.addId(uuid);
 
         try {
-            LOGGER.debug("Getting record from : {} (uuid:{})", request.getHost(), uuid);
+            log.debug("Getting record from : " + request.getHost() + " (uuid:" + uuid + ")");
 
             Element response = request.execute();
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Record got:{}\n", Xml.getString(response));
+            if (log.isDebugEnabled()) {
+                log.debug("Record got: " + Xml.getString(response) + "\n");
             }
 
             @SuppressWarnings("unchecked")
@@ -409,9 +428,9 @@ public class Aligner extends BaseAligner<CswParams> {
 
 
             try {
-                params.getValidate().validate(dataMan, context, response);
+                params.getValidate().validate(context.getBean(DataManager.class), context, response);
             } catch (Exception e) {
-                LOGGER.info("Ignoring invalid metadata with uuid {}", uuid);
+                log.debug("Ignoring invalid metadata with uuid " + uuid);
                 result.doesNotValidate++;
                 return null;
             }
@@ -425,8 +444,8 @@ public class Aligner extends BaseAligner<CswParams> {
 
             return response;
         } catch (Exception e) {
-            LOGGER.warn("Raised exception while getting record : {}", e);
-            e.printStackTrace();
+            log.error("Raised exception while getting record : " +  e);
+            log.error(e);
             result.unretrievable++;
 
             //--- we don't raise any exception here. Just try to go on
@@ -471,20 +490,20 @@ public class Aligner extends BaseAligner<CswParams> {
                     // Check if the metadata to import has a resource identifier
                     // existing in current catalog for a record with a different UUID
 
-                    LOGGER.debug("  - Resource identifiers found : {}", resourceIdentifiers.size());
+                    log.debug("  - Resource identifiers found : " + resourceIdentifiers.size());
 
                     for (Element identifierNode : resourceIdentifiers) {
                         String identifier = identifierNode.getTextTrim();
-                        LOGGER.debug("    - Searching for duplicates for resource identifier: {}", identifier);
+                        log.debug("    - Searching for duplicates for resource identifier: " + identifier);
 
                         Map<String, Map<String, String>> values = LuceneSearcher.getAllMetadataFromIndexFor(defaultLanguage, resourceIdentifierLuceneIndexField,
                             identifier, Collections.singleton("_uuid"), true);
-                        LOGGER.debug("    - Number of resources with same identifier: {}", values.size());
+                        log.debug("    - Number of resources with same identifier: " + values.size());
                         for (Map<String, String> recordFieldValues : values.values()) {
                             String indexRecordUuid = recordFieldValues.get("_uuid");
                             if (!indexRecordUuid.equals(uuid)) {
-                                LOGGER.debug("      - UUID {} in index does not match harvested record UUID {}", indexRecordUuid, uuid);
-                                LOGGER.warn("      - Duplicates found. Skipping record with UUID {} and resource identifier {}", uuid, identifier);
+                                log.debug("      - UUID " + indexRecordUuid + " in index does not match harvested record UUID " + uuid);
+                                log.warning("      - Duplicates found. Skipping record with UUID " + uuid + " and resource identifier " + identifier);
 
                                 result.duplicatedResource++;
                                 return true;
@@ -493,8 +512,7 @@ public class Aligner extends BaseAligner<CswParams> {
                     }
                 }
             } catch (Throwable e) {
-                LOGGER.warn("      - Error when searching for resource duplicate {}. Error is: {}", uuid, e.getMessage());
-                e.printStackTrace();
+                log.warning("      - Error when searching for resource duplicate " + uuid + ". Error is: " + e.getMessage());
             }
         }
         return false;
@@ -517,15 +535,15 @@ public class Aligner extends BaseAligner<CswParams> {
                                     Map<String, Object> processParams) {
         Path filePath = context.getAppPath().resolve(Geonet.Path.STYLESHEETS).resolve("conversion/import").resolve(processName + ".xsl");
         if (!Files.exists(filePath)) {
-            LOGGER.info("     processing instruction  {}. Metadata not filtered.", processName);
+            log.debug("     processing instruction  " + processName + ". Metadata not filtered.");
         } else {
             Element processedMetadata;
             try {
                 processedMetadata = Xml.transform(md, filePath, processParams);
-                LOGGER.debug("     metadata filtered.");
+                log.debug("     metadata filtered.");
                 md = processedMetadata;
             } catch (Exception e) {
-                LOGGER.warn("     processing error ({}): {}", processName, e.getMessage());
+                log.warning("     processing error " + processName + "}): " + e.getMessage());
             }
         }
         return md;

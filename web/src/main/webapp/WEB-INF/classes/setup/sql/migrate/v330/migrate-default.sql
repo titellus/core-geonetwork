@@ -1,3 +1,5 @@
+
+
 INSERT INTO Settings (name, value, datatype, position, internal) VALUES
   ('system/csw/enabledWhenIndexing', 'true', 2, 1211, 'y');
 

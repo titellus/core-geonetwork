@@ -24,21 +24,25 @@
 (function() {
   goog.provide('gn_cat_controller');
 
-
-
-
-
-
-
-  goog.require('gn_admin_menu');
-  goog.require('gn_saved_selections');
-  goog.require('gn_search_manager');
-  goog.require('gn_session_service');
+  
+  
+  
+  
+  
+  
+goog.require('gn_admin_menu');
+goog.require('gn_external_viewer');
+goog.require('gn_history');
+goog.require('gn_saved_selections');
+goog.require('gn_search_manager');
+goog.require('gn_session_service');
+goog.require('gn_alert');
 
 
   var module = angular.module('gn_cat_controller',
       ['gn_search_manager', 'gn_session_service',
-        'gn_admin_menu', 'gn_saved_selections']);
+        'gn_admin_menu', 'gn_saved_selections',
+        'gn_external_viewer', 'gn_history', 'gn_alert']);
 
 
   module.constant('gnSearchSettings', {});
@@ -47,15 +51,19 @@
     var defaultConfig = {
       'langDetector': {
         'fromHtmlTag': false,
-        'regexp': '^\/.+\/.+\/([a-z]{3})\/',
+        'regexp': '^(?:\/.+)?/.+\/([a-z]{2,3})\/.+',
         'default': 'eng'
       },
       'nodeDetector': {
-        'regexp': '^\/.+\/.+\/([a-z]{3})\/',
+        'regexp': '^(?:\/.+)?\/(.+)\/[a-z]{2,3}\/.+',
         'default': 'srv'
       },
+      'serviceDetector': {
+        'regexp': '^(?:\/.+)?\/.+\/[a-z]{2,3}\/(.+)',
+        'default': 'catalog.search'
+      },
       'baseURLDetector': {
-        'regexp': '^\(/[a-zA-Z0-9_\-]+)\/[a-zA-Z0-9_\-]+\/[a-z]{3}\/',
+        'regexp': '^((?:\/.+)?)+\/.+\/[a-z]{2,3}\/.+',
         'default': '/geonetwork'
       },
       'mods': {
@@ -74,12 +82,16 @@
             'ice': 'is',
             'ita' : 'it',
             'rus': 'ru',
-            'chi': 'zh'
-          }
+            'chi': 'zh',
+            'slo': 'sk'
+          },
+          'isLogoInHeader': false,
+          'logoInHeaderPosition': 'left'
         },
         'home': {
           'enabled': true,
-          'appUrl': '../../srv/{{lang}}/catalog.search#/home'
+          'appUrl': '../../srv/{{lang}}/catalog.search#/home',
+          'showSocialBarInFooter': true
         },
         'search': {
           'enabled': true,
@@ -89,6 +101,7 @@
             'hitsPerPage': 20
           },
           'facetsSummaryType': 'details',
+          'defaultSearchString': '',
           'facetTabField': '',
           'facetConfig': [
             // {
@@ -151,6 +164,13 @@
         'map': {
           'enabled': true,
           'appUrl': '../../srv/{{lang}}/catalog.search#/map',
+          'externalViewer': {
+            'enabled': false,
+            'baseUrl': 'http://www.example.com/viewer',
+            'urlTemplate': 'http://www.example.com/viewer?url=${service.url}&type=${service.type}&layer=${service.name}',
+            'openNewWindow': false,
+            'valuesSeparator': ','
+          },
           'is3DModeAllowed': true,
           'isSaveMapInCatalogAllowed': true,
           'isExportMapAsImageEnabled': false,
@@ -167,10 +187,16 @@
             'code': 'EPSG:3857',
             'label': 'Google mercator (EPSG:3857)'
           }],
+          'switcherProjectionList': [{
+            'code': 'EPSG:3857',
+            'label': 'Google mercator (EPSG:3857)'
+          }],
           'disabledTools': {
             'processes': false,
             'addLayers': false,
+            'projectionSwitcher': false,
             'layers': false,
+            'legend': false,
             'filter': false,
             'contexts': false,
             'print': false,
@@ -200,13 +226,18 @@
             'enabled': true,
             'appUrl': 'https://secure.geonames.org/searchJSON'
         },
+        'recordview': {
+          'enabled': true,
+          'isSocialbarEnabled': true
+        },
         'editor': {
           'enabled': true,
           'appUrl': '../../srv/{{lang}}/catalog.edit',
           'isUserRecordsOnly': false,
           'isFilterTagsDisplayed': false,
           'createPageTpl':
-              '../../catalog/templates/editor/new-metadata-horizontal.html'
+              '../../catalog/templates/editor/new-metadata-horizontal.html',
+          'editorIndentType': ''
         },
         'admin': {
           'enabled': true,
@@ -218,6 +249,10 @@
         },
         'signout': {
           'appUrl': '../../signout'
+        },
+        'page': {
+          'enabled': true,
+          'appUrl': '../../srv/{{lang}}/catalog.search#/page'
         }
       }
     };
@@ -245,14 +280,16 @@
         // and override with config arg if required
         angular.merge(this.gnCfg, config, {});
 
-        // secial case: languages (replace with object from config if available)
-        this.gnCfg.mods.header.languages = angular.extend({
-          mods: {
-            header: {
-              languages: {}
+        // special case: languages (replace with object from config if available)
+        if (config && config.mods) {
+          this.gnCfg.mods.header.languages = angular.extend({
+            mods: {
+              header: {
+                languages: {}
+              }
             }
-          }
-        }, config).mods.header.languages;
+          }, config).mods.header.languages;
+        }
 
         this.gnUrl = gnUrl || '../';
         this.proxyUrl = this.gnUrl + '../proxy?url=';
@@ -275,6 +312,20 @@
         copy.mods.header.languages = {};
         copy.mods.search.grid.related = [];
         return copy;
+      },
+      getProxyUrl: function() {
+        return this.proxyUrl;
+      },
+      // Removes the proxy path and decodes the layer url,
+      // so the layer can be printed with MapFish.
+      // Otherwise Mapfish rejects it, due to relative url.
+      getNonProxifiedUrl: function(url) {
+        if (url.indexOf(this.proxyUrl) > -1) {
+          return decodeURIComponent(
+            url.replace(this.proxyUrl, ''));
+        } else {
+          return url;
+        }
       }
     };
   }());
@@ -335,7 +386,7 @@
     },
     isValidIso2Lang: function(lang) {
       for (p in this.langs) {
-        if (this.langs[p] == lang) {
+        if (this.langs[p] === lang) {
           return true;
         }
       }
@@ -346,7 +397,7 @@
     },
     getIso3Lang: function(iso2lang) {
       for (p in this.langs) {
-        if (this.langs[p] == iso2lang) {
+        if (this.langs[p] === iso2lang) {
           return p;
         }
       }
@@ -369,34 +420,29 @@
     'gnGlobalSettings', '$location', 'gnUtilityService',
     'gnSessionService', 'gnLangs', 'gnAdminMenu',
     'gnViewerSettings', 'gnSearchSettings', '$cookies',
+    'gnExternalViewer', 'gnAlertService',
     function($scope, $http, $q, $rootScope, $translate,
              gnSearchManagerService, gnConfigService, gnConfig,
              gnGlobalSettings, $location, gnUtilityService,
              gnSessionService, gnLangs, gnAdminMenu,
-             gnViewerSettings, gnSearchSettings, $cookies) {
+             gnViewerSettings, gnSearchSettings, $cookies,
+             gnExternalViewer, gnAlertService) {
       $scope.version = '0.0.1';
 
 
-      //Update Links for social media
+      // Links for social media
       $scope.socialMediaLink = $location.absUrl();
-      $scope.$on('$locationChangeSuccess', function(event) {
-        $scope.socialMediaLink = $location.absUrl();
-        $scope.showSocialMediaLink =
-            ($scope.socialMediaLink.indexOf('/metadata/') != -1);
-      });
       $scope.getPermalink = gnUtilityService.getPermalink;
-
-      try {
-        var tokens = location.href.split('/');
-        $scope.service = tokens[6].split('?')[0];
-      } catch (e) {
-        // console.log("Failed to extract current service from URL.");
-      }
 
       // If gnLangs current already set by config, do not use URL
       $scope.langs = gnGlobalSettings.gnCfg.mods.header.languages;
       $scope.lang = gnLangs.detectLang(null, gnGlobalSettings);
       $scope.iso2lang = gnLangs.getIso2Lang($scope.lang);
+
+      $scope.getSocialLinksVisible = function() {
+        var onMdView =  $location.absUrl().indexOf('/metadata/') > -1;
+        return !onMdView && gnGlobalSettings.gnCfg.mods.home.showSocialBarInFooter;
+      };
 
       function detectNode(detector) {
         if (detector.regexp) {
@@ -406,6 +452,17 @@
           }
         }
         return detector.default || 'srv';
+      }
+
+
+      function detectService(detector) {
+        if (detector.regexp) {
+          var res = new RegExp(detector.regexp).exec(location.pathname);
+          if (angular.isArray(res)) {
+            return res[1];
+          }
+        }
+        return detector.default;
       }
 
       function detectBaseURL(detector) {
@@ -418,8 +475,9 @@
         return detector.default || 'geonetwork';
       }
       $scope.nodeId = detectNode(gnGlobalSettings.gnCfg.nodeDetector);
+      $scope.service = detectService(gnGlobalSettings.gnCfg.serviceDetector);
       gnGlobalSettings.nodeId = $scope.nodeId;
-      gnConfig.env = gnConfig.env || {};
+      gnConfig.env = gnConfig.env ||  {};
       gnConfig.env.node = $scope.nodeId;
       gnConfig.env.baseURL = detectBaseURL(gnGlobalSettings.gnCfg.baseURLDetector);
 
@@ -428,7 +486,7 @@
         'fre': 'Français', 'ger': 'Deutsch', 'kor': '한국의',
         'spa': 'Español', 'cat': 'Català', 'cze': 'Czech',
         'ita': 'Italiano', 'fin': 'Suomeksi', 'ice': 'Íslenska',
-        'rus': 'русский', 'chi': '中文'};
+        'rus': 'русский', 'chi': '中文', 'slo': 'Slovenčina'};
       $scope.url = '';
       $scope.gnUrl = gnGlobalSettings.gnUrl;
       $scope.gnCfg = gnGlobalSettings.gnCfg;
@@ -437,6 +495,8 @@
       $scope.isMapViewerEnabled = gnGlobalSettings.isMapViewerEnabled;
       $scope.isDebug = window.location.search.indexOf('debug') !== -1;
       $scope.shibbolethEnabled = gnGlobalSettings.shibbolethEnabled;
+      $scope.isExternalViewerEnabled = gnExternalViewer.isEnabled();
+      $scope.externalViewerUrl = gnExternalViewer.getBaseUrl();
 
 
       $scope.layout = {
@@ -516,7 +576,6 @@
        */
       $scope.searchInfo = {};
 
-      $scope.status = null;
       var defaultStatus = {
         title: '',
         link: '',
@@ -585,6 +644,7 @@
           }
         };
         // Build is<ProfileName> and is<ProfileName>OrMore functions
+        // This are not group specific, so not usable on metadata
         angular.forEach($scope.profiles, function(profile) {
           userFn['is' + profile] = function() {
             return profile === this.profile;
@@ -604,17 +664,31 @@
         // append a random number to avoid caching in IE11
         var userLogin = catInfo.then(function(value) {
           return $http.get('../api/me?_random=' +
-              Math.floor(Math.random() * 10000)).
-              success(function(me, status) {
-                if (angular.isObject(me)) {
-                  angular.extend($scope.user, me);
-                  angular.extend($scope.user, userFn);
-                  $scope.authenticated = true;
-                } else {
-                  $scope.authenticated = false;
-                  $scope.user = undefined;
-                }
-              });
+            Math.floor(Math.random() * 10000)).
+            success(function(me, status) {
+              if (angular.isObject(me)) {
+                angular.forEach($scope.profiles, function(profile) {
+                  // Builds is<ProfileName>ForGroup methods
+                  // to check the profile in the group
+                  me['is' + profile + 'ForGroup'] = function(groupId) {
+                    if('Administrator' == profile) {
+                      return me.admin;
+                    }
+                    if(me['groupsWith' + profile] &&
+                       me['groupsWith' + profile].indexOf(Number(groupId)) !== -1) {
+                      return true;
+                    }
+                    return false;
+                  };
+                });
+                angular.extend($scope.user, me);
+                angular.extend($scope.user, userFn);
+                $scope.authenticated = true;
+              } else {
+                $scope.authenticated = false;
+                $scope.user = undefined;
+              }
+           });
         });
 
 
@@ -637,31 +711,32 @@
         $scope.loadCatalogInfo();
       });
 
-      $scope.clearStatusMessage = function() {
-        $scope.status = null;
-        $('.gn-info').hide();
-      };
-
       $scope.allowPublishInvalidMd = function() {
         return gnConfig['metadata.workflow.allowPublishInvalidMd'];
       };
 
       $scope.$on('StatusUpdated', function(event, status) {
-        $scope.status = {};
-        $.extend($scope.status, defaultStatus, status);
-        $('.gn-info').show();
-        // TODO : handle multiple messages
-        if ($scope.status.timeout > 0) {
-          setTimeout(function() {
-            $scope.clearStatusMessage();
-          }, $scope.status.timeout * 1000);
-        }
+        var statusToApply = {};
+        $.extend(statusToApply, defaultStatus, status);
+
+        gnAlertService.addAlert(statusToApply, statusToApply.timeout);
       });
 
       gnSessionService.scheduleCheck($scope.user);
       $scope.session = gnSessionService.getSession();
 
       $scope.loadCatalogInfo();
+
+
+      $scope.healthCheck = {};
+      function healthCheckStatus(data) {
+        angular.forEach(data, function(o) {
+          $scope.healthCheck[o.name] = (o.status === 'OK');
+        });
+      };
+      $http.get('../../warninghealthcheck')
+        .success(healthCheckStatus)
+        .error(healthCheckStatus);
     }]);
 
 })();

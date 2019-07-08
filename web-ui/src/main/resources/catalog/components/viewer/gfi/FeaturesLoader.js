@@ -91,8 +91,7 @@
       uuid = layer.get('metadataUuid');
     }
 
-    var infoFormat = layer.ncInfo ? 'text/xml' :
-                'application/vnd.ogc.gml';
+    var infoFormat = false;
 
     //check if infoFormat is available in getCapabilities
     if(layer.get('capRequest') &&
@@ -101,18 +100,37 @@
       layer.get('capRequest').GetFeatureInfo.Format.length > 0) {
       if($.inArray(infoFormat,
           layer.get('capRequest').GetFeatureInfo.Format) == -1) {
-        //use a valid format
-        infoFormat = layer.get('capRequest').GetFeatureInfo.Format[0];
 
-        //if xml available, use it:
-        if(!$.inArray('text/xml',
-            layer.get('capRequest').GetFeatureInfo.Format) >= 0) {
-          infoFormat = 'text/xml';
+        // Search for available formats friendly to us
+        // using plain standard EMACS Javascript 
+        var friendlyFormats = layer.get('capRequest').GetFeatureInfo.Format
+            .filter(function (el) {
+              return el.toLowerCase().localeCompare('application/json') == 0
+              || el.toLowerCase().localeCompare('application/geojson') == 0
+              || el.toLowerCase().localeCompare('application/vnd.ogc.gml') == 0
+              || el.toLowerCase().localeCompare('text/xml') == 0;
+            });
+        
+        if(friendlyFormats.length > 0) {
+          //take any of them
+          infoFormat = friendlyFormats[0];
+        }
+        
+        //Heavy failback: take any available format
+        //we will deal later with this unknown and
+        //trust OpenLayers know how to deal with it
+        if(!infoFormat
+            && layer.get('capRequest').GetFeatureInfo.Format.length
+            && layer.get('capRequest').GetFeatureInfo.Format.length > 0) {
+          layer.infoFormat = layer.get('capRequest').GetFeatureInfo.Format[0];
         }
       }
     }
 
-    layer.infoFormat = infoFormat;
+    //Did we get anything from getCapabilities?
+    if(infoFormat) {
+      layer.infoFormat = infoFormat;
+    }
 
     var uri = layer.getSource().getGetFeatureInfoUrl(
         coordinates,
@@ -128,25 +146,33 @@
         "Content-Type": "text/plain"
       }
     }).then(function(response) {
-      this.loading = false;
-      if (layer.ncInfo) {
-        var doc = ol.xml.parse(response.data);
-        var props = {};
-        ['longitude', 'latitude', 'time', 'value'].forEach(function(v) {
-          var node = doc.getElementsByTagName(v);
-          if (node && node.length > 0) {
-            props[v] = ol.xml.getAllTextContent(node[0], true);
-          }
+      
+      if(infoFormat.toLowerCase().localeCompare('application/json') == 0 ||
+          infoFormat.toLowerCase().localeCompare('application/geojson') == 0 ) {
+        var jsonf = new ol.format.GeoJSON();
+        var features = [];
+        response.data.features.forEach(function(f) {
+          features.push(jsonf.readFeature(f));
         });
-        this.features = (props.value && props.value != 'none') ?
-                [new ol.Feature(props)] : [];
+        this.features = features;
+      } else if(infoFormat.toLowerCase().localeCompare('text/xml') == 0 
+        || infoFormat.toLowerCase().localeCompare('application/vnd.ogc.gml') == 0 ) {
+        var format = new ol.format.WMSGetFeatureInfo();
+        this.features = format.readFeatures(response.data, {
+          featureProjection: map.getView().getProjection()
+        });
       } else {
+        //Ooops, unknown format. 
+        console.warn("Unknown format for GetFeatureInfo " + infoFormat);
+        
+        //Try anyway with the default one and cross fingers
         var format = new ol.format.WMSGetFeatureInfo();
         this.features = format.readFeatures(response.data, {
           featureProjection: map.getView().getProjection()
         });
       }
-
+      
+      this.loading = false;
       return this.features;
 
     }.bind(this), function() {
@@ -199,6 +225,8 @@
           if (exclude.indexOf(key) == -1) {
             var value = obj[key];
             if (!(obj[key] instanceof Object)) {
+              //Make sure it is a string and not a number
+              obj[key] = obj[key]+'';
               obj[key] = $filter('linky')(obj[key], '_blank');
               if (obj[key]) {
                 obj[key] = obj[key].replace(/>(.)*</, ' ' +

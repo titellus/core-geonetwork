@@ -38,7 +38,7 @@
    * the input.
    *
    */
-  module.directive('gnTopiccategorySelector',
+  module.directive('gnTopiccategorySelectorDiv',
       ['$compile', '$timeout', '$translate',
        'gnTopicCategoryService', 'gnCurrentEdit',
        'TopicCategory', 'gnLangs',
@@ -50,7 +50,7 @@
            replace: true,
            transclude: true,
            scope: {
-             values: '@gnTopiccategorySelector',
+             values: '@gnTopiccategorySelectorDiv',
              label: '@label',
              ref: '@ref'
            },
@@ -78,8 +78,11 @@
 
              var schema = gnCurrentEdit.schema;
 
-             var schemaForXpath = (gnCurrentEdit.schema.indexOf("iso19139.") > -1)?
-               "iso19139":gnCurrentEdit.schema;
+             // By convention schema extension will have
+             // an identifier of the form {baseSchemaId}.{extensionId}
+             var schemaForXpath = (gnCurrentEdit.schema.indexOf(".") !== -1) ?
+               gnCurrentEdit.schema.split('.')[0] :
+               gnCurrentEdit.schema;
              scope.xpath = xpathBySchema[schemaForXpath].xpath;
 
              // Initial values are comma separated encoded

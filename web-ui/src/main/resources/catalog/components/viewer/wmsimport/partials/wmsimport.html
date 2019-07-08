@@ -10,11 +10,11 @@
             <span data-ng-show="serviceDesc">{{serviceDesc.title}}</span>
             <span class="caret"></span>
           </button>
-          <ul class="dropdown-menu" role="menu">
-            <li data-ng-repeat="srv in catServicesList">
+          <ul class="dropdown-menu" role="listbox">
+            <li data-ng-repeat="srv in catServicesList | orderBy: 'title'">
               <a href="" data-ng-click="setUrl(srv)"
-                 title="{{srv.desc}}">
-                {{srv.title}} ({{srv.url}}) - {{srv.type}}
+                 title="{{srv.desc}} ({{srv.url}}) - {{srv.type}}">
+                {{srv.title}} ({{srv.url}}))
               </a>
             </li>
           </ul>
@@ -31,10 +31,12 @@
         <div class="input-group">
           <input class="form-control" type="text" data-toggle="dropdown"
                  data-ng-model="url" data-ng-change="load()" data-ng-model-options="{debounce:500}"
+                 aria-label="{{format.toUpperCase()}} {{'serviceUrlLabel' | translate }}"
                  placeholder="{{'serviceUrl' | translate}}"/>
           <span class="input-group-btn">
             <button class="btn btn-default" type="button" data-ng-click="reset()">
               <i class="fa fa-close"></i>
+              <span class="sr-only" translate="">reset</span>
             </button>
           </span>
         </div>

@@ -26,7 +26,7 @@
 
   var module = angular.module('gn_printmap_service', []);
 
-  module.service('gnPrint', function() {
+  module.service('gnPrint', ['gnGlobalSettings', function(gnGlobalSettings) {
 
     var self = this;
 
@@ -233,6 +233,9 @@
           var url = layer.getSource() instanceof ol.source.ImageWMS ?
               layer.getSource().getUrl() :
               layer.getSource().getUrls()[0];
+
+          url = gnGlobalSettings.getNonProxifiedUrl(url);
+
           angular.extend(enc, {
             type: 'WMS',
             baseURL: config.wmsUrl || url,
@@ -278,6 +281,9 @@
             //Remove last "/"
             url = url.substring(0, url.lastIndexOf("/"));
           }
+
+          url = gnGlobalSettings.getNonProxifiedUrl(url);
+
           angular.extend(enc, {
             type: 'XYZ',
             extension: 'png',
@@ -340,13 +346,13 @@
           var layerUrl = layer.get('url');
           for (var z = 0; z < tileGrid.getResolutions().length; ++z) {
             var mSize = (ol.extent.getWidth(proj.getExtent()) /
-                tileGrid.getTileSize()) /
+                tileGrid.getTileSize(z)) /
                 tileGrid.getResolutions()[z];
                 matrixIds[z] = {
                   identifier: tileGrid.getMatrixIds()[z],
                   resolution: tileGrid.getResolutions()[z],
-                  tileSize: [tileGrid.getTileSize(), tileGrid.getTileSize()],
-                  topLeftCorner: tileGrid.getOrigin(),
+                  tileSize: [tileGrid.getTileSize(z), tileGrid.getTileSize(z)],
+                  topLeftCorner: tileGrid.getOrigin(z),
                   matrixSize: [mSize, mSize]
                 };
           }
@@ -362,6 +368,8 @@
                   source.getLayer()));
             }
           }
+
+          layerUrl = gnGlobalSettings.getNonProxifiedUrl(layerUrl);
 
           angular.extend(enc, {
             type: 'WMTS',
@@ -539,6 +547,5 @@
 
       return literal;
     };
-
-  });
+  }]);
 })();

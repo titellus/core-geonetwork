@@ -368,7 +368,7 @@
                               group-by="gmd:thesaurusName/*/gmd:title/*/text()">
 
             '<xsl:value-of select="replace(current-grouping-key(), '''', '\\''')"/>' :[
-            <xsl:for-each select="gmd:keyword//gmd:LocalisedCharacterString[@locale = $langId and text() != '']">
+            <xsl:for-each select="current-group()/gmd:keyword//gmd:LocalisedCharacterString[@locale = $langId and text() != '']">
               {'value': <xsl:value-of select="concat('''', replace(., '''', '\\'''), '''')"/>,
               'link': '<xsl:value-of select="@xlink:href"/>'}
               <xsl:if test="position() != last()">,</xsl:if>
@@ -563,12 +563,15 @@
         <Field name="format" string="{string(.)}" store="true" index="true"/>
       </xsl:for-each>
 
+      <!-- For local atom feed services -->
+      <xsl:if test="count(gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:onLine/gmd:CI_OnlineResource[gmd:function/gmd:CI_OnLineFunctionCode/@codeListValue='download'])>0">
+        <Field name="has_atom" string="true" store="false" index="true"/>
+      </xsl:if>
+
       <xsl:for-each select="gmd:transferOptions/gmd:MD_DigitalTransferOptions">
         <xsl:variable name="tPosition" select="position()"></xsl:variable>
-        <xsl:for-each select="gmd:onLine/gmd:CI_OnlineResource[
-        gmd:name/*/gmd:textGroup/gmd:LocalisedCharacterString[@locale=$langId] or
-        gmd:description/*/gmd:textGroup/gmd:LocalisedCharacterString[@locale=$langId]
-        ]">
+
+        <xsl:for-each select="gmd:onLine/gmd:CI_OnlineResource">
           <xsl:variable name="download_check"><xsl:text>&amp;fname=&amp;access</xsl:text></xsl:variable>
           <xsl:variable name="linkage" select="gmd:linkage/gmd:URL" />
           <xsl:variable name="title"
@@ -719,9 +722,10 @@
 
             <xsl:variable name="crsDetails">
             {
-             "code": "<xsl:value-of select="gmd:codeSpace/*/text()"/>:<xsl:value-of select="gmd:code/*/text()"/>",
-             "name": "<xsl:value-of select="gmd:code/*/@xlink:title"/>",
-             "url": "<xsl:value-of select="gmd:code/*/@xlink:href"/>"
+              "code": "<xsl:value-of select="gmd:code/*/text()"/>",
+              "codeSpace": "<xsl:value-of select="gmd:codeSpace/*/text()"/>",
+              "name": "<xsl:value-of select="gmd:code/*/@xlink:title"/>",
+              "url": "<xsl:value-of select="gmd:code/*/@xlink:href"/>"
             }
             </xsl:variable>
 

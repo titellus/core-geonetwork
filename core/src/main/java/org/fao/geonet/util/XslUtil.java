@@ -38,6 +38,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Locale;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -47,15 +48,19 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.fao.geonet.ApplicationContextHolder;
+import org.fao.geonet.SystemInfo;
 import org.fao.geonet.constants.Geonet;
+import org.fao.geonet.domain.UiSetting;
 import org.fao.geonet.domain.User;
 import org.fao.geonet.kernel.DataManager;
 import org.fao.geonet.kernel.SchemaManager;
+import org.fao.geonet.kernel.ThesaurusManager;
 import org.fao.geonet.kernel.search.CodeListTranslator;
 import org.fao.geonet.kernel.search.LuceneSearcher;
 import org.fao.geonet.kernel.search.Translator;
@@ -63,6 +68,7 @@ import org.fao.geonet.kernel.setting.SettingInfo;
 import org.fao.geonet.kernel.setting.SettingManager;
 import org.fao.geonet.languages.IsoLanguagesMapper;
 import org.fao.geonet.lib.Lib;
+import org.fao.geonet.repository.UiSettingsRepository;
 import org.fao.geonet.repository.UserRepository;
 import org.fao.geonet.schema.iso19139.ISO19139Namespaces;
 import org.fao.geonet.utils.GeonetHttpRequestFactory;
@@ -166,6 +172,61 @@ public final class XslUtil {
         return "";
     }
 
+    public static String getBuildNumber() {
+        return ApplicationContextHolder.get().getBean(SystemInfo.class).getScmRevision();
+    }
+
+    /**
+     * Get the UI configuration. Return the JSON string.
+     * @param key Optional key, if null, return a default configuration nammed 'srv'
+     *            if exist. If not, empty config is returned.
+     * @return
+     */
+    public static String getUiConfiguration(String key) {
+        final String defaultUiConfiguration = "srv";
+        UiSettingsRepository uiSettingsRepository = ApplicationContextHolder.get().getBean(UiSettingsRepository.class);
+
+        if (uiSettingsRepository != null) {
+            UiSetting one = null;
+            if (StringUtils.isNotEmpty(key)) {
+                one = uiSettingsRepository.findOne(key);
+            }
+            if (one == null) {
+                one = uiSettingsRepository.findOne(defaultUiConfiguration);
+            }
+            if (one != null) {
+                return one.getConfiguration();
+            } else {
+                return "{}";
+            }
+        }
+        return "{}";
+    }
+
+    /**
+     * Get a precise value in the JSON UI configuration
+     * @param key
+     * @param path JSON path to the property
+     * @return
+     */
+    public static String getUiConfigurationJsonProperty(String key, String path) {
+        String json = getUiConfiguration(key);
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            Object jsonObj = objectMapper.readValue(json, Object.class);
+
+            Object value = PropertyUtils.getProperty(jsonObj, path);
+            if (value != null) {
+                return value.toString();
+            } else {
+                return "";
+            }
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
     /**
      * Get a setting value
      */
@@ -192,6 +253,7 @@ public final class XslUtil {
         return "";
     }
 
+
     public static String getJsonSettingValue(String key, String path) {
         if (key == null) {
             return "";
@@ -202,6 +264,8 @@ public final class XslUtil {
                 SettingManager settingsMan = serviceContext.getBean(SettingManager.class);
                 if (settingsMan != null) {
                     String json = settingsMan.getValue(key);
+
+                    if (StringUtils.isEmpty(json)) return "";
 
                     ObjectMapper objectMapper = new ObjectMapper();
                     Object jsonObj = objectMapper.readValue(json, Object.class);
@@ -650,7 +714,7 @@ public final class XslUtil {
 
             final Envelope envelope = jts.getEnvelopeInternal();
             return
-                String.format("%f|%f|%f|%f",
+                String.format(Locale.US, "%f|%f|%f|%f",
                     envelope.getMinX(), envelope.getMinY(),
                     envelope.getMaxX(), envelope.getMaxY());
         } catch (Throwable e) {
@@ -716,7 +780,7 @@ public final class XslUtil {
         if (context != null) baseUrl = context.getBaseUrl();
 
         SettingInfo si = new SettingInfo();
-        return si.getSiteUrl() + "/" + baseUrl;
+        return si.getSiteUrl() + (!baseUrl.startsWith("/")?"/":"") + baseUrl;
     }
 
     public static String getLanguage() {
@@ -829,5 +893,27 @@ public final class XslUtil {
                 }
             }
         });
+    }
+
+
+    /**
+     * Utility method to retrieve the thesaurus dir from xsl processes.
+     *
+     * Usage:
+     *
+     *    <xsl:stylesheet
+     *      xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0"
+     *      ...
+     *      xmlns:java="java:org.fao.geonet.util.XslUtil" ...>
+     *
+     *     <xsl:variable name="thesauriDir" select="java:getThesaurusDir()"/>
+     *
+     * @return Thesaurus directory
+     */
+    public static String getThesaurusDir() {
+        ApplicationContext applicationContext = ApplicationContextHolder.get();
+        ThesaurusManager thesaurusManager = applicationContext.getBean(ThesaurusManager.class);
+
+        return thesaurusManager.getThesauriDirectory().toString();
     }
 }

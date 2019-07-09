@@ -446,5 +446,7 @@
     "categoriesUpdated": "Catégorie mise à jour.",
     "warnPublishDraft": "Lors de la publication d'une fiche ayant un statut brouillon, le statut passera à approuvé. Voulez-vous continuer ?",
     "canceWorkingCopy": "Annuler la copie de travail",
-    "deleteWorkingCopyRecordConfirm": "Voulez-vous vraiment supprimer la copie de travail ?"
+    "deleteWorkingCopyRecordConfirm": "Voulez-vous vraiment supprimer la copie de travail ?",
+    "apurTheme": "Thème Apur",
+    "apurThemeWithId": "Thème Apur"
 }

@@ -67,8 +67,8 @@
 
   <div class="row gn-row-topics" data-ng-show="searchInfo.count > 0">
     <div data-ng-class="fluidLayout ? 'container-fluid' : 'container'">
-      <div class="col-sm-12 col-md-9" data-ng-show="browse !== ''">
-        <h4>
+      <div class="col-sm-12 col-md-12" data-ng-show="browse !== ''">
+        <!--<h4>
           <span data-translate="">browseBy</span>
           <span
             data-ng-show="searchInfo.facet['inspireThemes'].length > 0 && searchInfo.facet['topicCats'].length > 0">
@@ -87,13 +87,33 @@
           <label
             data-ng-show="searchInfo.facet['topicCats'].length > 0 && searchInfo.facet['inspireThemes'].length == 0"><span
             data-translate="">topics</span></label>
-        </h4>
+        </h4>-->
 
   <!--       <div class="row">
           <span id="chips-card" data-ng-repeat="(key, facet) in searchInfo.facet['topicCats']"
                 class="col-xs-6 col-sm-4 col-lg-3" data-ng-show="browse === 'topics'"> -->
         <div class="row">
-          <span data-ng-repeat="(key, facet) in searchInfo.facet['topicCats']"
+          <span data-ng-repeat="(key, facet) in searchInfo.facet['apurThemeWithId'] track by $index"
+                class="col-xs-12 col-sm-6 col-md-4 chips-card">
+            <div class="badge-result badge-result-topic clearfix">
+              <a class="pull-left clearfix"
+                 title="{{facet['@name'].split('|')[1]}}"
+                 data-ng-href="#/search?facet.q=apurTheme%2F{{facet['@name'].split('|')[1] | encodeURIComponent | encodeURIComponent}}">
+                <span class="badge-icon badge-result-topic pull-left"
+                      style="line-height: 40px;">
+                  <img style="width:40px"
+                       src="../../images/harvesting/apur/{{facet['@name'].split('|')[0]}}.png"/>
+                </span>
+                <span class="badge-text pull-left">
+                  <span class="gn-icon-label">{{facet['@name'].split('|')[1]}}</span>
+                </span>
+              </a>
+              <span class="badge pull-left">{{facet['@count']}}</span>
+            </div>
+          </span>
+
+
+          <!--<span data-ng-repeat="(key, facet) in searchInfo.facet['topicCats']"
                 data-ng-show="browse === 'topics'"
                 class="col-xs-12 col-sm-6 col-md-4 chips-card">
             <div class="badge-result badge-result-topic clearfix">
@@ -127,10 +147,10 @@
               </a>
               <span class="badge pull-left">{{facet['@count']}}</span>
             </div>
-          </span>
+          </span>-->
         </div>
       </div>
-      <div class="col-sm-12 col-md-3" data-ng-show="searchInfo.facet['types'].length > 0">
+      <!--<div class="col-sm-12 col-md-3" data-ng-show="searchInfo.facet['types'].length > 0">
         <h4>
           <span data-translate="">browseTypes</span>
         </h4>
@@ -153,7 +173,7 @@
               </div>
             </span>
         </div>
-      </div>
+      </div>-->
     </div>
   </div>
   <!-- /.gn-row-topics -->

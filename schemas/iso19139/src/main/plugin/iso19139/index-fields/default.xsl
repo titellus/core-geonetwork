@@ -62,6 +62,9 @@
   <xsl:variable name="inspire-theme"
                 select="if ($inspire!='false') then $inspire-thesaurus//skos:Concept else ''"/>
 
+  <xsl:variable name="apur-themes"
+                select="document(concat('file:///', replace($thesauriDir, '\\', '/'), '/external/thesauri/theme/apur-themes.rdf'))//skos:Concept"/>
+
   <!-- If identification creation, publication and revision date
     should be indexed as a temporal extent information (eg. in INSPIRE
     metadata implementing rules, those elements are defined as part
@@ -323,6 +326,17 @@
           <xsl:variable name="keyword" select="string(.)"/>
 
           <Field name="keyword" string="{$keyword}" store="true" index="true"/>
+
+
+          <!-- APUR -->
+          <xsl:variable name="apurTheme"
+                        select="$apur-themes[skos:prefLabel/normalize-space() = normalize-space($keyword)]"/>
+          <xsl:if test="count($apurTheme) > 0">
+            <xsl:variable name="apurUri"
+                          select="$apurTheme/@rdf:about"/>
+            <Field name="apurTheme" string="{$keyword}" store="true" index="true"/>
+            <Field name="apurThemeWithId" string="{concat(replace($apurUri, 'https://www.apur.org/registre/themes/', ''), '|', $keyword)}" store="true" index="true"/>
+          </xsl:if>
 
           <!-- If INSPIRE is enabled, check if the keyword is one of the 34 themes
                and index annex, theme and theme in english. -->

@@ -84,6 +84,8 @@
     <facet name="topicCat" indexKey="topicCat" label="topicCats" localized="true"/>
     <facet name="category" indexKey="_cat" label="categories" localized="true"/>
     <facet name="inspireTheme" indexKey="inspiretheme" label="inspireThemes"/>
+    <facet name="apurTheme" indexKey="apurTheme" label="apurTheme"/>
+    <facet name="apurThemeWithId" indexKey="apurThemeWithId" label="apurThemeWithId"/>
     <facet name="inspireThemeWithAc" indexKey="inspirethemewithac" label="inspireThemesWithAc"/>
     <facet name="inspireThemeURI" indexKey="inspirethemeuri" label="inspireThemesURI"/>
     <facet name="denominator" indexKey="denominator" label="denominators"/>
@@ -135,15 +137,17 @@
     <summaryType name="details" format="DIMENSION">
       <item facet="type" translator="codelist:gmd:MD_ScopeCode"/>
       <item facet="mdActions"/>
-      <item facet="topicCat" translator="codelist:gmd:MD_TopicCategoryCode" max="20"/>
-      <item facet="inspireThemeURI" sortBy="value" sortOrder="asc" max="35"
-            translator="term:http://inspire.ec.europa.eu/theme"/>
+      <item facet="apurTheme"/>
+      <item facet="apurThemeWithId"/>
+<!--      <item facet="topicCat" translator="codelist:gmd:MD_TopicCategoryCode" max="20"/>-->
+<!--      <item facet="inspireThemeURI" sortBy="value" sortOrder="asc" max="35"-->
+<!--            translator="term:http://inspire.ec.europa.eu/theme"/>-->
       <!--<item facet="inspireTheme" sortBy="value" sortOrder="asc" max="35"/>-->
       <!--<item facet="inspireThemeWithAc" sortBy="value" sortOrder="asc" max="35"/>-->
       <item facet="gemetKeyword"
             translator="term:http://geonetwork-opensource.org/gemet"/>
       <item facet="keyword" max="15"/>
-      <item facet="orgName" max="25"/>
+      <item facet="orgName" max="85"/>
       <!--<item facet="sourceCatalog"
             translator="db:org.fao.geonet.repository.SourceRepository:findOneByUuid"/>-->
       <item facet="createDateYear" sortBy="value" sortOrder="desc" max="40"/>
@@ -187,6 +191,7 @@
     See above. -->
     <summaryType name="hits">
       <item facet="type" translator="codelist:gmd:MD_ScopeCode"/>
+      <item facet="apurThemeWithId"/>
       <item facet="topicCat" translator="codelist:gmd:MD_TopicCategoryCode" max="20"/>
       <item facet="inspireTheme" sortBy="value" sortOrder="asc" max="35"/>
       <item facet="inspireThemeWithAc" sortBy="value" sortOrder="asc" max="35"/>

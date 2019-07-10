@@ -392,14 +392,20 @@
    *  * waitForUser: wait until a user id is available to trigger the search.
    */
   module.directive('ngSearchForm', [
-    'gnSearchLocation',
-    function(gnSearchLocation) {
+    'gnSearchLocation', 'gnSearchManagerService', 'gnMetadataActions',
+    function(gnSearchLocation, gnSearchManagerService, gnMetadataActions) {
       return {
         restrict: 'A',
         scope: true,
         controller: searchFormController,
         controllerAs: 'controller',
         link: function(scope, element, attrs) {
+          scope.exportAsCsv = function () {
+            var bucket = 's101'
+            gnSearchManagerService.selectAll(bucket).then(function(r) {
+              gnMetadataActions.exportCSV(bucket)
+            });
+          };
 
           scope.resetSearch = function(htmlElementOrDefaultSearch, preserveGeometrySearch) {
             if (angular.isObject(htmlElementOrDefaultSearch)) {

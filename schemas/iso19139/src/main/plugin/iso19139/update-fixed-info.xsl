@@ -685,6 +685,26 @@
   </xsl:template>
 
 
+  <!-- Add with held for internal network protocols -->
+  <xsl:template match="gmd:linkage" priority="10">
+    <xsl:choose>
+      <xsl:when test="
+        contains(lower-case(string(../gmd:protocol/gco:CharacterString)), 'db') or
+        contains(lower-case(string(../gmd:protocol/gco:CharacterString)), 'file')">
+        <gmd:linkage gco:nilReason="withheld">
+          <xsl:apply-templates select="@*"/>
+          <xsl:apply-templates select="./*" />
+        </gmd:linkage>
+      </xsl:when>
+      <xsl:otherwise>
+        <gmd:linkage >
+          <xsl:apply-templates select="@*"/>
+          <xsl:apply-templates select="./*" />
+        </gmd:linkage>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
   <!-- Remove geographic/temporal extent if doesn't contain child elements.
        Used to clean up the element, for example when removing the the temporal extent
        in the editor, to avoid an element like <gmd:extent><gmd:EX_Extent></gmd:EX_Extent></gmd:extent>,

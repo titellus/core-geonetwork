@@ -85,9 +85,9 @@
             ifNotOperation="download">
       <keepMarkedElement gco:nilReason="withheld"/>
     </filter>
-    <filter
-      xpath="*//gmd:onLine[*/gmd:protocol/gco:CharacterString = 'WWW:DOWNLOAD-1.0-http--download']"
-      ifNotOperation="download"/>
+    <!--<filter
+      xpath="*//gmd:onLine[*/gmd:protocol/gco:CharacterString = 'WWW:DOWNLOAD-1.0-http&#45;&#45;download']"
+      ifNotOperation="download"/>-->
     <filter xpath="*//gmd:onLine[starts-with(*/gmd:protocol/gco:CharacterString, 'OGC:WMS')]"
             ifNotOperation="dynamic"/>
   </filters>

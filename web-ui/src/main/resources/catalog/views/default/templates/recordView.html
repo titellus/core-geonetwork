@@ -210,7 +210,31 @@
                 </button>
               </td>
             </tr>
-            <tr data-ng-repeat="(thesaurus, keywords) in mdView.current.record.keywordGroup">
+
+            <tr data-ng-if="mdView.current.record.apurThemeWithId.length > 0 ||
+                            mdView.current.record.apurThemeWithId.length > 0">
+              <th data-translate="">apurTheme</th>
+              <td>
+                <div class="badge-result badge-result-topic clearfix">
+                  <a data-ng-repeat="cat in mdView.current.record.apurThemeWithId track by $index"
+                     class="pull-left clearfix"
+                     title="{{cat.split('|')[1]}}"
+                     data-ng-href="#/search?facet.q=apurTheme%2F{{cat.split('|')[1] | encodeURIComponent | encodeURIComponent}}">
+                    <span class="badge-icon badge-result-topic pull-left"
+                          style="line-height: 40px;">
+                      <img style="width:40px"
+                           src="../../images/harvesting/apur/{{cat.split('|')[0]}}.png"/>
+                    </span>
+                      <span class="badge-text pull-left">
+                      <span class="gn-icon-label">{{cat.split('|')[1]}}</span>
+                    </span>
+                  </a>
+                </div>
+              </td>
+            </tr>
+
+            <tr data-ng-repeat="(thesaurus, keywords) in mdView.current.record.keywordGroup"
+                data-ng-show="thesaurus !== 'Thèmes de l\'Apur'">
               <th>{{thesaurus | translate}}</th>
               <td>
                 <ul>

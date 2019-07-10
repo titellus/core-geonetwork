@@ -195,6 +195,7 @@
     <entry>
       <code>custodian</code>
       <label>Gestionnaire</label>
+<!--      <label>Référent apur</label>-->
       <description>Acteur responsable de la gestion et de la mise à jour de la ressource
       </description>
     </entry>

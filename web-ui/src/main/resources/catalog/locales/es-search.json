@@ -463,5 +463,12 @@
     "clickToSelect": "Pulsa para seleccionar y deseleccionar",
     "filterDataDescription": "Selecciona una capa en el mapa para empezar a filtrar features asociadas al WFS (si existen). Las features deben primero ser indexadas por un administrador.",
     "WPSDescription": "Introduce una URL de un servicio WPS para empezar el proceso a través de un formulario dinámico. Los procesos WPS usados recientemente se mostrarán en la segunda pestaña.",
-    "noLayersFound": "No se encontraron capas"
+    "noLayersFound": "No se encontraron capas",
+    "regions_eng": "Regions",
+    "regions_spa": "Regions",
+    "regions_fre": "Regions",
+    "iwrmThemes": "IWRM Themes",
+    "iwrmThemes_fre": "IWRM Themes",
+    "iwrmThemes_spa": "IWRM Themes",
+    "iwrmThemes_eng": "IWRM Themes"
 }

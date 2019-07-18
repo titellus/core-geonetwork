@@ -463,5 +463,12 @@
     "clickToSelect": "Cliquer pour sélectionner ou désélectionner",
     "filterDataDescription": "Choisir une couche sur la carte pour filtrer les objets géographiques. Les objets doivent être indexés au préalable par l'administrateur du catalogue.",
     "WPSDescription": "Saisir l'URL du service de traitement (WPS) à utiliser. Les derniers utilisés sont dans l'onglet suivant. ",
-    "noLayersFound": "Aucune couche."
+    "noLayersFound": "Aucune couche.",
+    "regions_eng": "Régions",
+    "regions_spa": "Régions",
+    "regions_fre": "Régions",
+    "iwrmThemes": "Thèmes IWRM",
+    "iwrmThemes_fre": "Thèmes IWRM",
+    "iwrmThemes_spa": "Thèmes IWRM",
+    "iwrmThemes_eng": "Thèmes IWRM"
 }

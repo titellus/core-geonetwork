@@ -180,6 +180,12 @@
     <constructor-arg name="conceptScheme" value="http://oieau.org/iwrm/themes"/>
     <constructor-arg name="langCode" value="spa"/>
   </bean>
+  <bean id="iwrmThemeKeywordClassifierFre"
+        class="org.fao.geonet.kernel.search.classifier.TermLabel" lazy-init="true">
+    <constructor-arg name="finder" ref="ThesaurusManager"/>
+    <constructor-arg name="conceptScheme" value="http://oieau.org/iwrm/themes"/>
+    <constructor-arg name="langCode" value="fre"/>
+  </bean>
 
   <bean id="regionKeywordClassifierEng"
         class="org.fao.geonet.kernel.search.classifier.TermLabel" lazy-init="true">
@@ -192,6 +198,12 @@
     <constructor-arg name="finder" ref="ThesaurusManager"/>
     <constructor-arg name="conceptScheme" value="http://oieau.org/iwrm/country-basin"/>
     <constructor-arg name="langCode" value="spa"/>
+  </bean>
+  <bean id="regionKeywordClassifierFre"
+        class="org.fao.geonet.kernel.search.classifier.TermLabel" lazy-init="true">
+    <constructor-arg name="finder" ref="ThesaurusManager"/>
+    <constructor-arg name="conceptScheme" value="http://oieau.org/iwrm/country-basin"/>
+    <constructor-arg name="langCode" value="fre"/>
   </bean>
 
   <!--

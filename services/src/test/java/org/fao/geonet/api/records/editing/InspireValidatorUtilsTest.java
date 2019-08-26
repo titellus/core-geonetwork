@@ -1,25 +1,26 @@
 package org.fao.geonet.api.records.editing;
 
-import static org.junit.Assert.assertEquals;
-
-import org.fao.geonet.kernel.setting.SettingManager;
-import org.fao.geonet.kernel.setting.Settings;
+import javassist.NotFoundException;
+import org.fao.geonet.services.AbstractServiceIntegrationTest;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import javassist.NotFoundException;
+import static org.junit.Assert.assertEquals;
 
-public class InspireValidatorUtilsTest {
+import java.io.IOException;
 
-    private SettingManager sm = Mockito.mock(SettingManager.class);
+public class InspireValidatorUtilsTest extends AbstractServiceIntegrationTest {
 
-    private static String URL = "http://inspire-sandbox.jrc.ec.europa.eu/etf-webapp/";
+    private static String URL = "http://inspire-sandbox.jrc.ec.europa.eu/etf-webapp";
+
+    @Autowired
+    InspireValidatorUtils inspireValidatorUtils;
 
     @Test
     public void testGetReportUrl() {
 
-        String reportUrl = InspireValidatorUtils.getReportUrl(URL, "123");
+        String reportUrl = inspireValidatorUtils.getReportUrl(URL, "123");
 
         assertEquals(URL + "/v2/TestRuns/123.html", reportUrl);
     }
@@ -27,26 +28,24 @@ public class InspireValidatorUtilsTest {
     @Test
     public void testGetReportUrlJSON() {
 
-        String reportUrl = InspireValidatorUtils.getReportUrlJSON(URL, "123");
+        String reportUrl = inspireValidatorUtils.getReportUrlJSON(URL, "123");
 
         assertEquals(URL + "/v2/TestRuns/123.json", reportUrl);
     }
 
     @Test
     @Ignore
-    public void testLifeCycle() {
+    public void testLifeCycle() throws IOException {
 
-        sm.setValue(Settings.SYSTEM_PROXY_USE, false);
-
-        // assertEquals(InspireValidatorUtils.checkServiceStatus("http://wrong.url.eu", null, sm), false);
+        assertEquals(inspireValidatorUtils.checkServiceStatus("http://wrong.url.eu"), false);
 
         // FIRST TEST IF OFFICIAL ETF IS AVAILABLE
         // Needed to avoid GN errors when ETF is not available
-        if (InspireValidatorUtils.checkServiceStatus(URL, null, sm)) {
+        if (inspireValidatorUtils.checkServiceStatus(URL)) {
 
             try {
                 // No file
-                InspireValidatorUtils.submitFile(URL, null, "GN UNIT TEST ", sm);
+                inspireValidatorUtils.submitFile(URL, null, "Metadata (TG version 1.3)", "GN UNIT TEST ");
             } catch (IllegalArgumentException e) {
                 // RIGHT EXCEPTION
             } catch (Exception e) {
@@ -55,7 +54,7 @@ public class InspireValidatorUtilsTest {
 
             try {
                 // Valid but not found test ID
-                InspireValidatorUtils.isReady(URL, "IED123456789012345678901234567890123", null, sm);
+                inspireValidatorUtils.isReady(URL, "IED123456789012345678901234567890123");
                 assertEquals("No exception!", "NotFoundException", "No Exception");
             } catch (NotFoundException e) {
                 // RIGHT EXCEPTION
@@ -65,7 +64,7 @@ public class InspireValidatorUtilsTest {
 
             try {
                 // Test ID in wrong format
-                assertEquals(InspireValidatorUtils.isPassed(URL, "1", null, sm), null);
+                assertEquals(inspireValidatorUtils.isPassed(URL, "1"), null);
             } catch (Exception e) {
                 assertEquals("Unexpected exception.", "Exception", "No Exception");
             }
@@ -76,4 +75,6 @@ public class InspireValidatorUtilsTest {
 
     }
 
+
 }
+

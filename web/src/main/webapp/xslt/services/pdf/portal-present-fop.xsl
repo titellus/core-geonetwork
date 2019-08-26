@@ -68,8 +68,7 @@
           <!-- Experimental / Combine all record using a dedicated formatter.
           This does not work for private record as fox is using HTTP call
           without authentication. Also paging will not work and link from
-          toc does not either. A better approach may be to use iText in Java
-          directly. It may be also less memory consuming. -->
+          toc does not. -->
           <xsl:for-each select="/root/response/*[name() != 'summary' and name() != 'from' and name() != 'to']" >
             <fox:external-document content-type="pdf"
                                    src="{concat($nodeUrl, 'api/records/', geonet:info/uuid, '/formatters/', $formatter)}" />

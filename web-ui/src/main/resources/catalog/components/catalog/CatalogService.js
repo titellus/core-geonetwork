@@ -549,7 +549,7 @@
   module.factory('Metadata', function() {
     function Metadata(k) {
       $.extend(true, this, k);
-      var listOfArrayFields = ['topicCat', 'category', 'keyword',
+      var listOfArrayFields = ['topicCat', 'category', 'keyword', 'apurTheme',
         'securityConstraints', 'resourceConstraints', 'legalConstraints',
         'denominator', 'resolution', 'geoDesc', 'geoBox', 'inspirethemewithac',
         'status', 'status_text', 'crs', 'identifier', 'responsibleParty',
@@ -738,14 +738,14 @@
             } else if (s[0] === 'overview') {
               images.big = s[1];
             }
-            
+
             //Is it a draft?
-            if( s[1].indexOf("/api/records/") >= 0 
+            if( s[1].indexOf("/api/records/") >= 0
                 &&  s[1].indexOf("/api/records/")<  s[1].indexOf("/attachments/")) {
               s[1] += "?approved=" + (this.draft != 'y');
             }
-              
-            
+
+
             images.list[insertFn]({url: s[1], label: s[2]});
           }
         }

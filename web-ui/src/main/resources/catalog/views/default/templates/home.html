@@ -1,43 +1,47 @@
-<div class="container-fluid">
+<div>
   <div class="row gn-row-main">
-    <div class="col-sm-8 col-sm-offset-2">
+    <div data-ng-class="fluidLayout ? 'container-fluid' : 'container'">
+      <div class="col-sm-8 col-sm-offset-2">
 
-      <div class="input-group gn-form-any">
-        <input type="text"
-               class="form-control input-lg"
-               autofocus=""
-               data-ng-model="homeAnyField"
-               data-ng-model-options="modelOptions"
-               placeholder="{{'anyPlaceHolder' | translate}}"
-               aria-label="{{'anyPlaceHolder' | translate}}"
-               data-ng-keyup="$event.keyCode == 13 && goToSearch(homeAnyField)"
-               data-typeahead="address for address in getAnySuggestions($viewValue)"
-               data-typeahead-loading="anyLoading"
-               data-typeahead-min-length="1"/>
-        <span class="input-group-btn">
-          <a class="btn btn-primary btn-lg"
-             type="button"
-             data-ng-href="#/search?any={{homeAnyField}}">
-            <i class="fa fa-search"></i>
-            <span class="sr-only" data-translate="">search</span>
-          </a>
-        </span>
+        <div class="input-group gn-form-any">
+          <input type="text"
+                class="form-control input-lg"
+                autofocus=""
+                data-ng-model="homeAnyField"
+                data-ng-model-options="modelOptions"
+                placeholder="{{'anyPlaceHolder' | translate}}"
+                aria-label="{{'anyPlaceHolder' | translate}}"
+                data-ng-keyup="$event.keyCode == 13 && goToSearch(homeAnyField)"
+                data-typeahead="address for address in getAnySuggestions($viewValue)"
+                data-typeahead-loading="anyLoading"
+                data-typeahead-min-length="1"/>
+          <span class="input-group-btn">
+            <a class="btn btn-primary btn-lg"
+              type="button"
+              data-ng-href="#/search?any={{homeAnyField}}">
+              <i class="fa fa-search"></i>
+              <span class="sr-only" data-translate="">search</span>
+            </a>
+          </span>
+        </div>
+
+        <div data-translate="" class="search-over"
+            data-translate-values="{records: '{{searchInfo.count}}'}">searchOver</div>
+
       </div>
-
-      <div data-translate="" class="search-over"
-           data-translate-values="{records: '{{searchInfo.count}}'}">searchOver</div>
-
     </div>
   </div>
+  <!-- /.gn-row-main -->
 
   <form class="form-horizontal"
-        role="grid"
+        role="form"
         data-ng-controller="gnsSearchTopEntriesController"
         data-ng-search-form=""
         data-runSearch="true"
         data-ng-show="searchResults.records.length > 0">
     <div class="row gn-top-records" role="row">
-      <h4 data-translate="">topMaps</h4>
+      <div data-ng-class="fluidLayout ? 'container-fluid' : 'container'">
+        <h4 data-translate="">topMaps</h4>
 
         <input type="hidden" name="_csrf" value="{{csrf}}"/>
 
@@ -45,14 +49,18 @@
              data-gn-results-container=""
              data-search-results="searchResults"
              data-template-url="resultTemplate"></div>
+      </div>
     </div>
+    <!-- /.gn-top-records -->
   </form>
 
   <div class="row" data-ng-show="searchInfo.count == 0">
-    <div data-ng-show="searchInfo.count == 0"
-         class="col-md-offset-4 col-md-4 alert alert-warning">
-      <span data-translate="">noDataInCatalog</span>
-      <div data-gn-need-help="user-guide/quick-start/index.html"></div>
+    <div data-ng-class="fluidLayout ? 'container-fluid' : 'container'">
+      <div data-ng-show="searchInfo.count == 0"
+          class="col-md-offset-2 col-md-8 alert alert-warning">
+        <span data-translate="">noDataInCatalog</span>
+        <div data-gn-need-help="user-guide/quick-start/index.html"></div>
+      </div>
     </div>
   </div>
 
@@ -122,10 +130,6 @@
             <span class="badge pull-left">{{facet['@count']}}</span>
           </div>
         </span>
-
-
-
-
         <span id="chips-card"
               data-ng-repeat="(key, facet) in searchInfo.facet['iwrmThemeURI'] track by $index"
               data-ng-show="browse === 'iwrmThemeURI'"
@@ -161,6 +165,7 @@
                  class="pull-left clearfix"
                  data-ng-href="#/search?facet.q=type%2F{{facet['@name']}}">
                 <span class="badge-icon pull-left">
+
                   <i class="fa fa-3x fa-table gn-icon gn-icon-{{facet['@name']}}"></i>
                 </span>
                 <span class="badge-text pull-left">
@@ -170,14 +175,18 @@
               <span class="badge pull-left">{{facet['@count']}}</span>
             </div>
           </span>
+
+        </div>
       </div>
     </div>
   </div>
-  
+  <!-- /.gn-row-topics -->
+
   <div class="row gn-row-info"
        data-ng-show="searchInfo.count > 0"
        data-ng-class="{'gn-info-list-blocks': type === 'blocks' || type === undefined, 'gn-info-list-large': type === 'large', 'gn-info-list-small': type === 'small'}">
-    <div class="col-sm-12">
+    <div data-ng-class="fluidLayout ? 'container-fluid' : 'container'">
+      <div class="col-sm-12">
 
       <!-- toggle buttons -->
       <div id="info-toggle-buttons" class="btn-group pull-right" data-toggle="buttons">
@@ -204,7 +213,7 @@
         </button>
       </div>
 
-      <tabset id="info-tabset pull-left" type="pills" justified="false">
+      <tabset id="info-tabset pull-left" type="pills" justified="false" role="tablist">
         <tab heading="{{'lastRecords' | translate}}"
              role="tab"
              active="infoTabs.lastRecords.active">
@@ -232,36 +241,13 @@
             <div data-gn-info-list=""></div>
           </form>
         </tab>
-        <tab heading="{{'topMaps' | translate}}"
-                   active="infoTabs.topMaps.active">
-       <!--   <form class="form-horizontal"
-                role="nav"
-                data-ng-controller="gnsSearchTopEntriesController"
-                data-ng-search-form=""
-                data-runSearch="true"
-                data-ng-show="searchResults.records.length > 0">
-            <div class="row gn-top-records">
-              <h4 data-translate="">topMaps</h4>
 
-              <input type="hidden" name="_csrf" value="{{csrf}}"/>
-
-              <div data-ng-show="searchResults.records.length > 0"
-                   data-gn-results-container=""
-                   data-search-results="searchResults"
-                   data-template-url="resultTemplate"></div>
-            </div>
-          </form>
-          -->
-
-
-          <form class="form-horizontal"
-                role="nav"
-                data-ng-controller="gnsSearchTopEntriesController"
-                data-ng-search-form=""
-                data-runSearch="true"
-                data-ng-show="searchResults.records.length > 0">
-            <input type="hidden" name="_csrf" value="{{csrf}}"/>
-            <div data-gn-info-list=""></div>
+        <tab heading="{{'featuredUserSearches' | translate}}"
+             data-ng-if="isUserSearchesEnabled && displayFeaturedSearchesPanel"
+             role="tab"
+             active="infoTabs.featuredSearches.active">
+          <form class="form-horizontal">
+            <div data-gn-user-searches-list></div>
           </form>
         </tab>
         <tab heading="{{'Comments' | translate}}"
@@ -274,8 +260,8 @@
           </form>
         </tab>
       </tabset>
+      </div>
     </div>
   </div>
   <!-- /.gn-row-info -->
-
 </div>

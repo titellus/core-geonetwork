@@ -951,7 +951,7 @@
       <properties>
         <es.spring.profile>es</es.spring.profile>
 
-        <es.port>9200</es.port>
+        <es.port>9202</es.port>
         <es.host>localhost</es.host>
         <es.url>http://${es.host}:${es.port}</es.url>
         <es.index.features>gn-features</es.index.features>

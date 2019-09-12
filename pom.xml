@@ -1346,7 +1346,7 @@
     <!-- Define if redirection should ignore HTTP headers,
     Cookie or URL parameters. Set it to true to always redirect
     to the default language. -->
-    <language.forceDefault>true</language.forceDefault>
+    <language.forceDefault>false</language.forceDefault>
 
     <!-- Define using CRON expression
      when watchlist notifier is triggered (Default 4AM) -->

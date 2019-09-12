@@ -145,7 +145,7 @@
 
     <facet name="maintenanceAndUpdateFrequency" indexKey="cl_maintenanceAndUpdateFrequency"
            label="maintenanceAndUpdateFrequencies"/>
-    <facet name="mdActions" indexKey="_mdActions" label="mdActions"/> 
+    <facet name="mdActions" indexKey="_mdActions" label="mdActions"/>
   </facets>
 
   <summaryTypes>
@@ -173,8 +173,8 @@
       <!--<item facet="keyword" max="15"/>-->
       <item facet="orgName" max="25"/>
       <item facet="mdActions"/>
-      <!--<item facet="sourceCatalog"
-            translator="db:org.fao.geonet.repository.SourceRepository:findOneByUuid"/>-->
+      <item facet="sourceCatalog"
+            translator="db:org.fao.geonet.repository.SourceRepository:findOneByUuid"/>
       <!--<item facet="createDateYear" sortBy="value" sortOrder="desc" max="40"/>-->
       <item facet="format" max="15" sortBy="value" sortOrder="asc"/>
       <!--<item facet="spatialRepresentationType"

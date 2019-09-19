@@ -279,8 +279,9 @@
           }
 
           // Hack for Guyane
-          config.name = config.name.replace(' : WMS_Capabilities de la ressource', '');
-
+          if (config.name) {
+            config.name = config.name.replace(' : WMS_Capabilities de la ressource', '');
+          }
           // if an external viewer is defined, use it here
           if (gnExternalViewer.isEnabled()) {
             gnExternalViewer.viewService({

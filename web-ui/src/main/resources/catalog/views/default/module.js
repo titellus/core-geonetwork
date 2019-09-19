@@ -219,7 +219,7 @@
       $scope.toggleListType = function(type) {
         $scope.type = type;
       };
-      
+
       $scope.infoTabs = {
         lastRecords: {
           title: 'lastRecords',
@@ -277,6 +277,9 @@
           } else if (link.title) {
             config.name = link.title;
           }
+
+          // Hack for Guyane
+          config.name = config.name.replace(' : WMS_Capabilities de la ressource', '');
 
           // if an external viewer is defined, use it here
           if (gnExternalViewer.isEnabled()) {

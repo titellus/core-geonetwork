@@ -83,11 +83,21 @@ public class EsSearchManager implements ISearchManager {
     @Value("${es.index.records:gn-records}")
     private String index = "records";
 
+    /**
+     * Index containing only public records.
+     */
+    @Value("${es.index.records_public:gn-records-public}")
+    private String publicIndex = "records";
+
     @Value("${es.index.records.type:records}")
     private String indexType = "records";
 
     public String getIndex() {
         return index;
+    }
+
+    public String getPublicIndex() {
+        return publicIndex;
     }
 
     public String getIndexType() {
@@ -204,10 +214,11 @@ public class EsSearchManager implements ISearchManager {
 
     private int commitInterval = 200;
     private Map<String, String> listOfDocumentsToIndex = new HashMap<>();
+    private Map<String, String> listOfPublicDocumentsToIndex = new HashMap<>();
 
     @Autowired
     SourceRepository sourceRepository;
-
+    
     @Override
     public void index(Path schemaDir, Element metadata, String id, List<Element> moreFields,
                       MetadataType metadataType, String root, boolean forceRefreshReaders) throws Exception {
@@ -240,9 +251,11 @@ public class EsSearchManager implements ISearchManager {
         doc.put("scope", settingManager.getSiteName());
         doc.put("harvesterUuid", settingManager.getSiteId());
         doc.put("harvesterId", settingManager.getNodeURL());
-        Map<String, String> docListToIndex = new HashMap<>();
-        docListToIndex.put(id, mapper.writeValueAsString(doc));
-        listOfDocumentsToIndex.put(id, mapper.writeValueAsString(doc));
+        String json = mapper.writeValueAsString(doc);
+        if (doc.get("isPublishedToAll").asBoolean()) {
+            listOfPublicDocumentsToIndex.put(id, json);
+        }
+        listOfDocumentsToIndex.put(id, json);
         if (listOfDocumentsToIndex.size() == commitInterval) {
             sendDocumentsToIndex();
         }
@@ -252,6 +265,10 @@ public class EsSearchManager implements ISearchManager {
         synchronized (this) {
             if (listOfDocumentsToIndex.size() > 0) {
                 client.bulkRequest(index, listOfDocumentsToIndex);
+                if (StringUtils.isNotEmpty(publicIndex)) {
+                    client.bulkRequest(publicIndex, listOfPublicDocumentsToIndex);
+                    listOfPublicDocumentsToIndex.clear();
+                }
                 listOfDocumentsToIndex.clear();
             }
         }
@@ -447,6 +464,10 @@ public class EsSearchManager implements ISearchManager {
         SettingManager settingManager = ApplicationContextHolder.get().getBean(SettingManager.class);
         client.deleteByQuery(index,
             "harvesterUuid:\\\"" + settingManager.getSiteId() + "\\\"");
+        if (StringUtils.isNotEmpty(publicIndex)) {
+            client.deleteByQuery(publicIndex,
+                "harvesterUuid:\\\"" + settingManager.getSiteId() + "\\\"");
+        }
     }
 
 //    public void iterateQuery(SolrQuery params, final Consumer<SolrDocument> callback) throws IOException, SolrServerException {

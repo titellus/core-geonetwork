@@ -265,7 +265,7 @@
                                            color="$link-color"
                                            external-destination="{$url}">
                               <fo:external-graphic padding-left="4pt"
-                                                   content-width="100%">
+                                                   content-width="50%">
                                 <xsl:attribute name="src">url('<xsl:value-of
                                   select="$url"
                                 />')"

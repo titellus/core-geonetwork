@@ -1407,7 +1407,7 @@
                 '     id="gn-img-modal-"' + img.id + '>' +
                 '<div class="modal-dialog gn-img-modal in">' +
                 '  <button type=button class="btn btn-link gn-btn-modal-img">' +
-                '<i class="fa fa-times text-danger"/></button>' +
+                '<i class="fa fa-2x fa-times text-danger"/></button>' +
                 '  <img src="' + (img.url || img.id) + '"/>' +
                 (label != '' ? labelDiv : '') +
                 '</div>' +

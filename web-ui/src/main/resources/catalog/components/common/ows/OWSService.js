@@ -86,8 +86,6 @@
   var unmarshaller110 = context110.createUnmarshaller();
   var unmarshaller20 = context20.createUnmarshaller();
   var cachedGetCapabilitiesUrls = {};
-  // var timeout = -1;
-  var timeout = 60 * 1000;
 
   module.provider('gnOwsCapabilities', function() {
     this.$get = ['$http', '$q', '$translate',
@@ -279,7 +277,7 @@
               if (true) {
                 $http.get(url, {
                   cache: true,
-                  timeout: timeout
+                  timeout: 5000
                 })
                     .success(function(data) {
                       try {
@@ -315,7 +313,7 @@
 
                 $http.get(url, {
                   cache: true,
-                  timeout: timeout
+                  timeout: 5000
                 })
                     .success(function(data, status, headers, config) {
                       if (data) {
@@ -347,7 +345,7 @@
               if (gnUrlUtils.isValid(url)) {
                 $http.get(url, {
                   cache: true,
-                  timeout: timeout
+                  timeout: 5000
                 })
                     .success(function(data, status, headers, config) {
                       var xfsCap = parseWFSCapabilities(data);
@@ -447,7 +445,7 @@
             return extent;
           },
 
-
+          
           getLayerInfoFromCap: function(layerName, capObj, uuid) {
             var needles = [];
             var layers = capObj.layers || capObj.Layer;
@@ -467,7 +465,7 @@
                 if (capObj.Request) {
                   layers[i].capRequest = capObj.Request;
                 }
-
+                
                 //check layername
                 var lId = layers[i].Identifier;
                 var capName = layers[i].Name ||
@@ -512,7 +510,7 @@
                 }
               }
             }
-
+            
             //FIXME: remove duplicates
             if (needles.length >= layerList.length) {
               if (capObj.version) {

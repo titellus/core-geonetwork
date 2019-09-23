@@ -324,13 +324,15 @@
                       <xsl:call-template name="info-rows">
                         <xsl:with-param name="label" select="$oldGuiStrings/lastUpdate"/>
                         <xsl:with-param name="value"
-                                        select="geonet:info/changeDate"/>
+                                        select="substring-before(geonet:info/changeDate, 'T')"/>
                       </xsl:call-template>
+<!--
 
                       <xsl:call-template name="metadata-resources">
                         <xsl:with-param name="gui" select="$oldGuiStrings"/>
                         <xsl:with-param name="metadata" select="."/>
                       </xsl:call-template>
+-->
 
                       <xsl:call-template name="info-rows">
                         <xsl:with-param name="label" select="$oldGuiStrings/onTheWeb"/>

@@ -563,6 +563,8 @@ public final class XslUtil {
                      * an exception will occur if gmd:language has more than 3 characters but
                      * does not have a semicolon.
                      */
+                } else if (iso3LangCode.length() > 3 && (iso3LangCode.indexOf('-') != -1)) {
+                    iso2LangCode = iso3LangCode.substring(0, 2);
                 } else {
                     iso2LangCode = mapper.iso639_2_to_iso639_1(iso3LangCode);
                 }

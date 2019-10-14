@@ -86,7 +86,7 @@
   var unmarshaller110 = context110.createUnmarshaller();
   var unmarshaller20 = context20.createUnmarshaller();
   var cachedGetCapabilitiesUrls = {};
-  // var timeout = -1; Unlimited
+  // var timeout = -1;
   var timeout = 60 * 1000;
 
   module.provider('gnOwsCapabilities', function() {

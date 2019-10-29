@@ -34,10 +34,14 @@
 ">
   <context:annotation-config/>
 
-  <context:property-placeholder location="${app.properties}"
-                                file-encoding="UTF-8"
-                                ignore-unresolvable="true" />
-
+  <context:property-placeholder location="${app.properties}" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
+  <!--
+  <context:property-placeholder location="file:/${cat_africa.dir}/config/config.properties" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
+  <context:property-placeholder location="file:/${cat_amlat.dir}/config/config.properties" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
+  <context:property-placeholder location="file:/${cat_asia.dir}/config/config.properties" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
+  <context:property-placeholder location="file:/${cat_eecca.dir}/config/config.properties" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
+  <context:property-placeholder location="file:/${cat_global.dir}/config/config.properties" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
+  -->
   <import resource="config-spring-env.xml"/>
   <import resource="config-security/config-security.xml"/>
   <import resource="config-summary.xml"/>

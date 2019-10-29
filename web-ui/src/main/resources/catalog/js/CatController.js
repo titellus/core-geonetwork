@@ -70,6 +70,10 @@ goog.require('gn_alert');
         'global': {
           'humanizeDates': true
         },
+        'footer':{
+          'enabled': true,
+          'showSocialBarInFooter': true
+        },
         'header': {
           'enabled': true,
           'languages': {
@@ -95,7 +99,6 @@ goog.require('gn_alert');
         'home': {
           'enabled': true,
           'appUrl': '../../{{node}}/{{lang}}/catalog.search#/home',
-          'showSocialBarInFooter': true,
           'fluidLayout': true
         },
         'search': {
@@ -450,7 +453,7 @@ goog.require('gn_alert');
              gnViewerSettings, gnSearchSettings, $cookies,
              gnExternalViewer, gnAlertService) {
       $scope.version = '0.0.1';
-
+      var defaultNode = 'srv';
 
       // Links for social media
       $scope.socialMediaLink = $location.absUrl();
@@ -464,7 +467,7 @@ goog.require('gn_alert');
 
       $scope.getSocialLinksVisible = function() {
         var onMdView =  $location.absUrl().indexOf('/metadata/') > -1;
-        return !onMdView && gnGlobalSettings.gnCfg.mods.home.showSocialBarInFooter;
+        return !onMdView && gnGlobalSettings.gnCfg.mods.footer.showSocialBarInFooter;
       };
 
       function detectNode(detector) {
@@ -474,7 +477,7 @@ goog.require('gn_alert');
             return res[1];
           }
         }
-        return detector.default || 'srv';
+        return detector.default || defaultNode;
       }
 
 
@@ -498,6 +501,7 @@ goog.require('gn_alert');
         return detector.default || 'geonetwork';
       }
       $scope.nodeId = detectNode(gnGlobalSettings.gnCfg.nodeDetector);
+      $scope.isDefaultNode = $scope.nodeId === defaultNode;
       $scope.service = detectService(gnGlobalSettings.gnCfg.serviceDetector);
       $scope.redirectUrlAfterSign = window.location.href;
 

@@ -238,7 +238,7 @@ public class Aligner extends BaseAligner<SimpleUrlParams> {
 
         String id = String.valueOf(metadata.getId());
 
-        addPrivileges(id, params.getPrivileges(), localGroups, dataMan, context);
+        addPrivileges(id, params.getPrivileges(), localGroups, context);
 
         metadataIndexer.indexMetadata(id, true, null);
         result.addedMetadata++;
@@ -273,7 +273,7 @@ public class Aligner extends BaseAligner<SimpleUrlParams> {
         OperationAllowedRepository repository = context.getBean(OperationAllowedRepository.class);
         repository.deleteAllByMetadataId(Integer.parseInt(id));
 
-        addPrivileges(id, params.getPrivileges(), localGroups, dataMan, context);
+        addPrivileges(id, params.getPrivileges(), localGroups, context);
 
         metadata.getCategories().clear();
         addCategories(metadata, params.getCategories(), localCateg, context, null, true);

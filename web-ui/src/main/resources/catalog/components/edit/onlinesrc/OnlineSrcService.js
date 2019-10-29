@@ -258,7 +258,6 @@
               //     src.lUrl  += "?approved=false";
               //   }
               // }
-
           });
           angular.forEach(data.thumbnails, function(img) {
             img.lUrl = img.url[lang] ||

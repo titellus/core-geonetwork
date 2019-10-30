@@ -32,11 +32,11 @@
 	">
   <context:property-placeholder location="${db.properties}" file-encoding="UTF-8" ignore-unresolvable="true" order="1"/>
   <!--
-    <context:property-placeholder location="file:/${cat_africa.dir}/config/jdbc.properties" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
-    <context:property-placeholder location="file:/${cat_amlat.dir}/config/jdbc.properties" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
-    <context:property-placeholder location="file:/${cat_asia.dir}/config/jdbc.properties" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
-    <context:property-placeholder location="file:/${cat_eecca.dir}/config/jdbc.properties" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
-    <context:property-placeholder location="file:/${cat_global.dir}/config/jdbc.properties" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
+    <context:property-placeholder location="file:/${cat_africa.dir}/jdbc.properties" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
+    <context:property-placeholder location="file:/${cat_amlat.dir}/jdbc.properties" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
+    <context:property-placeholder location="file:/${cat_asia.dir}/jdbc.properties" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
+    <context:property-placeholder location="file:/${cat_eecca.dir}/jdbc.properties" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
+    <context:property-placeholder location="file:/${cat_global.dir}/jdbc.properties" file-encoding="UTF-8" order="1" ignore-unresolvable="true" />
     -->
 
   <bean id="jdbcDataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">

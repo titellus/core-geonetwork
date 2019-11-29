@@ -4356,6 +4356,9 @@ la non-évaluation</b>, dans le cadre de métadonnées INSPIRE
       <option value="OGC:SOS">OGC-SOS Sensor Observation Service</option>
       <option value="OGC:WCS">OGC-WCS Web Coverage Service</option>
       <option value="OGC:WFS">OGC-WFS Web Feature Service</option>
+      <option value="INSPIRE Atom">INSPIRE Atom</option>
+      <option value="OGC:WFS-1.0.0-http-get-capabilities">OGC-WFS Web Feature Service (ver 1.0.0)</option>
+      <option value="OGC:WFS-G">OGC-WFS-G Gazzetteer Service</option>
       <option value="OGC:WMC">OGC-WMC Web Map Context</option>
       <option value="OGC:WMS">OGC-WMS Web Map Service</option>
       <option value="OGC:WMTS">OGC-WMTS Web Map Tiled Service</option>

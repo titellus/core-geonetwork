@@ -771,7 +771,8 @@
               name: s[5] || '',
               position: s[6] || '',
               address: s[7] || '',
-              phone: s[8] || ''
+              phone: s[8] || '',
+              website: s[11] || ''
             };
             if (s[1] === 'resource') {
               this.allContacts.resource.push(contact);

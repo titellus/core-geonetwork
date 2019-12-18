@@ -177,14 +177,8 @@
   <bean id="exporter" class="org.springframework.jmx.export.MBeanExporter" lazy-init="false">
     <property name="namingStrategy" ref="namingStrategy"/>
   </bean>
-  <bean id="namingStrategy"
-        class="org.springframework.jmx.export.naming.KeyNamingStrategy">
-    <property name="mappings">
-      <props>
-        <prop key="jdbcDataSource">org.apache.commons.dbcp2:name=jdbcDataSource</prop>
-      </props>
-    </property>
-  </bean>
 
+  <bean id="namingStrategy"
+        class="org.springframework.jmx.export.naming.IdentityNamingStrategy"/>
 
 </beans>

@@ -156,7 +156,7 @@
             gnOwsContextService.loadContextFromUrl(url,
                 gnSearchSettings.viewerMap);
 
-            gnSearchLocation.setMap();
+            gnSearchLocation.setMap('legend');
           };
 
           var openMd = function(r, md) {

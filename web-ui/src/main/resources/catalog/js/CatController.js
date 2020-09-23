@@ -227,6 +227,7 @@ goog.require('gn_login_service');
             'print': false,
             'mInteraction': false,
             'graticule': false,
+            'mousePosition': true,
             'syncAllLayers': false,
             'drawVector': false
           },

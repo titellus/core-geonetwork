@@ -430,7 +430,7 @@
           scope.setMousePositionProjection = function(c) {
             scope.coordinateProjectionCode = c.code;
             scope.coordinateFormat = c.format;
-            scope.mousePositionControl.setProjection(c.code);
+            scope.mousePositionControl.setProjection(ol.proj.get(c.code));
           }
 
           scope.mousePositionControl = new ol.control.MousePosition({
@@ -441,7 +441,7 @@
                   ol.coordinate.toStringHDMS(c,scope.coordinateFormatPrecision);
               return scope.mousePosition;
             },
-            projection: scope.coordinateProjectionCode,
+            projection: ol.proj.get(scope.coordinateProjectionCode),
             target: document.getElementById('gn-map-mouse-position'),
             undefinedHTML: '&nbsp;'
           });

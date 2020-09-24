@@ -409,5 +409,11 @@
     "accessManagerChooseGroups": "Sélectionner un ou plusieurs groupes",
     "accessManagerChooseOperations": "Sélectionner un ou plusieurs types d'opération",
     "status-no-status": "Cycle de vie désactivé",
-    "draft": "Brouillon"
+    "draft": "Brouillon",
+    "APUR:OPENDATA": "Apur / Portail opendata",
+    "APUR:OPENDATA-help": "Modifier l'URL pour pointer vers le portail opendata. Ajouter un nom. Par exemple 'Jeu de données disponible sur la plateforme open data de l'Apur'.",
+    "FILE:GEO": "Apur / Fichier sur le réseau local",
+    "FILE:GEO-help": "Indiquer l'URL du fichier sur le réseau local eg. '\\\\zcartoagol\\donnees\\opendata\\xyz.gdb\\abc' et ajouter le nom de la table dans le champ nom.",
+    "DB:POSTGIS": "Apur / Base de données",
+    "DB:POSTGIS-help": "Indiquer l'URL de la base de données eg. '@zpostgresig.sde/apur.projet.xyz' et ajouter le nom de la table dans le champ nom."
 }

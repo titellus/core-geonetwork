@@ -54,9 +54,56 @@ See [rza-migration.sh](rza-migration.sh).
 Update of GEMET to version 4.1.2 from https://github.com/geonetwork/util-gemet/blob/master/thesauri/gemet.rdf.
 
 Update INSPIRE thesaurus using the INSPIRE registry (see https://geonetwork-opensource.org/manuals/4.0.x/en/administrator-guide/configuring-the-catalog/inspire-configuration.html#loading-inspire-codelists):
+* INSPIRE Theme
+* Metadata codelist / Spatial scope
+* Metadata codelist / Priority dataset
 
+
+## EnvThes
+
+To load the thesaurus in a GeoNetwork instance user needs to convert ttl format to XML skos:
+
+```shell script
+wget https://raw.githubusercontent.com/LTER-Europe/EnvThes/master/CurrentVersion/EnvThes.ttl
+skosify EnvThes.ttl -o EnvThes.rdf
+```
+
+See https://pypi.org/project/skosify/ utility for the conversion.
+
+## OZCAR-Theia thesaurus
+
+https://github.com/NatLibFi/Skosmos/wiki/REST-API
+https://in-situ.theia-land.fr/skosmos/rest/v1/theia_ozcar_thesaurus/
+
+```shell script
+```
+
+## Agrovoc
+
+```shell script
+wget http://agrovoc.uniroma2.it/agrovocReleases/agrovoc_2021-02-02_core.rdf.zip
+```
+
+Application is starting up but it does not look to be able to load 1Go thesaurus.
+
+## Loterre - BHL
+
+User can upload the thesaurus https://www.loterre.fr/wp-content/uploads/2020/04/Biodiversit%C3%A9.xml from the admin without issue.
+
+## EUNIS-habitat
+
+Format provided is CSV.
 
  
+# Templates
+
+Questions: Une fiche exemple ?
+
+
+# Thematic portals
+
+
+
 
 
 # GeoNetwork improvements

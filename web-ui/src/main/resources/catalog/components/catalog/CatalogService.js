@@ -223,16 +223,27 @@
          * @description
          * Get the metadata js object from catalog. Trigger a search and
          * return a promise.
-         * @param {string} uuid of the metadata
-         * @param {string} isTemplate optional isTemplate value (s, t...)
-         * @return {HttpPromise} of the $http get
+         * @param {string} uuid or id of the metadata
+         * @param {array} isTemplate optional isTemplate value (y, n, s, t...)
+         * @return {HttpPromise} of the $http post
          */
         getMdObjByUuid: function(uuid, isTemplate) {
-          return $http.get('qi?_uuid=' + uuid + '' +
-              '&fast=index&_content_type=json&buildSummary=false' +
-              (isTemplate !== undefined ? '&isTemplate=' + isTemplate : '')).
-              then(function(resp) {
-                return new Metadata(resp.data.metadata);
+          return $http.post('../api/search/records/_search', {"query": {
+              "bool" : {
+                "must": [
+                  {"multi_match": {
+                      "query": uuid,
+                      "fields": ['id', 'uuid']}},
+                  {"terms": {"isTemplate": isTemplate !== undefined ? isTemplate : ['n']}},
+                  {"terms": {"draft": ["n", "y", "e"]}}
+                ]
+              }
+            }}).then(function(r) {
+              if (r.data.hits.total.value > 0) {
+                return new Metadata(r.data.hits.hits[0]);
+              } else {
+                console.warn("Record with UUID/ID " + uuid + " not found.")
+              }
               });
         },
 
@@ -245,16 +256,11 @@
          * Get the metadata js object from catalog. Trigger a search and
          * return a promise.
          * @param {string} id of the metadata
-         * @param {string} isTemplate optional isTemplate value (s, t...)
-         * @return {HttpPromise} of the $http get
+         * @param {array} isTemplate optional isTemplate value (y, n, s, t...)
+         * @return {HttpPromise} of the $http post
          */
         getMdObjById: function(id, isTemplate) {
-          return $http.get('q?_id=' + id + '' +
-              '&fast=index&_content_type=json&buildSummary=false' +
-              (isTemplate !== undefined ? '&_isTemplate=' + isTemplate : '')).
-              then(function(resp) {
-                return new Metadata(resp.data.metadata);
-              });
+          return this.getMdObjByUuid(id, isTemplate);
         },
 
         /**
@@ -269,7 +275,7 @@
          * @return {HttpPromise} of the $http get
          */
         updateMdObj: function(md) {
-          return this.getMdObjByUuid(md.getUuid()).then(
+          return this.getMdObjByUuid(md.uuid).then(
               function(md_) {
                 angular.extend(md, md_);
                 return md;
@@ -291,11 +297,7 @@
    */
 
   module.value('gnHttpServices', {
-    mdGetPDFSelection: 'pdf.selection.search', // TODO: CHANGE
-    mdGetRDF: 'rdf.metadata.get',
-    mdGetMEF: 'mef.export', // Deprecated service
     mdGetXML19139: 'xml_iso19139',
-    csv: 'csv.search',
 
     publish: 'md.publish',
     unpublish: 'md.unpublish',
@@ -313,7 +315,6 @@
     removeThumbnail: 'md.thumbnail.remove?_content_type=json&',
     removeOnlinesrc: 'resource.del.and.detach', // TODO: CHANGE
     suggest: 'suggest',
-    facetConfig: 'search/facet/config',
     selectionLayers: 'selection.layers',
 
     featureindexproxy: '../../index/features',
@@ -509,7 +510,7 @@
          *
          * @return {String} service url.
          */
-        getServiceURL: function() {
+        getServiceURL: function(useDefaultNode) {
           var port = '';
           if (gnConfig['system.server.protocol'] === 'http' &&
              gnConfig['system.server.port'] &&
@@ -527,10 +528,13 @@
 
           }
 
+          var node = (!useDefaultNode?
+            gnConfig.env.node:gnConfig.env.defaultNode);
+
           var url = gnConfig['system.server.protocol'] + '://' +
               gnConfig['system.server.host'] + port +
               gnConfig.env.baseURL + '/' +
-              gnConfig.env.node + '/';
+              node + '/';
           return url;
         }
       };
@@ -546,99 +550,82 @@
    * json output of the search service. It also provides some functions
    * on the metadata.
    */
-  module.factory('Metadata', function() {
+  module.factory('Metadata', ['gnLangs', '$translate',
+    function(gnLangs, $translate) {
     function Metadata(k) {
-      $.extend(true, this, k);
-      var listOfArrayFields = ['iwrmthemeuri', 'topicCat', 'category', 'keyword',
-        'securityConstraints', 'resourceConstraints', 'legalConstraints',
-        'denominator', 'resolution', 'geoDesc', 'geoBox', 'inspirethemewithac',
-        'status', 'status_text', 'crs', 'identifier', 'responsibleParty',
-        'mdLanguage', 'datasetLang', 'type', 'link', 'crsDetails',
-        'creationDate', 'publicationDate', 'revisionDate'];
-      var listOfJsonFields = ['keywordGroup', 'crsDetails'];
-      // See below; probably not necessary
+      // Move _source properties to the root.
+      var source = k._source;
+      delete k._source;
+      $.extend(true, this, k, source);
+
       var record = this;
+
+      // See EsSearchManager#documentToJson to define fields as array.
+      // var listOfArrayFields = ; // Except for geom
+      if (angular.isDefined(record.geom) &&
+        !angular.isArray(record.geom)) {
+        record.geom = [record.geom];
+      }
+
+      // Multilingual fields
+      $.each(this, function(key, value) {
+        var fieldName = key;
+        // Object fields and codelist are storing translations.
+        // Create a field with the UI translation or fallback to default.
+        if (key.endsWith('Object') || key.indexOf('cl_') === 0) {
+          record.translate(fieldName);
+        }
+      });
+
+      // See below; probably not necessary
       this.linksCache = [];
-      $.each(listOfArrayFields, function(idx) {
-        var field = listOfArrayFields[idx];
-        if (angular.isDefined(record[field]) &&
-            !angular.isArray(record[field])) {
-          record[field] = [record[field]];
-        }
-      });
-      // Note: this step does not seem to be necessary; TODO: remove or refactor
-      $.each(listOfJsonFields, function(idx) {
-        var fieldName = listOfJsonFields[idx];
-        if (angular.isDefined(record[fieldName])) {
-          try {
-            record[fieldName] = angular.fromJson(record[fieldName]);
-            var field = record[fieldName];
 
-            // Combine all document keywordGroup fields
-            // in one object. Applies to multilingual records
-            // which may have multiple values after combining
-            // documents from all index
-            // fixme: not sure how to precess this, take first array as main
-            // object or take last arrays when they appear (what is done here)
-            if (fieldName === 'keywordGroup' && angular.isArray(field)) {
-              var thesaurusList = {};
-              for (var i = 0; i < field.length; i++) {
-                var thesauri = field[i];
-                $.each(thesauri, function(key) {
-                  if (!thesaurusList[key] && thesauri[key].length)
-                    thesaurusList[key] = thesauri[key];
-                });
-              }
-              record[fieldName] = thesaurusList;
-            }
-          } catch (e) {}
-        }
-      }.bind(this));
-
-      // Create a structure that reflects the transferOption/onlinesrc tree
-      var links = [];
-      angular.forEach(this.link, function(link) {
-        var linkInfo = formatLink(link);
-        var idx = linkInfo.group - 1;
-        if (!links[idx]) {
-          links[idx] = [linkInfo];
-        }
-        else if (angular.isArray(links[idx])) {
-          links[idx].push(linkInfo);
-        }
-      });
-      this.linksTree = links;
+      this.getAllContacts();
     };
 
-    function formatLink(sLink) {
-      var linkInfos = sLink.split('|');
-      return {
-        name: linkInfos[0],
-        title: linkInfos[0],
-        url: linkInfos[2],
-        desc: linkInfos[1],
-        protocol: linkInfos[3],
-        contentType: linkInfos[4],
-        group: linkInfos[5] ? parseInt(linkInfos[5]) : undefined,
-        applicationProfile: linkInfos[6]
-      };
-    }
-    function parseLink(sLink) {
-
-    };
 
     Metadata.prototype = {
-      getUuid: function() {
-        return this['geonet:info'].uuid;
-      },
-      getId: function() {
-        return this['geonet:info'].id;
-      },
-      getTitle: function() {
-        return this.title || this.defaultTitle;
+      // For codelist, default property is replaced
+      // For Object, a new field is created without the Object suffix.
+      translate: function(fieldName) {
+        var fieldValues = this[fieldName],
+          isCodelist = fieldName.indexOf('cl_') === 0;
+
+        // In object lang prop, in translations, default prop.
+        function getCodelistTranslation(o) {
+          if (o['lang' + gnLangs.current]) {
+            return o['lang' + gnLangs.current];
+          } else if ($translate.instant(o.key) != o.key) {
+            return $translate.instant(o.key);
+          }
+          return o.default;
+        }
+
+        if (angular.isArray(fieldValues)) {
+          var translatedValues = [];
+          angular.forEach(fieldValues, function(o) {
+            if (isCodelist) {
+              o.default = getCodelistTranslation(o);
+            } else {
+              translatedValues.push(o['lang' + gnLangs.current] || o.default);
+            }
+          });
+          if (!isCodelist) {
+            this[fieldName.slice(0, -6)] = translatedValues;
+          }
+        } else if (angular.isObject(fieldValues)) {
+          if(isCodelist) {
+            o.default = getCodelistTranslation(fieldValues)
+          } else {
+            this[fieldName.slice(0, -6)] =
+              fieldValues['lang' + gnLangs.current] || fieldValues.default;
+          }
+        } else {
+          console.warn(fieldName + ' is not defined in this record.');
+        }
       },
       isPublished: function() {
-        return this['geonet:info'].isPublishedToAll === 'true';
+        return JSON.parse(this.isPublishedToAll) === true;
       },
       isValid: function() {
         return this.valid === '1';
@@ -647,22 +634,29 @@
         return (this.valid > -1);
       },
       isOwned: function() {
-        return this['geonet:info'].owner === 'true';
+        return this.owner === 'true';
       },
       getOwnerId: function() {
-        return this['geonet:info'].ownerId;
+        return this.ownerId;
       },
       getGroupOwner: function() {
-        return this['geonet:info'].owner;
+        return this.owner;
       },
       getSchema: function() {
-        return this['geonet:info'].schema;
+        return this.schema;
       },
       publish: function() {
-        this['geonet:info'].isPublishedToAll = this.isPublished() ?
-            'false' : 'true';
+        this.isPublishedToAll = this.isPublished() ?
+            false : true;
       },
-
+      getFields: function(filter) {
+        var values = {}, props = this, keys = Object.keys(this)
+          .filter(function(name) {return new RegExp(filter).test(name)});
+        keys.forEach(function (k) {
+          values[k] = props[k];
+        });
+        return values;
+      },
       getLinks: function() {
         return this.link;
       },
@@ -698,58 +692,33 @@
           groupId = types[0];
           types.splice(0, 1);
         }
-        if (this.linksCache[key] && !groupId) {
+        if (this.linksCache[key] && groupId === undefined) {
           return this.linksCache[key];
         }
         angular.forEach(this.link, function(link) {
-          var linkInfo = formatLink(link);
           if (types.length > 0) {
             types.forEach(function(type) {
               if (type.substr(0, 1) == '#') {
-                if (linkInfo.protocol == type.substr(1, type.length - 1) &&
-                    (!groupId || groupId == linkInfo.group)) {
-                  ret.push(linkInfo);
+                var protocolMatch = link.protocol == type.substr(1, type.length - 1);
+                if ((protocolMatch && groupId === undefined) ||
+                    (protocolMatch && groupId != undefined && groupId == link.group)) {
+                  ret.push(link);
                 }
               }
               else {
-                if (linkInfo.protocol.toLowerCase().indexOf(
+                if (link.protocol.toLowerCase().indexOf(
                     type.toLowerCase()) >= 0 &&
-                    (!groupId || groupId == linkInfo.group)) {
-                  ret.push(linkInfo);
+                    (!groupId || groupId == link.group)) {
+                  ret.push(link);
                 }
               }
             });
           } else {
-            ret.push(linkInfo);
+            ret.push(link);
           }
         });
         this.linksCache[key] = ret;
         return ret;
-      },
-      getThumbnails: function() {
-        if (angular.isArray(this.image)) {
-          var images = {list: []};
-          for (var i = 0; i < this.image.length; i++) {
-            var s = this.image[i].split('|');
-            var insertFn = 'push';
-            if (s[0] === 'thumbnail') {
-              images.small = s[1];
-              var insertFn = 'unshift';
-            } else if (s[0] === 'overview') {
-              images.big = s[1];
-            }
-            
-            //Is it a draft?
-            if( s[1].indexOf("/api/records/") >= 0 
-                &&  s[1].indexOf("/api/records/")<  s[1].indexOf("/attachments/")) {
-              s[1] += "?approved=" + (this.draft != 'y');
-            }
-              
-            
-            images.list[insertFn]({url: s[1], label: s[2]});
-          }
-        }
-        return images;
       },
       /**
        * Return an object containing metadata contacts
@@ -758,66 +727,14 @@
        * @return {{metadata: Array, resource: Array}}
        */
       getAllContacts: function() {
-        if (angular.isUndefined(this.allContacts) &&
-            angular.isDefined(this.responsibleParty)) {
-          this.allContacts = {metadata: [], resource: []};
-          for (var i = 0; i < this.responsibleParty.length; i++) {
-            var s = this.responsibleParty[i].split('|');
-            var contact = {
-              role: s[0] || '',
-              org: s[2] || '',
-              logo: s[3] || '',
-              email: s[4] || '',
-              name: s[5] || '',
-              position: s[6] || '',
-              address: s[7] || '',
-              phone: s[8] || ''
-            };
-            if (s[1] === 'resource') {
-              this.allContacts.resource.push(contact);
-            } else if (s[1] === 'metadata') {
-              this.allContacts.metadata.push(contact);
-            }
-          }
+        this.allContacts = {metadata:[], resource:[]};
+        if (this.contact && this.contact.length > 0){
+          this.allContacts.metadata = this.contact;
+        }
+        if (this.contactForResource && this.contactForResource.length > 0){
+          this.allContacts.resource = this.contactForResource;
         }
         return this.allContacts;
-      },
-      /**
-       * Deprecated. Use getAllContacts instead
-       */
-      getContacts: function() {
-        var ret = {};
-        if (angular.isArray(this.responsibleParty)) {
-          for (var i = 0; i < this.responsibleParty.length; i++) {
-            var s = this.responsibleParty[i].split('|');
-            if (s[1] === 'resource') {
-              ret.resource = s[2];
-            } else if (s[1] === 'metadata') {
-              ret.metadata = s[2];
-            }
-          }
-        }
-        return ret;
-      },
-      getBoxAsPolygon: function(i) {
-        // Polygon((4.6810%2045.9170,5.0670%2045.9170,5.0670%2045.5500,4.6810%2045.5500,4.6810%2045.9170))
-        var bboxes = [];
-        if (this.geoBox[i]) {
-          var coords = this.geoBox[i].split('|');
-          return 'Polygon((' +
-              coords[0] + ' ' +
-              coords[1] + ',' +
-              coords[2] + ' ' +
-              coords[1] + ',' +
-              coords[2] + ' ' +
-              coords[3] + ',' +
-              coords[0] + ' ' +
-              coords[3] + ',' +
-              coords[0] + ' ' +
-              coords[1] + '))';
-        } else {
-          return null;
-        }
       },
       getOwnername: function() {
         if (this.userinfo) {
@@ -853,7 +770,7 @@
       }
     };
     return Metadata;
-  });
+  }]);
 
 
 })();

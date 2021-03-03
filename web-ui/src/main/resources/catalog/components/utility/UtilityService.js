@@ -84,12 +84,9 @@
              e.offset().top :
              e.position().top;
           }
-          $('body,html').animate({scrollTop: top},
-           duration, easing, function() {
-              if (e.length == 1) {
-                e.fadeOut('slow', function() {e.fadeIn()});
-              }
-            });
+
+          $('body,html').scrollTop(top);
+
           $location.search('scrollTo', elementId);
         };
 
@@ -385,6 +382,12 @@
     };
   }]);
 
+  module.filter('unique', function() {
+    return function (arr, field) {
+      return _.uniq(arr, function(a) { return a[field]; });
+    };
+  });
+
   module.factory('gnRegionService', [
     '$q',
     '$http',
@@ -464,7 +467,56 @@
       };
     }]);
 
-  module.service('gnTreeFromSlash', [function() {
+
+  module.service('gnHumanizeTimeService', ['gnGlobalSettings', function(gnGlobalSettings) {
+    return function(date, format, contextAllowToUseFromNow) {
+        function isDateGmlFormat(date) {
+          return date.match('[Zz]$') !== null;
+        }
+        var settingAllowToUseFromNow = gnGlobalSettings.gnCfg.mods.global.humanizeDates,
+            timezone = gnGlobalSettings.gnCfg.mods.global.timezone;
+        var parsedDate = null;
+        if (isDateGmlFormat(date)) {
+          parsedDate = moment(date, 'YYYY-MM-DDtHH-mm-SSSZ');
+        } else {
+          parsedDate = moment(date);
+        }
+        if (parsedDate.isValid()) {
+          if (!! timezone) {
+            parsedDate = parsedDate.tz(
+              timezone === 'Browser' ? moment.tz.guess() : timezone);
+          }
+          var fromNow = parsedDate.fromNow();
+          if (settingAllowToUseFromNow && contextAllowToUseFromNow) {
+            return {value: fromNow, title: format ? parsedDate.format(format) : parsedDate.toString()};
+          } else {
+            return {title: fromNow, value: format ? parsedDate.format(format) : parsedDate.toString()};
+          }
+        }
+      };
+    }]);
+
+  module.service('getBsTableLang', ['gnLangs', function(gnLangs) {
+    return function() {
+      var iso2 = gnLangs.getIso2Lang(gnLangs.getCurrent());
+      var locales = Object.keys($.fn.bootstrapTable.locales);
+      var lang = 'en';
+      locales.forEach(function (locale) {
+        if (locale.startsWith(iso2)) {
+          lang = locale;
+          return true;
+        }
+      });
+      return lang;
+    };
+  }]);
+
+  module.service('gnFacetTree', [
+    '$http', 'gnLangs', '$q', '$translate', '$timeout',
+    function($http, gnLangs, $q, $translate, $timeout) {
+    var separator = '^';
+    var translationsToLoad = [];
+
     var findChild = function(node, name) {
       var n;
       if (node.nodes) {
@@ -484,9 +536,17 @@
       return 0;
     };
 
-    var createNode = function(node, g, index, e) {
+    var registerTranslation = function(keyword, fieldId) {
+      if (keyword.indexOf('http') === 0 &&
+        $translate.instant(keyword) == keyword) {
+        translationsToLoad[fieldId][keyword] = '';
+      }
+    };
+
+    var createNode = function(node, fieldId, g, index, e) {
       var group = g[index];
       if (group) {
+        registerTranslation(group, fieldId);
         var newNode = findChild(node, group);
         if (!newNode) {
           newNode = {
@@ -496,25 +556,159 @@
           };
           if (!node.nodes) node.nodes = [];
           node.nodes.push(newNode);
+          node.items = node.nodes;
           //node.nodes.sort(sortNodeFn);
         }
-        createNode(newNode, g, index + 1, e);
+        createNode(newNode, fieldId, g, index + 1, e);
       } else {
         node.key = e.key;
         node.count = e.doc_count;
+        node.size = node.count;
+        node.path = [e.key];
       }
     };
 
-    this.getTree = function(list) {
-      var tree = {
-        nodes: []
-      };
+    function loadTranslation(fieldId) {
+      var keys = Object.keys(translationsToLoad[fieldId]);
+      var deferred = $q.defer();
+      if (keys.length > 0) {
+        var uris = [];
+        angular.copy(keys, uris);
+        translationsToLoad[fieldId] = {};
+        $http.get('../api/registries/vocabularies/keyword' +
+          '?thesaurus=' + fieldId.replace(/th_(.*)_tree.key/, '$1') +
+          '&id=' + encodeURIComponent(uris.join(',')) +
+          // Get Keyword in current UI language or fallback to any UI language
+          '&lang=' + gnLangs.getCurrent() + ',' + Object.keys(gnLangs.langs).join(','), {
+          cache: true,
+          headers: {
+            'Accept': 'application/json'
+          }
+        }).then(function(r) {
+          deferred.resolve(r.data);
+        })
+      } else {
+        deferred.resolve();
+      }
+      return deferred.promise;
+    };
+
+    function buildTree(list, fieldId, tree, meta) {
+      var translateOnLoad = meta && meta.translateOnLoad;
       list.forEach(function(e) {
         var name = e.key;
-        var g = name.split('/');
-        createNode(tree, g, 0, e);
+        if (translateOnLoad) {
+          var t = $translate.instant(name);
+          if (t !== name) {
+            name = t;
+
+            // using a custom separator?
+            // eg. 'th_sextant-theme_tree.key': {
+            //   'terms': {
+            //     'field': 'th_sextant-theme_tree.key',
+            //       'size': 100,
+            //       "order" : { "_key" : "asc" }
+            //   },
+            //   'meta': {
+            //     'translateOnLoad': true,
+            //     'treeKeySeparator': '/'
+            //   }
+            // },
+            if(meta && meta.treeKeySeparator) {
+              name = t.replaceAll(meta.treeKeySeparator, '^');
+            }
+
+            if (name.indexOf(separator) === 0) {
+              name = name.slice(1);
+            }
+          }
+        }
+
+
+        var g = name.split(separator);
+        createNode(tree, fieldId, g, 0, e);
       });
-      return tree;
+    }
+
+    this.getTree = function(list, fieldId, meta) {
+      var tree = {
+        nodes: []
+      },
+       deferred = $q.defer(),
+        // Browse the tree, collect keys and load translations
+        // Experimental - The idea was to build the tree
+        // based on translations and not the buckets returned.
+        // It sounds hard to refresh the tree once created.
+        // A better approach is to do this operation at indexing time.
+        // or load the thesaurus (if not too big) on app load
+        translateOnLoad = meta && meta.translateOnLoad;
+
+
+      // If bucket key starts with http, we assume they are
+      // thesaurus URI and translation will be loaded (if not yet loaded)
+      // and injected into translations.
+      if (translationsToLoad[fieldId] === undefined) {
+        translationsToLoad[fieldId] = [];
+      }
+
+      buildTree(list, fieldId, tree, meta);
+
+      if(Object.keys(translationsToLoad[fieldId]).length > 0) {
+        loadTranslation(fieldId, tree).then(function(translations) {
+          if (angular.isObject(translations)) {
+            var t = {};
+            t[gnLangs.current] = {};
+            t[gnLangs.current] = angular.extend({},
+              gnLangs.provider.translations()[gnLangs.current],
+              translations);
+            gnLangs.provider.useLoader('inlineLoaderFactory', t);
+            $translate.refresh();
+            if (translateOnLoad) {
+              if (tree.items) {
+                tree.items.length = 0;
+              }
+              $timeout(function() {
+                buildTree(list, fieldId, tree, meta);
+              });
+            }
+            deferred.resolve(tree);
+          }
+        });
+      } else {
+        deferred.resolve(tree);
+      }
+      return deferred.promise;
     };
+  }]);
+
+  // taken from ngeo
+  module.factory('gnDebounce', ['$timeout', function($timeout) {
+    return (
+      /**
+       * @param {function(?)} func The function to debounce.
+       * @param {number} wait The wait time in ms.
+       * @param {boolean} invokeApply Whether the call to `func` is wrapped
+       *    into an `$apply` call.
+       * @return {function()} The wrapper function.
+       */
+      function(func, wait, invokeApply) {
+        /**
+         * @type {?angular.$q.Promise}
+         */
+        var timeout = null;
+        return (
+          function() {
+            var context = this;
+            var args = arguments;
+            var later = function() {
+              timeout = null;
+              func.apply(context, args);
+            };
+            if (timeout !== null) {
+              $timeout.cancel(timeout);
+            }
+            timeout = $timeout(later, wait, invokeApply);
+          });
+      });
   }]);
 })();

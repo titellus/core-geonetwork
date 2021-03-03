@@ -26,11 +26,13 @@
 
 
   goog.require('gn_mdtypewidget');
+  goog.require('gn_mdtypeinspirevalidationwidget');
   goog.require('gn_draftvalidationwidget');
+  goog.require('gn_batchtask');
 
   var module = angular.module('gn_directoryassociatedmd_directive', [
-    'gn_mdtypewidget',
-    'gn_draftvalidationwidget'
+    'gn_mdtypewidget', 'gn_mdtypeinspirevalidationwidget',
+    'gn_draftvalidationwidget', 'gn_batchtask'
   ]);
 
   module.directive('gnDirectoryAssociatedMd', [
@@ -47,22 +49,22 @@
           function($scope, gnGlobalSettings) {
             $scope.searchObj = {
               params: {
-                _isTemplate: 'y or n',
+                isTemplate: ['y', 'n'],
                 any: '',
-                sortBy: 'title',
+                sortBy: 'resourceTitleObject.default.keyword',
                 _xlink: '*'
               },
               internal: true,
               sortbyValues: [
                 {
-                  sortBy: 'title'
+                  sortBy: 'resourceTitleObject.default.keyword'
                 },
                 {
                   sortBy: 'owner'
                 },
                 {
                   sortBy: 'changeDate',
-                  sortOrder: 'reverse'
+                  sortOrder: 'desc'
                 }
               ]
             };

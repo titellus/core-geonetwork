@@ -166,20 +166,35 @@
 
           if ($routeParams.id) {
             // Check requested metadata exists
-            gnSearchManagerService.gnSearch({
-              _id: $routeParams.id,
-              _content_type: 'json',
-              _isTemplate: 'y or n or s',
-              _draft: 'y or n or e',
-              fast: 'index'
-            }).then(function(data) {
-              $scope.metadataFound = data.count !== '0';
+            $http.post('../api/search/records/_search', {"query": {
+                "bool" : {
+                  "must": [
+                    {"term": {"id": $routeParams.id}},
+                    {"terms": {"draft": ["n", "y", "e"]}},
+                    {"terms": {"isTemplate": ["n", "y", "s"]}}
+                  ]
+                }
+              }}).then(function(r) {
+              $scope.metadataFound = r.data.hits.total.value !== 0;
               $scope.metadataNotFoundId = $routeParams.id;
+
+              if (!$scope.metadataFound) {
+                $rootScope.$broadcast('StatusUpdated', {
+                  title: $translate.instant('metadataNotFound') || 'metadataNotFound',
+                  error: $routeParams.id,
+                  timeout: 0,
+                  type: 'danger'
+                });
+                return;
+              }
+
               $scope.id = $routeParams.id;
 
-              $scope.mdSchema = data.metadata[0]['geonet:info'].schema;
+              gnCurrentEdit.metadata = new Metadata(r.data.hits.hits[0]);
+              $scope.mdSchema = gnCurrentEdit.metadata.schema;
+              gnCurrentEdit.schema = $scope.mdSchema;
               $scope.mdCategories = {values: []};
-              var categories = data.metadata[0].category;
+              var categories = gnCurrentEdit.metadata.cat;
               if (categories) {
                 if (angular.isArray(categories)) {
                   $scope.mdCategories.values = categories;
@@ -188,13 +203,9 @@
                 }
               }
 
-              $scope.groupOwner = data.metadata[0].groupOwner;
-              $scope.mdTitle = data.metadata[0].title ||
-                  data.metadata[0].defaultTitle;
+              $scope.groupOwner = gnCurrentEdit.metadata.groupOwner;
+              $scope.mdTitle = gnCurrentEdit.metadata.resourceTitle;
 
-              // Get the schema configuration for the current record
-              gnCurrentEdit.metadata = new Metadata(data.metadata[0]);
-              gnCurrentEdit.schema = $scope.mdSchema;
               $scope.redirectUrl = $location.search()['redirectUrl'];
 
               if ($scope.metadataFound) {
@@ -288,6 +299,13 @@
                     // and all directives to be rendered which
                     // may affect element positions.
                   }
+                }).catch(function(data) {
+                  //an api-error is returned as xml
+                  $rootScope.$broadcast('StatusUpdated', {
+                    title: $translate.instant('runServiceError'),
+                    error: $(data).find('description').text(),
+                    timeout: 0,
+                    type: 'danger'});
                 });
 
                 window.onbeforeunload = function() {
@@ -352,7 +370,7 @@
             });
           }
         });
-        
+
       };
 
       /**
@@ -546,7 +564,7 @@
               then(function(data) {
                 $rootScope.$broadcast('StatusUpdated', {
                   title: $translate.instant('metadataRemoved',
-                  {title: md.title || md.defaultTitle}),
+                  {title: md.resourceTitle}),
                   timeout: 2
                 });
                 closeEditor();
@@ -579,16 +597,6 @@
         }
       };
 
-      function parseXmlError(error) {
-        if (error.toString().indexOf('<?xml') === 0) {
-          var x = jQuery.parseXML(error),
-              d = x.getElementsByTagName('description'),
-              m = d[0].textContent;
-          return m;
-        }
-        return null;
-      };
-
       $scope.close = function(submit, approve) {
         // if auto unpublish is not set in the settings, or if MD is not
         // published: close w/o confirmation
@@ -617,15 +625,13 @@
             }, function(error) {
               // When closing editor and if error occurs,
               // the response is in XML. Try to get the message
-              message = parseXmlError(error);
 
               $scope.savedStatus = gnCurrentEdit.savedStatus;
               $scope.saveError = true;
 
               $rootScope.$broadcast('StatusUpdated', {
-                title: message ?
-                message : $translate.instant('saveMetadataError'),
-                error: message ? undefined : error,
+                title: error ? error.message : $translate.instant('saveMetadataError'),
+                error: error,
                 timeout: 0,
                 type: 'danger'});
             });

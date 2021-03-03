@@ -50,6 +50,7 @@
         internal: true,
         filters: gnSearchSettings.filters,
         params: {
+          isTemplate: 'n',
           sortBy: 'popularity',
           from: 1,
           to: 12
@@ -66,7 +67,9 @@
         internal: true,
         filters: gnSearchSettings.filters,
         params: {
-          sortBy: 'changeDate',
+          isTemplate: 'n',
+          sortBy: 'createDate',
+          sortOrder: 'desc',
           from: 1,
           to: 12
         }
@@ -82,11 +85,15 @@
       $scope.searchObj = {
         permalink: false,
         internal: true,
-        filters: {
-          'type': 'interactiveMap'
-        },
+        filters: [{
+          "query_string": {
+            "query": "+resourceType:\"map/interactive\""
+          }
+        }],
         params: {
+          isTemplate: 'n',
           sortBy: 'changeDate',
+          sortOrder: 'desc',
           from: 1,
           to: 30
         }
@@ -96,6 +103,10 @@
         gnRelatedResources.getAction('MAP')(map, md);
       };
     }]);
+
+  module.config(['$LOCALES', function($LOCALES) {
+    $LOCALES.push('/../api/i18n/packages/search');
+  }]);
 
 
   module.controller('gnsDefault', [
@@ -116,13 +127,16 @@
     'gnOwsContextService',
     'hotkeys',
     'gnGlobalSettings',
+    'gnESClient',
+    'gnESFacet',
     'gnExternalViewer',
     function($scope, $location, $filter,
              suggestService, $http, $translate,
              gnUtilityService, gnSearchSettings, gnViewerSettings,
              gnMap, gnMdView, mdView, gnWmsQueue,
              gnSearchLocation, gnOwsContextService,
-             hotkeys, gnGlobalSettings, gnExternalViewer) {
+             hotkeys, gnGlobalSettings, gnESClient, gnESFacet, gnExternalViewer) {
+
 
       var viewerMap = gnSearchSettings.viewerMap;
       var searchMap = gnSearchSettings.searchMap;
@@ -131,6 +145,7 @@
       $scope.modelOptions = angular.copy(gnGlobalSettings.modelOptions);
       $scope.modelOptionsForm = angular.copy(gnGlobalSettings.modelOptions);
       $scope.isFilterTagsDisplayedInSearch = gnGlobalSettings.gnCfg.mods.search.isFilterTagsDisplayedInSearch;
+      $scope.exactMatchToggle = gnGlobalSettings.gnCfg.mods.search.exactMatchToggle;
       $scope.gnWmsQueue = gnWmsQueue;
       $scope.$location = $location;
       $scope.activeTab = '/home';
@@ -144,6 +159,8 @@
       $scope.location = gnSearchLocation;
       $scope.fluidLayout = gnGlobalSettings.gnCfg.mods.home.fluidLayout;
       $scope.fluidEditorLayout = gnGlobalSettings.gnCfg.mods.editor.fluidEditorLayout;
+      $scope.fluidHeaderLayout = gnGlobalSettings.gnCfg.mods.header.fluidHeaderLayout;
+      $scope.showGNName = gnGlobalSettings.gnCfg.mods.header.showGNName;
       $scope.toggleMap = function () {
         $(searchMap.getTargetElement()).toggle();
         $('button.gn-minimap-toggle > i').toggleClass('fa-angle-double-left fa-angle-double-right');
@@ -200,12 +217,32 @@
       };
       $scope.canEdit = function(record) {
         // TODO: take catalog config for harvested records
-        if (record && record['geonet:info'] &&
-            record['geonet:info'].edit == 'true') {
+        // TODOES: this property does not exist yet; makes sure it is
+        // replaced by a correct one eventually
+        if (record && record.edit == 'true') {
           return true;
         }
         return false;
       };
+
+      $scope.buildOverviewUrl = function(md) {
+        if (md.overview) {
+          return md.overview[0].url;
+        } else if (md.resourceType && md.resourceType[0] === 'feature') {
+          // Build a getmap request on the feature
+          var t = decodeURIComponent(md.featureTypeId).split('#');
+
+          var getMapRequest = t[0].replace(/SERVICE=WFS/i, '') + (t[0].indexOf('?' !== -1) ? '&' : '?')
+            + "SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&FORMAT=image/png&LAYERS=" + t[1]
+            + "&CRS=EPSG:4326&BBOX=" + md.bbox_xmin + ","+ md.bbox_ymin + ","+ md.bbox_xmax + ","+ md.bbox_ymax
+            + "&WIDTH=100&HEIGHT=100";
+
+          return getMapRequest;
+        } else {
+          return '../../catalog/views/default/images/no-thumbnail.png';
+        }
+      };
+
       $scope.closeRecord = function() {
         gnMdView.removeLocationUuid();
       };
@@ -236,20 +273,20 @@
           active: false
         }};
 
-      // Set the default browse mode for the home page
-      $scope.$watch('searchInfo', function (n, o) {
-        if (angular.isDefined($scope.searchInfo.facet)) {
-          if ($scope.searchInfo.facet['iwrmThemeURI'].length > 0) {
-            $scope.browse = 'iwrmThemeURI';
-          } else if ($scope.searchInfo.facet['inspireThemes'].length > 0) {
-            $scope.browse = 'inspire';
-          } else if ($scope.searchInfo.facet['topicCats'].length > 0) {
-            $scope.browse = 'topics';
-          //} else if ($scope.searchInfo.facet['categories'].length > 0) {
-          //  $scope.browse = 'cat';
-          }
-        }
-      });
+      // // Set the default browse mode for the home page
+      // $scope.$watch('searchInfo', function (n, o) {
+      //   if (angular.isDefined($scope.searchInfo.facet)) {
+      //     if ($scope.searchInfo.facet['iwrmThemeURI'].length > 0) {
+      //       $scope.browse = 'iwrmThemeURI';
+      //     } else if ($scope.searchInfo.facet['inspireThemes'].length > 0) {
+      //       $scope.browse = 'inspire';
+      //     } else if ($scope.searchInfo.facet['topicCats'].length > 0) {
+      //       $scope.browse = 'topics';
+      //     //} else if ($scope.searchInfo.facet['categories'].length > 0) {
+      //     //  $scope.browse = 'cat';
+      //     }
+      //   }
+      // });
 
       $scope.$on('layerAddedFromContext', function(e,l) {
         var md = l.get('md');
@@ -262,8 +299,10 @@
       $scope.resultviewFns = {
         addMdLayerToMap: function (link, md) {
           var config = {
-            uuid: md ? md.getUuid() : null,
-            type: link.protocol.indexOf('WMTS') > -1 ? 'wmts' : 'wms',
+            uuid: md ? md.uuid : null,
+            type:
+              link.protocol.indexOf('WMTS') > -1 ? 'wmts' :
+                ((link.protocol == 'ESRI:REST') || (link.protocol.startsWith('ESRI REST')) ? 'esrirest' : 'wms'),
             url: $filter('gnLocalized')(link.url) || link.url
           };
 
@@ -344,24 +383,41 @@
       angular.extend($scope.searchObj, {
         advancedMode: false,
         from: 1,
-        to: 30,
+        to: 20,
         selectionBucket: 's101',
         viewerMap: viewerMap,
         searchMap: searchMap,
         mapfieldOption: {
-          relations: ['within_bbox']
+          relations: ['within'],
+          autoTriggerSearch: true
         },
         hitsperpageValues: gnSearchSettings.hitsperpageValues,
         filters: gnSearchSettings.filters,
         defaultParams: {
-          'facet.q': '',
-          resultType: gnSearchSettings.facetsSummaryType || 'details',
+          isTemplate: 'n',
+          resourceTemporalDateRange: {
+            range: {
+              resourceTemporalDateRange: {
+                gte: null,
+                lte: null,
+                relation: "intersects"
+              }
+            }
+          },
           sortBy: sortConfig[0] || 'relevance',
           sortOrder: sortConfig[1] || ''
         },
         params: {
-          'facet.q': gnSearchSettings.defaultSearchString || '',
-          resultType: gnSearchSettings.facetsSummaryType || 'details',
+          isTemplate: 'n',
+          resourceTemporalDateRange: {
+            range: {
+              resourceTemporalDateRange: {
+                gte: null,
+                lte: null,
+                relation: "intersects"
+              }
+            }
+          },
           sortBy: sortConfig[0] || 'relevance',
           sortOrder: sortConfig[1] || ''
         },

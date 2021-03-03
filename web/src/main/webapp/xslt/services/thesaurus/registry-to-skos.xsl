@@ -69,7 +69,7 @@
                 select="/documents/*[*:language = 'en']/*:label[@xml:lang = 'en']"/>
 
   <xsl:variable name="statusSuffix"
-                select="'registry/status/valid'"/>
+                select="'/status/valid'"/>
 
   <xsl:variable name="hasBroaderNarrowerLinks"
                 select="count(//*[1]/*:containeditems/*/*:parents) > 0"/>
@@ -81,6 +81,12 @@
     <title thesaurus="Classification of spatial data services"
            register="Classification of spatial data services"
            date="2008-12-03"/>
+    <title thesaurus="Spatial scope"
+           register="Spatial scope"
+           date="2019-05-22"/>
+    <title thesaurus="INSPIRE priority data set"
+           register="INSPIRE priority data set"
+           date="2018-04-04"/>
   </xsl:variable>
 
   <xsl:variable name="isInspireThemes"
@@ -108,13 +114,14 @@
         <xsl:choose>
           <xsl:when test="normalize-space($thesaurusTitle) = ''">
             <xsl:apply-templates mode="concept-scheme"
-                                 select="*/*:label|
-                                     */*:definition"/>
+                                 select="*/*:label"/>
           </xsl:when>
           <xsl:otherwise>
             <dc:title><xsl:value-of select="$thesaurusTitle"/></dc:title>
           </xsl:otherwise>
         </xsl:choose>
+        <xsl:apply-templates mode="concept-scheme"
+                             select="*/*:definition"/>
 
 
         <dcterms:issued><xsl:value-of select="if ($thesaurusDate != '') then $thesaurusDate else $now"/></dcterms:issued>

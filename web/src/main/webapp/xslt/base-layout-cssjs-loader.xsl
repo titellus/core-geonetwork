@@ -24,6 +24,7 @@
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:util="java:org.fao.geonet.util.XslUtil"
+                xmlns:keycloakUtil="java:org.fao.geonet.kernel.security.keycloak.KeycloakXslUtil"
                 version="2.0"
                 exclude-result-prefixes="#all">
   <!-- Template to load CSS and Javascript -->
@@ -80,7 +81,7 @@
 
 
     <xsl:if test="$is3DModeAllowed">
-      <script>var CESIUM_BASE_URL = '<xsl:value-of select="$uiResourcesPath"/>lib/ol3cesium/Cesium/';
+      <script>var CESIUM_BASE_URL = '<xsl:value-of select="$uiResourcesPath"/>lib/olcesium/Cesium/';
       </script>
     </xsl:if>
 
@@ -98,6 +99,7 @@
         <script src="{$uiResourcesPath}lib/jquery-2.2.4.js?v={$buildNumber}"></script>
 
         <script src="{$uiResourcesPath}lib/moment+langs.min.js?v={$buildNumber}"></script>
+        <script src="{$uiResourcesPath}lib/moment-timezone-with-data-10-year-range.min.js?v={$buildNumber}"></script>
 
         <script src="{$uiResourcesPath}lib/angular/angular.js?v={$buildNumber}"></script>
         <script src="{$uiResourcesPath}lib/angular/angular-resource.js?v={$buildNumber}"></script>
@@ -130,11 +132,12 @@
 
         <xsl:choose>
           <xsl:when test="$is3DModeAllowed">
-            <script src="{$uiResourcesPath}lib/ol3cesium/Cesium/Cesium.js?v={$buildNumber}"></script>
-            <script src="{$uiResourcesPath}lib/ol3cesium/ngeool3cesium-debug.js?v={$buildNumber}"></script>
+            <script src="{$uiResourcesPath}lib/openlayers/ol.js?v={$buildNumber}"></script>
+            <script src="{$uiResourcesPath}lib/olcesium/Cesium/Cesium.js?v={$buildNumber}"></script>
+            <script src="{$uiResourcesPath}lib/olcesium/olcesium.js?v={$buildNumber}"></script>
           </xsl:when>
           <xsl:otherwise>
-            <script src="{$uiResourcesPath}lib/ngeo/ngeo-debug.js?v={$buildNumber}"></script>
+            <script src="{$uiResourcesPath}lib/openlayers/ol.js?v={$buildNumber}"></script>
           </xsl:otherwise>
         </xsl:choose>
 
@@ -177,6 +180,8 @@
         <script src="{$uiResourcesPath}lib/bootstrap-table/src/extensions/angular/bootstrap-table-angular.js?v={$buildNumber}"></script>
         <script src="{$uiResourcesPath}lib/bootstrap-table/src/extensions/export/bootstrap-table-export.js?v={$buildNumber}"></script>
         <script src="{$uiResourcesPath}lib/bootstrap-table/dist/bootstrap-table-locale-all.min.js"></script>
+        <script src="{$uiResourcesPath}lib/bootstrap-table/dist/extensions/filter-control/bootstrap-table-filter-control.min.js"></script>
+
         <!--</xsl:if>-->
 
         <script src="{$uiResourcesPath}lib/underscore/underscore-min.js?v={$buildNumber}"></script>
@@ -184,6 +189,7 @@
         <script src="{$uiResourcesPath}lib/geohash.js?v={$buildNumber}"></script>
 
         <script src="{$uiResourcesPath}lib/xml2json/xml2json.min.js?v={$buildNumber}"></script>
+        <script src="{$uiResourcesPath}lib/dom-to-image/dom-to-image.min.js?v={$buildNumber}"></script>
       </xsl:when>
       <xsl:otherwise>
       </xsl:otherwise>
@@ -202,7 +208,7 @@
 
         <xsl:choose>
           <xsl:when test="$is3DModeAllowed">
-            <script src="{$uiResourcesPath}lib/ol3cesium/Cesium/Cesium.js?v={$buildNumber}"></script>
+            <script src="{$uiResourcesPath}lib/olcesium/Cesium/Cesium.js?v={$buildNumber}"></script>
             <script src="{/root/gui/url}/static/lib3d.js?v={$buildNumber}"></script>
           </xsl:when>
           <xsl:otherwise>
@@ -213,6 +219,11 @@
       </xsl:otherwise>
     </xsl:choose>
 
+    <script src="{$uiResourcesPath}lib/d3_timeseries/d3.min.js?v={$buildNumber}"></script>
+    <script src="{$uiResourcesPath}lib/timeline/timeline-zoomable.js?v={$buildNumber}"></script>
+    <link rel="stylesheet" href="{$uiResourcesPath}lib/timeline/timeline.css"/>
+    <link rel="stylesheet" href="{$uiResourcesPath}lib/d3_timeseries/nv.d3.min.css"/>
+
     <xsl:variable name="appConfig"
                   select="util:getUiConfiguration(/root/request/ui)"/>
 
@@ -221,23 +232,43 @@
       <script src="{$uiResourcesPath}lib/timeline/timeline-zoomable.js?v={$buildNumber}"></script>
       <link rel="stylesheet" href="{$uiResourcesPath}lib/timeline/timeline.css"/>
       <link rel="stylesheet" href="{$uiResourcesPath}lib/d3_timeseries/nv.d3.min.css"/>
-      <script type="text/javascript">
-        var module = angular.module('gn_search');
-        module.config(['gnGlobalSettings',
-        function(gnGlobalSettings) {
-        gnGlobalSettings.shibbolethEnabled = <xsl:value-of select="$shibbolethOn"/>;
-        }]);
-      </script>
     </xsl:if>
 
-    <xsl:if test="$angularApp = 'gn_login'">
+    <xsl:if test="$angularApp = 'gn_search' or $angularApp = 'gn_login'">
       <script type="text/javascript">
-        var module = angular.module('gn_login');
+        var module = angular.module('<xsl:value-of select="$angularApp"/>');
         module.config(['gnGlobalSettings',
         function(gnGlobalSettings) {
-        gnGlobalSettings.shibbolethEnabled = <xsl:value-of select="$shibbolethOn"/>;
+        gnGlobalSettings.isDisableLoginForm = <xsl:value-of select="$isDisableLoginForm"/>;
+        gnGlobalSettings.isShowLoginAsLink = <xsl:value-of select="$isShowLoginAsLink"/>;
         }]);
       </script>
+
+      <!-- For keycloak we have to add some extra scripts -->
+      <xsl:if test="util:getSecurityProvider() =  'KEYCLOAK' and keycloakUtil:getClientId()">
+        <xsl:variable name="authServerBaseUrl"  select="keycloakUtil:getAuthServerBaseUrl()"/>
+        <script src="{$authServerBaseUrl}/js/keycloak.js"></script>
+        <script type="text/javascript">
+          var sessionModule = angular.module('gn_session_service');
+          var keycloak = new Keycloak({
+          "realm" : "<xsl:value-of select="keycloakUtil:getRealm()"/>",
+          "url" : "<xsl:value-of select="keycloakUtil:getAuthServerBaseUrl()"/>",
+          "clientId" : "<xsl:value-of select="keycloakUtil:getClientId()"/>"
+          })
+
+          keycloak.init({ onLoad: '<xsl:value-of select="keycloakUtil:getInitOnLoad()"/>',
+          checkLoginIframe: false }).success(function(authenticated) {
+             $(window).load(function() {
+              if (authenticated) {
+                if ($("#signinLink").length) {
+                   window.location.href = $("#signinLink").href;
+                }
+              }
+            })
+          });
+
+        </script>
+      </xsl:if>
     </xsl:if>
 
     <!-- XML highlighter JS dependency. -->

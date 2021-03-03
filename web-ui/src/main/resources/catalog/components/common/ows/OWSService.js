@@ -99,7 +99,7 @@
             var parser = new ol.format.WMSCapabilities();
             cachedGetCapabilitiesUrls[getCapabilitiesUrl] = parser.read(data);
           }
-          var result = cachedGetCapabilitiesUrls[getCapabilitiesUrl];
+          var result = angular.copy(cachedGetCapabilitiesUrls[getCapabilitiesUrl], {});
           var layers = [];
           var url = result.Capability.Request.GetMap.
               DCPType[0].HTTP.Get.OnlineResource;
@@ -150,6 +150,12 @@
 
           //result.contents.Layer = result.contents.layers;
           result.Contents.operationsMetadata = result.OperationsMetadata;
+
+          var capUrlMatch = data.match(/<ServiceMetadataURL xlink:href="(.+)"/);
+          if (capUrlMatch) {
+            result.Contents.serviceMetadataURL = capUrlMatch[1];
+          }
+
           return result.Contents;
         };
 
@@ -170,20 +176,8 @@
 
           try {
 
-            //check the version (some wfs responds in other version then requested)
-            if (data.indexOf('version="2.0.0"')>-1){
-              version = "2.0";
-            } else if (data.indexOf('version="1.1.0"')>-1) {
-              version = "1.1.0";
-            } else if (data.indexOf('version="1.0.0"')>-1) {
-              version = "1.0.0";
-            } else {
-              console.warn('no version detected');
-              defer.reject({msg: 'wfsGetCapabilitiesFailed',
-                owsExceptionReport: 'No WFS version detected on response'});
-            }
-
             var xml = $.parseXML(data);
+            var version = $(xml).find(":first-child").attr("version");
 
             //First cleanup not supported INSPIRE extensions:
             if (xml.getElementsByTagName('ExtendedCapabilities').length > 0) {
@@ -205,7 +199,7 @@
               xfsCap = unmarshaller110.unmarshalDocument(xml).value;
             } else if (version === '1.0.0') {
               xfsCap = unmarshaller100.unmarshalDocument(xml).value;
-            } else if (version === '2.0') {
+            } else if (version === '2.0.0') {
               xfsCap = unmarshaller20.unmarshalDocument(xml).value;
             } else {
               console.warn('WFS version '+version+' not supported.');
@@ -421,7 +415,7 @@
                 });
 
             if (bboxProp) {
-              extent = ol.extent.containsExtent(proj.getWorldExtent(),
+              extent = proj.getWorldExtent() && ol.extent.containsExtent(proj.getWorldExtent(),
                       bboxProp) ?
                       ol.proj.transformExtent(bboxProp, 'EPSG:4326', proj) :
                       proj.getExtent();
@@ -458,8 +452,7 @@
             for (var j = 0; j < layerList.length; j ++) {
               var name = layerList[j];
               //non namespaced lowercase name
-              nameNoNamespace = name.split(':')[
-                  name.split(':').length - 1].toLowerCase();
+              nameNoNamespace = this.getNameWithoutNamespace(name).toLowerCase();
 
               capabilityLayers:
               for (var i = 0; i < layers.length; i++) {
@@ -475,21 +468,24 @@
                     capNameNoNamespace;
                 //non namespaced lowercase capabilities name
                 if (capName) {
-                  capNameNoNamespace = capName.split(':')[
-                      capName.split(':').length - 1].toLowerCase();
+                  capNameNoNamespace = this.getNameWithoutNamespace(capName).toLowerCase();
                 }
 
                 //either names match or non namespaced names
+                // note: these matches are put at the beginning of the needles array
                 if (name == capName || nameNoNamespace == capNameNoNamespace) {
                   layers[i].nameToUse = capName;
                   if (capObj.version) {
                     layers[i].version = capObj.version;
                   }
-                  needles.push(layers[i]);
+                  needles.unshift(layers[i]);
                   break capabilityLayers;
                 }
 
                 //check dataset identifer match
+                // note: these matches are put at the end of the needles array
+                // because they are lower priority than the layername matches
+                // and the loop is not stopping after them
                 if (uuid != null) {
                   if (angular.isArray(layers[i].Identifier)) {
                     for (var c = 0; c < layers[i].Identifier.length; c++) {
@@ -513,15 +509,16 @@
               }
             }
 
-            //FIXME: remove duplicates
             if (needles.length >= layerList.length) {
               if (capObj.version) {
                 needles[0].version = capObj.version;
               }
               // Multiple layers from the same service
               if (layerName.indexOf(',') !== -1) {
-                needles[0].Name = layerName;
                 // Parameters 'styles' and 'layers' should have the same number of values.
+                // needles[0].Name = layerName;
+                needles[0].Name = _.uniq(needles.map(function(l) {return l.Name})).join(',');
+                needles[0].Title = _.uniq(needles.map(function(l) {return l.Title})).join(', ');
                 needles[0].Style = new Array(layerList.length).join(',');
               }
               return needles[0];
@@ -581,6 +578,17 @@
             else {
               return;
             }
+          },
+
+          /**
+           * If the name contains a namespace, like: ms:myLayer, will
+           * return the part after the first `:` character: 'myLayer'
+           * @param {string} name
+           * @return {string} name without namespace
+           */
+          getNameWithoutNamespace: function(name) {
+            var parts = name.split(':', 2);
+            return parts[parts.length - 1];
           }
         };
       }];

@@ -69,7 +69,7 @@ public class UrlAnalyzerTest extends AbstractCoreIntegrationTest {
 
     @Autowired
     protected MetadataLinkRepository metadataLinkRepository;
-    
+
     @Autowired
     private UrlChecker urlChecker;
 
@@ -231,6 +231,8 @@ public class UrlAnalyzerTest extends AbstractCoreIntegrationTest {
         assertEquals(0, statusRepository.findAll().size());
 
         linkRepository.findAll().stream().forEach(toTest::testLink);
+        entityManager.flush();
+        entityManager.clear();
 
         List<LinkStatus> allStatus = statusRepository.findAll();
         assertEquals(6, allStatus.size());
@@ -245,6 +247,8 @@ public class UrlAnalyzerTest extends AbstractCoreIntegrationTest {
         Mockito.when(mockUrlChecker.getUrlStatus(contains("aquastat"))).thenReturn(new LinkStatus().setStatusValue("418").setStatusInfo("I am teapot").setFailing(true));
         Mockito.when(mockUrlChecker.getUrlStatus(contains("data.fao"))).thenReturn(new LinkStatus().setStatusValue("418").setStatusInfo("I am teapot").setFailing(true));
         linkRepository.findAll().stream().forEach(toTest::testLink);
+        entityManager.flush();
+        entityManager.clear();
 
         allStatus = statusRepository.findAll();
         assertEquals(12, allStatus.size());
@@ -287,7 +291,6 @@ public class UrlAnalyzerTest extends AbstractCoreIntegrationTest {
                 context,
                 metadata,
                 element,
-                false,
                 true,
                 false,
                 NO,

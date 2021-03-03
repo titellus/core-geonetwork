@@ -63,7 +63,9 @@ var gnHarvestercsw = {
           // happen and then search criteria name which is the tag name
           // will be lost.
           //                if (value) {
-          body += '<' + tag + '>' + value + '</' + tag + '>';
+          body += '<' + tag + '>' +
+            ((tag.indexOf('bbox-') === 0 && isNaN(value)) || value === null ? '' : value) +
+            '</' + tag + '>';
           //            }
         }
       }
@@ -100,7 +102,7 @@ var gnHarvestercsw = {
       + '  </options>'
       + '  <content>'
       + '    <validate>' + h.content.validate + '</validate>'
-      + '    <batchEdits><![CDATA[' + h.content.batchEdits + ']]></batchEdits>'
+      + '    <batchEdits><![CDATA[' + (h.content.batchEdits == '' ? '[]' : h.content.batchEdits) + ']]></batchEdits>'
       + '  </content>'
       + $scope.buildResponseGroup(h)
       + $scope.buildResponseCategory(h) + '</node>';

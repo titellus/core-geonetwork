@@ -48,7 +48,7 @@
   <xsl:variable name="i18n" select="/root/gui/i18n"/>
   <!-- Used by SearchApi loading translation from JSON locale files. -->
   <xsl:variable name="t" select="/root/translations"/>
-  <xsl:variable name="lang" select="/root/gui/language"/>
+  <xsl:variable name="lang" select="if (/root/gui/language) then /root/gui/language else 'eng'"/>
   <xsl:variable name="lang2chars" select="/root/gui/lang2chars"/>
   <xsl:variable name="requestParameters" select="/root/request"/>
 
@@ -65,8 +65,11 @@
   <xsl:variable name="angularModule"
                 select="if ($angularApp = 'gn_search') then concat('gn_search_', $searchView) else $angularApp"></xsl:variable>
 
-  <xsl:variable name="shibbolethOn"
-                select="util:existsBean('shibbolethConfiguration')"/>
+  <xsl:variable name="isDisableLoginForm"
+                select="util:isDisableLoginForm()"/>
+
+  <xsl:variable name="isShowLoginAsLink"
+                select="util:isShowLoginAsLink()"/>
 
   <!-- Define which JS module to load using Closure -->
   <xsl:variable name="angularApp" select="
@@ -84,18 +87,25 @@
       or $service = 'search'
       or $service = 'md.format.html') then 'gn_search'
     else if ($service = 'display') then 'gn_formatter_viewer'
+    else if ($service = 'portal') then 'gn_portal'
     else 'gn'"/>
 
   <xsl:variable name="customFilename" select="concat($angularApp, '_', $searchView)"></xsl:variable>
 
   <!-- Catalog settings -->
-  <xsl:variable name="env" select="/root/gui/systemConfig"/>
+  <xsl:variable name="env">
+    <system>
+      <xsl:copy-of select="if (/root/gui/systemConfig)
+                            then /root/gui/systemConfig
+                            else /root/gui/env/*"/>
+    </system>
+  </xsl:variable>
 
   <!-- Only system settings (use for backward compatibility replacing
   /root/gui/env by $envSystem is equivalent). New reference to setting
   should use $env.
   -->
-  <xsl:variable name="envSystem" select="/root/gui/systemConfig/system"/>
+  <xsl:variable name="envSystem" select="/root/gui/env/system"/>
 
   <!-- URL for services - may not be defined FIXME or use fullURL instead -->
   <xsl:variable name="siteURL" select="/root/gui/siteURL"/>
@@ -119,6 +129,12 @@
 
   <xsl:variable name="isJsEnabled" select="not(ends-with($service, '-nojs'))"/>
 
+  <!-- TODO: Can be improved.
+  If there is no config in the database then this is always false.
+  If CatController default config was set it to true, 3D JS dependencies will not be loaded.
+  CatController default config is false and if user wants to enable 3D
+  he/she has to create a config from the admin.
+   -->
   <xsl:variable name="is3DModeAllowed"
                 select="if ($service = 'catalog.search' and
                             (util:getUiConfigurationJsonProperty(/root/request/ui, 'mods.map.is3DModeAllowed') = 'true' or /root/request/with3d))

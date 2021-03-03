@@ -44,31 +44,41 @@
   module.controller('GnDashboardController', [
     '$scope', '$http', 'gnGlobalSettings',
     function($scope, $http, gnGlobalSettings) {
-      $scope.pageMenu = {tabs: {}};
       $scope.info = {};
       $scope.gnUrl = gnGlobalSettings.gnUrl;
 
-      $scope.pageMenu.tabs = [{
-        type: 'status',
-        label: 'status',
-        icon: 'fa-dashboard',
-        href: '#/dashboard/status'
-      },{
+      var userAdminTabs = [{
         type: 'record-links',
         label: 'record-links',
         icon: 'fa-link',
         href: '#/dashboard/record-links'
-      },{
-        type: 'information',
-        label: 'information',
-        icon: 'fa-list-ul',
-        href: '#/dashboard/information'
-      },{
-        type: 'versioning',
-        label: 'versioning',
-        icon: 'fa-rss',
-        href: '#/dashboard/versioning'
       }];
+
+      $scope.pageMenu = {
+        folder: 'dashboard/',
+        defaultTab: 'status',
+        tabs:
+          [{
+            type: 'status',
+            label: 'status',
+            icon: 'fa-dashboard',
+            href: '#/dashboard/status'
+          }, {
+            type: 'record-links',
+            label: 'record-links',
+            icon: 'fa-link',
+            href: '#/dashboard/record-links'
+          }, {
+            type: 'information',
+            label: 'information',
+            icon: 'fa-list-ul',
+            href: '#/dashboard/information'
+          }, {
+            type: 'versioning',
+            label: 'versioning',
+            icon: 'fa-rss',
+            href: '#/dashboard/versioning'
+          }]};
 
       var dashboards = [{
         type: 'statistics',
@@ -93,9 +103,12 @@
       //       '5b407790-4fa1-11e7-a577-3197d1592a1d?embed=true&_g=()')
       }];
 
-
-
       function loadConditionalTabs() {
+        if ($scope.user.profile === 'UserAdmin') {
+          $scope.pageMenu.tabs = userAdminTabs;
+          $scope.pageMenu.defaultTab = 'record-links';
+        }
+
         if ($scope.healthCheck.DashboardAppHealthCheck === true) {
           $scope.pageMenu.tabs = $scope.pageMenu.tabs.concat(dashboards);
         }
@@ -109,11 +122,11 @@
         }
       });
 
-      $scope.pageMenu = {
-        folder: 'dashboard/',
-        defaultTab: 'status',
-        tabs: $scope.pageMenu.tabs
-      };
+      $scope.$watchCollection('user', function (n, o) {
+        if (n !== o) {
+          loadConditionalTabs();
+        }
+      });
 
       $http.get('../api/site/info').
           success(function(data) {

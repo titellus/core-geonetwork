@@ -23,66 +23,42 @@
 
 package org.fao.geonet.api.registries.vocabularies;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLDecoder;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jeeves.server.UserSession;
+import jeeves.server.context.ServiceContext;
+import net.sf.json.JSONObject;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.fao.geonet.ApplicationContextHolder;
-import org.fao.geonet.GeonetContext;
-import org.fao.geonet.api.API;
+import org.fao.geonet.Constants;
 import org.fao.geonet.api.ApiParams;
 import org.fao.geonet.api.ApiUtils;
 import org.fao.geonet.api.exception.ResourceNotFoundException;
 import org.fao.geonet.api.exception.WebApplicationException;
+import org.fao.geonet.api.records.formatters.FormatType;
 import org.fao.geonet.api.tools.i18n.LanguageUtils;
 import org.fao.geonet.constants.Geonet;
+import org.fao.geonet.domain.ISODate;
 import org.fao.geonet.kernel.GeonetworkDataDirectory;
 import org.fao.geonet.kernel.KeywordBean;
 import org.fao.geonet.kernel.Thesaurus;
 import org.fao.geonet.kernel.ThesaurusManager;
 import org.fao.geonet.kernel.search.KeywordsSearcher;
-import org.fao.geonet.kernel.search.keyword.KeywordSearchParamsBuilder;
-import org.fao.geonet.kernel.search.keyword.KeywordSearchType;
-import org.fao.geonet.kernel.search.keyword.KeywordSort;
-import org.fao.geonet.kernel.search.keyword.SortDirection;
-import org.fao.geonet.kernel.search.keyword.XmlParams;
+import org.fao.geonet.kernel.search.keyword.*;
 import org.fao.geonet.kernel.setting.SettingManager;
 import org.fao.geonet.languages.IsoLanguagesMapper;
 import org.fao.geonet.lib.Lib;
 import org.fao.geonet.repository.ThesaurusActivationRepository;
-import org.fao.geonet.utils.FilePathChecker;
-import org.fao.geonet.utils.GeonetHttpRequestFactory;
-import org.fao.geonet.utils.IO;
-import org.fao.geonet.utils.Log;
-import org.fao.geonet.utils.Xml;
-import org.fao.geonet.utils.XmlRequest;
+import org.fao.geonet.utils.*;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.output.Format;
@@ -91,27 +67,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.MissingServletRequestParameterException;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import jeeves.server.UserSession;
-import jeeves.server.context.ServiceContext;
-import springfox.documentation.annotations.ApiIgnore;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import static org.fao.geonet.csw.common.Csw.NAMESPACE_DC;
+import static org.fao.geonet.csw.common.Csw.NAMESPACE_DCT;
+import static org.fao.geonet.kernel.rdf.Selectors.RDF_NAMESPACE;
+import static org.fao.geonet.kernel.rdf.Selectors.SKOS_NAMESPACE;
 
 /**
  * The Class KeywordsApi.
@@ -120,17 +104,16 @@ import springfox.documentation.annotations.ApiIgnore;
 @Service
 @RequestMapping(
     value = {
-        "/{portal}/api/registries/vocabularies",
-        "/{portal}/api/" + API.VERSION_0_1 +
-            "/registries/vocabularies"
+        "/{portal}/api/registries/vocabularies"
     })
-@Api(
-    value = ApiParams.API_CLASS_REGISTRIES_TAG,
-    tags = ApiParams.API_CLASS_REGISTRIES_TAG,
+@Tag(
+    name = ApiParams.API_CLASS_REGISTRIES_TAG,
     description = ApiParams.API_CLASS_REGISTRIES_OPS)
 public class KeywordsApi {
 
-    /** The language utils. */
+    /**
+     * The language utils.
+     */
     @Autowired
     LanguageUtils languageUtils;
 
@@ -150,29 +133,38 @@ public class KeywordsApi {
     ThesaurusActivationRepository thesaurusActivationRepository;
 
     @Autowired
-    GeonetHttpRequestFactory  httpRequestFactory;
+    GeonetHttpRequestFactory httpRequestFactory;
+    /**
+     * The mapper.
+     */
+    @Autowired
+    IsoLanguagesMapper mapper;
+    /**
+     * The thesaurus manager.
+     */
+    @Autowired
+    ThesaurusManager thesaurusManager;
 
     /**
      * Search keywords.
      *
-     * @param q the q
-     * @param lang the lang
-     * @param rows the rows
-     * @param start the start
+     * @param q           the q
+     * @param lang        the lang
+     * @param rows        the rows
+     * @param start       the start
      * @param targetLangs the target langs
-     * @param thesaurus the thesaurus
-     * @param type the type
-     * @param uri the uri
-     * @param sort the sort
-     * @param request the request
+     * @param thesaurus   the thesaurus
+     * @param type        the type
+     * @param uri         the uri
+     * @param sort        the sort
+     * @param request     the request
      * @param httpSession the http session
      * @return the list
      * @throws Exception the exception
      */
-    @ApiOperation(
-        value = "Search keywords",
-        nickname = "searchKeywords",
-        notes = "")
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Search keywords",
+        description = "")
     @RequestMapping(
         path = "/search",
         method = RequestMethod.GET,
@@ -183,16 +175,16 @@ public class KeywordsApi {
         value = HttpStatus.OK)
     @ResponseBody
     public List<KeywordBean> searchKeywords(
-        @ApiParam(
-            value = "Query",
+        @Parameter(
+            description = "Query",
             required = false
         )
         @RequestParam(
             required = false
         )
             String q,
-        @ApiParam(
-            value = "Query in that language",
+        @Parameter(
+            description = "Query in that language",
             required = false
         )
         @RequestParam(
@@ -200,8 +192,8 @@ public class KeywordsApi {
             defaultValue = "eng"
         )
             String lang,
-        @ApiParam(
-            value = "Number of rows",
+        @Parameter(
+            description = "Number of rows",
             required = false
         )
         @RequestParam(
@@ -209,8 +201,8 @@ public class KeywordsApi {
             defaultValue = "1000"
         )
             int rows,
-        @ApiParam(
-            value = "Start from",
+        @Parameter(
+            description = "Start from",
             required = false
         )
         @RequestParam(
@@ -218,24 +210,24 @@ public class KeywordsApi {
             required = false
         )
             int start,
-        @ApiParam(
-            value = "Return keyword information in one or more languages",
-                required = false
+        @Parameter(
+            description = "Return keyword information in one or more languages",
+            required = false
         )
         @RequestParam(
             value = XmlParams.pLang,
-                required = false
+            required = false
         )
             List<String> targetLangs,
-        @ApiParam(
-            value = "Thesaurus identifier",
+        @Parameter(
+            description = "Thesaurus identifier",
             required = false
         )
         @RequestParam(
             required = false
         )
             String[] thesaurus,
-//        @ApiParam(
+//        @Parameter(
 //            value = "?",
 //            required = false
 //        )
@@ -243,24 +235,24 @@ public class KeywordsApi {
 //            required = false
 //        )
 //            String thesauriDomainName,
-        @ApiParam(
-            value = "Type of search",
+        @Parameter(
+            description = "Type of search",
             required = false
         )
         @RequestParam(
             defaultValue = "CONTAINS"
         )
             KeywordSearchType type,
-        @ApiParam(
-            value = "URI query",
+        @Parameter(
+            description = "URI query",
             required = false
         )
         @RequestParam(
             required = false
         )
             String uri,
-        @ApiParam(
-            value = "Sort by",
+        @Parameter(
+            description = "Sort by",
             required = false
         )
         @RequestParam(
@@ -268,13 +260,13 @@ public class KeywordsApi {
             defaultValue = "DESC"
         )
             String sort,
-        @ApiIgnore
+        @Parameter(hidden = true)
             HttpServletRequest request,
-        @ApiIgnore
-            @ApiParam(hidden = true)
-        HttpSession httpSession
+        @Parameter(hidden = true)
+            HttpSession httpSession
     )
-        throws Exception {ConfigurableApplicationContext applicationContext = ApplicationContextHolder.get();
+        throws Exception {
+        ConfigurableApplicationContext applicationContext = ApplicationContextHolder.get();
         ServiceContext context = ApiUtils.createServiceContext(request);
         UserSession session = ApiUtils.getUserSession(httpSession);
 
@@ -290,9 +282,13 @@ public class KeywordsApi {
 
         String thesauriDomainName = null;
 
+        List<String> thesauri=null;
+        if (thesaurus!=null)
+            thesauri=Arrays.asList(thesaurus);
+
         KeywordSearchParamsBuilder builder = parseBuilder(
             lang, q, rows, start,
-            targetLangs, thesaurus != null ? Arrays.asList(thesaurus) : null,
+            targetLangs, thesauri,
             thesauriDomainName, type, uri, languagesMapper);
 
 //            if (checkModified(webRequest, thesaurusMan, builder)) {
@@ -314,33 +310,22 @@ public class KeywordsApi {
         return searcher.getResults();
     }
 
-
-
-    /** The mapper. */
-    @Autowired
-    IsoLanguagesMapper mapper;
-
-    /** The thesaurus manager. */
-    @Autowired
-    ThesaurusManager thesaurusManager;
-
     /**
      * Gets the keyword by id.
      *
-     * @param uri the uri
-     * @param sThesaurusName the s thesaurus name
-     * @param langs the langs
-     * @param keywordOnly the keyword only
-     * @param transformation the transformation
+     * @param uri              the uri
+     * @param sThesaurusName   the s thesaurus name
+     * @param langs            the langs
+     * @param keywordOnly      the keyword only
+     * @param transformation   the transformation
      * @param allRequestParams the all request params
-     * @param request the request
+     * @param request          the request
      * @return the keyword by id
      * @throws Exception the exception
      */
-    @ApiOperation(
-        value = "Get keyword by id",
-        nickname = "getKeywordById",
-        notes = "Retrieve XML representation of keyword(s) from same thesaurus" +
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Get keyword by id",
+        description = "Retrieve XML representation of keyword(s) from same thesaurus" +
             "using different transformations. " +
             "'to-iso19139-keyword' is the default and return an ISO19139 snippet." +
             "'to-iso19139-keyword-as-xlink' return an XLinked element. Custom transformation " +
@@ -350,59 +335,87 @@ public class KeywordsApi {
         path = "/keyword",
         method = RequestMethod.GET,
         produces = {
-            MediaType.APPLICATION_XML_VALUE
+            MediaType.APPLICATION_XML_VALUE,
+            MediaType.APPLICATION_JSON_VALUE
         })
     @ApiResponses(value = {
-        @ApiResponse(code = 200, message = "XML snippet with requested keywords."),
+        @ApiResponse(responseCode = "200", description = "XML snippet with requested keywords."),
     })
     @ResponseBody
     @ResponseStatus(HttpStatus.OK)
-    public Element getKeywordById(
-        @ApiParam(
-            value = "Keyword identifier or list of keyword identifiers comma separated.",
+    public Object getKeywordById(
+        @Parameter(
+            description = "Keyword identifier or list of keyword identifiers comma separated.",
             required = true)
-        @RequestParam (name = "id")
+        @RequestParam(name = "id")
             String uri,
-        @ApiParam(
-            value = "Thesaurus to look info for the keyword(s).",
+        @Parameter(
+            description = "Thesaurus to look info for the keyword(s).",
             required = true)
-        @RequestParam (name = "thesaurus")
+        @RequestParam(name = "thesaurus")
             String sThesaurusName,
-        @ApiParam(
-            value = "Languages.",
+        @Parameter(
+            description = "Languages.",
             required = false)
-        @RequestParam (name = "lang", required = false)
-            String [] langs,
-        @ApiParam(
-            value = "Only print the keyword, no thesaurus information.",
+        @RequestParam(name = "lang", required = false)
+            String[] langs,
+        @Parameter(
+            description = "Only print the keyword, no thesaurus information.",
             required = false)
-        @RequestParam (required = false, defaultValue = "false")
+        @RequestParam(required = false, defaultValue = "false")
             boolean keywordOnly,
-        @ApiParam(
-            value = "XSL template to use (ISO19139 keyword by default, see convert.xsl).",
+        @Parameter(
+            description = "XSL template to use (ISO19139 keyword by default, see convert.xsl).",
             required = false)
-        @RequestParam (required = false)
+        @RequestParam(required = false)
             String transformation,
-        @ApiIgnore
+        @Parameter(
+            description = "langMap, that converts the values in the 'lang' parameter to how they will be actually represented in the record. {'fre':'fra'} or {'fre':'fr'}.  Missing/empty means to convert to iso 2 letter.",
+            required = false)
+        @RequestParam (name = "langMap", required = false)
+            String  langMapJson,
+        @Parameter(hidden = true)
         @RequestParam
-            Map<String,String> allRequestParams,
+            Map<String, String> allRequestParams,
+        @RequestHeader(
+            value = "Accept",
+            defaultValue = MediaType.APPLICATION_XML_VALUE
+        )
+        String accept,
+        @Parameter(hidden = true)
         HttpServletRequest request
-
-    ) throws Exception {
+        ) throws Exception {
         final String SEPARATOR = ",";
         ServiceContext context = ApiUtils.createServiceContext(request);
+        boolean isJson = MediaType.APPLICATION_JSON_VALUE.equals(accept);
 
-        if(langs == null) {
+        // Search thesaurus by name (as facet key only contains the name of the thesaurus)
+        Thesaurus thesaurus = thesaurusManager.getThesaurusByName(sThesaurusName);
+        if (thesaurus == null) {
+            String finalSThesaurusName = sThesaurusName;
+            Optional<Thesaurus> thesaurusEntry = thesaurusManager.getThesauriMap().values().stream().filter(t -> t.getKey().endsWith(finalSThesaurusName)).findFirst();
+            if (!thesaurusEntry.isPresent()) {
+                throw new IllegalArgumentException(String.format(
+                    "Thesaurus '%s' not found.", sThesaurusName));
+            } else {
+                thesaurus = thesaurusEntry.get();
+                sThesaurusName = thesaurusEntry.get().getKey();
+            }
+        }
+
+
+        if (langs == null) {
             langs = context.getLanguage().split(",");
         }
         String[] iso3langCodes = Arrays.copyOf(langs, langs.length);
         for (int i = 0; i < langs.length; i++) {
             if (StringUtils.isNotEmpty(langs[i])) {
-                langs[i] = mapper.iso639_2_to_iso639_1(langs[i], langs[i].substring(2));
+                langs[i] = mapper.iso639_2_to_iso639_1(langs[i], langs[i].substring(0,2));  //default: fra -> fr
             }
         }
 
         Element descKeys;
+        Map<String, String> jsonResponse = new HashMap<>();
 
         uri = URLDecoder.decode(uri, "UTF-8");
 
@@ -412,58 +425,94 @@ public class KeywordsApi {
             KeywordsSearcher searcher = new KeywordsSearcher(context, thesaurusManager);
 
             KeywordBean kb;
+            String[] url;
             if (!uri.contains(SEPARATOR)) {
-                kb = searcher.searchById(uri, sThesaurusName, langs);
+                url = new String[]{uri};
+            }
+            else {
+                url = uri.split(SEPARATOR);
+            }
+            List<KeywordBean> kbList = new ArrayList<>();
+            for (String currentUri : url) {
+                kb = searcher.searchById(currentUri, sThesaurusName, iso3langCodes);
                 if (kb == null) {
-                    descKeys = new Element("descKeys");
-                } else {
-                    descKeys = KeywordsSearcher.toRawElement(new Element("descKeys"), kb);
-                }
-            } else {
-                String[] url = uri.split(SEPARATOR);
-                List<KeywordBean> kbList = new ArrayList<>();
-                for (String currentUri : url) {
                     kb = searcher.searchById(currentUri, sThesaurusName, langs);
-                    if (kb != null) {
-                        kbList.add(kb);
-                    }
                 }
-                descKeys = new Element("descKeys");
-                for (KeywordBean keywordBean : kbList) {
+                if (kb == null) {
+                    kb = searcher.searchById(ApiUtils.fixURIFragment(currentUri), sThesaurusName, iso3langCodes);
+                }
+                if (kb == null) {
+                    kb = searcher.searchById(ApiUtils.fixURIFragment(currentUri), sThesaurusName, langs);
+                }
+                if (kb != null) {
+                    kbList.add(kb);
+                }
+            }
+            descKeys = new Element("descKeys");
+            for (KeywordBean keywordBean : kbList) {
+                if (isJson) {
+                    jsonResponse.put(
+                        keywordBean.getUriCode(),
+                        // Requested lang or the first non empty value
+                        keywordBean.getDefaultValue()
+                    );
+                } else {
                     KeywordsSearcher.toRawElement(descKeys, keywordBean);
                 }
             }
         }
 
-        Path convertXsl = dataDirectory.getWebappDir().resolve("xslt/services/thesaurus/convert.xsl");
-
-        Element gui = new Element("gui");
-        Element nodeUrl = new Element("nodeUrl").setText(settingManager.getNodeURL());
-        Element nodeId = new Element("nodeId").setText(context.getNodeId());
-        Element thesaurusEl = new Element("thesaurus");
-        final Element root = new Element("root");
-
-        gui.addContent(thesaurusEl);
-        thesaurusEl.addContent(thesaurusManager.buildResultfromThTable(context));
-
-        Element requestParams = new Element ("request");
-        for (Map.Entry<String, String> e : allRequestParams.entrySet()) {
-            if (e.getKey().equals("lang")) {
-                requestParams.addContent(new Element(e.getKey())
-                    .setText(String.join(",", iso3langCodes)));
-            } else {
-                requestParams.addContent(new Element(e.getKey()).setText(e.getValue()));
+       Element langConversion = null;
+        if ( (langMapJson != null) && (!langMapJson.isEmpty()) ){
+            JSONObject obj = JSONObject.fromObject(langMapJson);
+            langConversion = new Element("languageConversions");
+            for(Object entry : obj.entrySet()) {
+                String key = ((Map.Entry) entry).getKey().toString();
+                String value = ((Map.Entry) entry).getValue().toString();
+                Element conv = new Element("conversion");
+                conv.setAttribute("from",key.toString());
+                conv.setAttribute("to",value.toString().replace("#",""));
+                langConversion.addContent(conv);
             }
+
         }
 
-        root.addContent(requestParams);
-        root.addContent(descKeys);
-        root.addContent(gui);
-        root.addContent(nodeUrl);
-        root.addContent(nodeId);
-        final Element transform = Xml.transform(root, convertXsl);
+        if (isJson) {
+            return jsonResponse;
+        } else {
+            Path convertXsl = dataDirectory.getWebappDir().resolve("xslt/services/thesaurus/convert.xsl");
 
-        return transform;
+            Element gui = new Element("gui");
+            Element nodeUrl = new Element("nodeUrl").setText(settingManager.getNodeURL());
+            Element nodeId = new Element("nodeId").setText(context.getNodeId());
+            Element thesaurusEl = new Element("thesaurus");
+            final Element root = new Element("root");
+
+            gui.addContent(thesaurusEl);
+            thesaurusEl.addContent(thesaurusManager.buildResultfromThTable(context));
+
+            Element requestParams = new Element("request");
+            for (Map.Entry<String, String> e : allRequestParams.entrySet()) {
+                if (e.getKey().equals("lang")) {
+                    requestParams.addContent(new Element(e.getKey())
+                        .setText(String.join(",", iso3langCodes)));
+                } else {
+                    requestParams.addContent(new Element(e.getKey()).setText(e.getValue()));
+                }
+            }
+            if (langConversion != null) {
+                requestParams.addContent(langConversion);
+            }
+
+            root.addContent(requestParams);
+            root.addContent(descKeys);
+            root.addContent(gui);
+            root.addContent(nodeUrl);
+            root.addContent(nodeId);
+            final Element transform = Xml.transform(root, convertXsl);
+
+            return transform;
+        }
     }
 
 
@@ -471,35 +520,34 @@ public class KeywordsApi {
      * Gets the thesaurus.
      *
      * @param thesaurus the thesaurus
-     * @param response the response
+     * @param response  the response
      * @return the thesaurus
      * @throws Exception the exception
      */
-    @ApiOperation(
-            value = "Download a thesaurus by name",
-            nickname = "getThesaurus",
-            notes = "Download the thesaurus in SKOS format."
-        )
-        @RequestMapping(
-            value = "/{thesaurus:.+}",
-            method = RequestMethod.GET,
-            produces = {
-                MediaType.TEXT_XML_VALUE
-            })
-        @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Thesaurus in SKOS format."),
-            @ApiResponse(code = 404, message = ApiParams.API_RESPONSE_RESOURCE_NOT_FOUND)
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Download a thesaurus by name",
+        description = "Download the thesaurus in SKOS format."
+    )
+    @RequestMapping(
+        value = "/{thesaurus:.+}",
+        method = RequestMethod.GET,
+        produces = {
+            MediaType.TEXT_XML_VALUE
         })
-        @ResponseBody
-        @ResponseStatus(HttpStatus.OK)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Thesaurus in SKOS format."),
+        @ApiResponse(responseCode = "404", description = ApiParams.API_RESPONSE_RESOURCE_NOT_FOUND)
+    })
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
     public void getThesaurus(
-            @ApiParam(
-                    value = "Thesaurus to download.",
-                    required = true)
-            @PathVariable(value = "thesaurus")
+        @Parameter(
+            description = "Thesaurus to download.",
+            required = true)
+        @PathVariable(value = "thesaurus")
             String thesaurus,
-            HttpServletResponse response
-            ) throws Exception {
+        HttpServletResponse response
+    ) throws Exception {
 
         Thesaurus directory = thesaurusMan.getThesaurusByName(thesaurus);
         if (directory == null)
@@ -510,9 +558,9 @@ public class KeywordsApi {
             throw new IllegalArgumentException("Thesaurus file not found --> " + thesaurus);
 
         response.setContentType("text/xml");
-        response.setHeader("Content-Disposition","attachment;filename="+directoryFile.getFileName());
+        response.setHeader("Content-Disposition", "attachment;filename=" + directoryFile.getFileName());
         ServletOutputStream out = response.getOutputStream();
-        BufferedReader reader1 = new BufferedReader(new InputStreamReader(new FileInputStream(directoryFile.toFile()), Charset.forName("UTF-8")));
+        BufferedReader reader1 = new BufferedReader(new InputStreamReader(new FileInputStream(directoryFile.toFile()), StandardCharsets.UTF_8));
         IOUtils.copy(reader1, out);
         out.flush();
         out.close();
@@ -526,35 +574,34 @@ public class KeywordsApi {
      * @return the element
      * @throws Exception the exception
      */
-    @ApiOperation(
-            value = "Delete a thesaurus by name",
-            nickname = "deleteThesaurus",
-            notes = "Delete a thesaurus."
-        )
-        @RequestMapping(
-            value = "/{thesaurus:.+}",
-            method = RequestMethod.DELETE)
-        @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Thesaurus deleted."),
-            @ApiResponse(code = 403, message = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_USER_ADMIN),
-            @ApiResponse(code = 404, message = ApiParams.API_RESPONSE_RESOURCE_NOT_FOUND)
-        })
-        @PreAuthorize("hasRole('UserAdmin')")
-        @ResponseBody
-        @ResponseStatus(HttpStatus.OK)
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Delete a thesaurus by name",
+        description = "Delete a thesaurus."
+    )
+    @RequestMapping(
+        value = "/{thesaurus:.+}",
+        method = RequestMethod.DELETE)
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Thesaurus deleted."),
+        @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_USER_ADMIN),
+        @ApiResponse(responseCode = "404", description = ApiParams.API_RESPONSE_RESOURCE_NOT_FOUND)
+    })
+    @PreAuthorize("hasAuthority('UserAdmin')")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
     public void deleteThesaurus(
-            @ApiParam(
-                    value = "Thesaurus to delete.",
-                    required = true)
-            @PathVariable(value = "thesaurus")
+        @Parameter(
+            description = "Thesaurus to delete.",
+            required = true)
+        @PathVariable(value = "thesaurus")
             String thesaurus
-            ) throws Exception {
+    ) throws Exception {
 
         Thesaurus thesaurusObject = thesaurusMan.getThesaurusByName(thesaurus);
         if (thesaurusObject == null) {
             throw new ResourceNotFoundException(String.format(
-              "Thesaurus with identifier '%s' not found in the catalogue. Should be one of: %s",
-              thesaurus,
+                "Thesaurus with identifier '%s' not found in the catalogue. Should be one of: %s",
+                thesaurus,
                 thesaurusMan.getThesauriMap().keySet().toString()
             ));
         }
@@ -569,8 +616,8 @@ public class KeywordsApi {
 
             // Delete thesaurus record in the database
             String thesaurusId = thesaurusObject.getFname();
-            if (thesaurusActivationRepository.exists(thesaurusId)) {
-                thesaurusActivationRepository.delete(thesaurusId);
+            if (thesaurusActivationRepository.existsById(thesaurusId)) {
+                thesaurusActivationRepository.deleteById(thesaurusId);
             }
         } else {
             throw new IllegalArgumentException(String.format(
@@ -582,57 +629,47 @@ public class KeywordsApi {
 
     /**
      * Upload thesaurus.
-     *
-     * @param file the file
-     * @param type the type
-     * @param dir the dir
-     * @param stylesheet the stylesheet
-     * @param request the request
-     * @return the element
-     * @throws Exception the exception
      */
-    @ApiOperation(
-            value = "Uploads a new thesaurus from a file",
-            nickname = "uploadThesaurus",
-            notes = "Uploads a new thesaurus."
-        )
-        @RequestMapping(
-            method = RequestMethod.POST,
-            produces = MediaType.TEXT_XML_VALUE
-        )
-        @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Thesaurus uploaded in SKOS format."),
-            @ApiResponse(code = 403, message = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_REVIEWER)
-        })
-
-        @PreAuthorize("hasRole('Reviewer')")
-        @ResponseBody
-        @ResponseStatus(value = HttpStatus.CREATED)
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Uploads a new thesaurus from a file",
+        description = "Uploads a new thesaurus."
+    )
+    @RequestMapping(
+        method = RequestMethod.POST,
+        produces = MediaType.TEXT_XML_VALUE
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Thesaurus uploaded in SKOS format."),
+        @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_REVIEWER)
+    })
+    @PreAuthorize("hasAuthority('Reviewer')")
+    @ResponseBody
+    @ResponseStatus(value = HttpStatus.CREATED)
     public String uploadThesaurus(
-            @ApiParam(
-                    value = "If set, do a file upload.")
-            @RequestParam(value = "file", required = false)
+        @Parameter(
+            description = "If set, do a file upload.")
+        @RequestParam(value = "file", required = false)
             MultipartFile file,
-            @ApiParam(
-                    value = "Local or external (default).")
-            @RequestParam(value = "type", defaultValue = "external")
+        @Parameter(
+            description = "Local or external (default).")
+        @RequestParam(value = "type", defaultValue = "external")
             String type,
-            @ApiParam(
-                    value = "Type of thesaurus, usually one of the ISO thesaurus type codelist value. Default is theme.")
-            @RequestParam(value = "dir", defaultValue = "theme")
+        @Parameter(
+            description = "Type of thesaurus, usually one of the ISO thesaurus type codelist value. Default is theme.")
+        @RequestParam(value = "dir", defaultValue = "theme")
             String dir,
-            @ApiParam(
-                    value = "XSL to be use to convert the thesaurus before load. Default _none_.")
-            @RequestParam(value = "stylesheet", defaultValue = "_none_")
+        @Parameter(
+            description = "XSL to be use to convert the thesaurus before load. Default _none_.")
+        @RequestParam(value = "stylesheet", defaultValue = "_none_")
             String stylesheet,
-            HttpServletRequest request
-            ) throws Exception {
+        HttpServletRequest request
+    ) throws Exception {
 
         long start = System.currentTimeMillis();
         ServiceContext context = ApiUtils.createServiceContext(request);
 
         // Different options for upload
-        boolean fileUpload = file!=null&&!file.isEmpty();
+        boolean fileUpload = file != null && !file.isEmpty();
 
         // Upload RDF file
         Path rdfFile = null;
@@ -704,59 +741,364 @@ public class KeywordsApi {
 
 
 
+    /**
+     * Upload CSV file as a thesaurus.
+     */
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Uploads a CSV file and convert it to SKOS format",
+        description = "CSV file MUST contains columns at least for concept id and label. For multilingual thesaurus, consider using columns like label, label_fre, label_ita with languages parameter set to [en, fr, it]. Default language value is used if translations are empty. The thesaurus filename will be the filename of the CSV file (with .rdf extension). It is recommended to set the thesaurus title and namespace URL even if default values will be used based on the filename. Thesaurus dates are set to the date of import."
+    )
+    @RequestMapping(
+        value = "/import/csv",
+        method = RequestMethod.POST,
+        produces = MediaType.APPLICATION_XML_VALUE
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Thesaurus converted and imported in SKOS format."),
+        @ApiResponse(responseCode = "200", description = "Thesaurus converted and returned in response in SKOS format."),
+        @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_REVIEWER)
+    })
+    @PreAuthorize("hasAuthority('Reviewer')")
+    @ResponseBody
+    public void importCsvAsThesaurus(
+        @Parameter(
+            description = "If set, do a file upload.")
+        @RequestParam(value = "file", required = false)
+            MultipartFile file,
+        @Parameter(
+            description = "Local or external (default).")
+        @RequestParam(value = "type", defaultValue = "external")
+            String type,
+        @Parameter(
+            description = "Type of thesaurus, usually one of the ISO thesaurus type codelist value. Default is theme.")
+        @RequestParam(value = "dir", defaultValue = "theme")
+            String dir,
+        @Parameter(
+            description = "Encoding. Default is UTF-8.")
+        @RequestParam(value = "encoding", defaultValue = "UTF-8")
+            String encoding,
+        @Parameter(
+            description = "Thesaurus namespace. Default is filename.")
+        @RequestParam(value = "thesaurusNs", defaultValue = "")
+            String thesaurusNs,
+        @Parameter(
+            description = "Thesaurus languages")
+        @RequestParam(value = "languages", defaultValue = "en")
+            String[] languages,
+        @Parameter(
+            description = "Thesaurus title. Default is filename.")
+        @RequestParam(value = "thesaurusTitle", defaultValue = "")
+            String thesaurusTitle,
+        @Parameter(
+            description = "Column name for concept id. Default is id.")
+        @RequestParam(value = "conceptIdColumn", defaultValue = "id")
+            String conceptIdColumn,
+        @Parameter(
+            description = "Column name for concept label. Default is label.")
+        @RequestParam(value = "conceptLabelColumn", defaultValue = "label")
+            String conceptLabelColumn,
+        @Parameter(
+            description = "Column name for concept description. Default is description.")
+        @RequestParam(value = "conceptDescriptionColumn", defaultValue = "")
+            String conceptDescriptionColumn,
+        @Parameter(
+            description = "Column name for broader concept id. Default is broader.")
+        @RequestParam(value = "conceptBroaderIdColumn", defaultValue = "broader")
+            String conceptBroaderIdColumn,
+        @Parameter(
+            description = "Column name for narrower concept id. Default is narrower.")
+        @RequestParam(value = "conceptNarrowerIdColumn", defaultValue = "narrower")
+            String conceptNarrowerIdColumn,
+        @Parameter(
+            description = "Column name for related concept id. Default is related.")
+        @RequestParam(value = "conceptRelatedIdColumn", defaultValue = "related")
+            String conceptRelatedIdColumn,
+        @Parameter(
+            description = "Separator used when multiple broader/narrower/related ids are in the same column. Default is '|'.")
+        @RequestParam(value = "conceptLinkSeparator", defaultValue = "\\|")
+            String conceptLinkSeparator,
+        @Parameter(
+            description = "Import CSV file as thesaurus if true (detault) or return it in  SKOS format.")
+        @RequestParam(value = "importAsThesaurus", defaultValue = "true")
+            boolean importAsThesaurus,
+        HttpServletRequest request,
+        HttpServletResponse response
+    ) throws Exception {
+        ServiceContext context = ApiUtils.createServiceContext(request);
+
+        String fname = file.getOriginalFilename();
+        Log.debug(Geonet.THESAURUS, "Uploading CSV file: " + fname);
+        File tempDir = Files.createTempDirectory("thesaurus").toFile();
+        Path tempFilePath = tempDir.toPath().resolve(file.getOriginalFilename());
+        File convFile = tempFilePath.toFile();
+        file.transferTo(convFile);
+        Path csvFile = convFile.toPath();
+
+        try {
+            if (StringUtils.isEmpty(fname)) {
+                throw new Exception("File missing.");
+            }
+
+            long fsize;
+            if (csvFile != null && Files.exists(csvFile)) {
+                fsize = Files.size(csvFile);
+            } else {
+                throw new MissingServletRequestParameterException("CSV file doesn't exist", "file");
+            }
+
+            if (fsize == 0) {
+                throw new MissingServletRequestParameterException("CSV file has zero size", "file");
+            }
+
+            String extension = FilenameUtils.getExtension(fname);
+            Element element = convertCsvToSkos(csvFile,
+                languages,
+                encoding,
+                thesaurusNs,
+                thesaurusTitle,
+                conceptIdColumn,
+                conceptLabelColumn,
+                conceptDescriptionColumn,
+                conceptBroaderIdColumn,
+                conceptNarrowerIdColumn,
+                conceptRelatedIdColumn,
+                conceptLinkSeparator);
+
+            fname = fname.replace(extension, "rdf");
+
+            if(importAsThesaurus) {
+                Path rdfFile = tempDir.toPath().resolve(fname);
+                XMLOutputter xmlOutput = new XMLOutputter();
+                xmlOutput.setFormat(Format.getCompactFormat());
+                xmlOutput.output(element,
+                    new OutputStreamWriter(new FileOutputStream(rdfFile.toFile().getCanonicalPath()),
+                        StandardCharsets.UTF_8));
+                uploadThesaurus(rdfFile, "_none_", context, fname, type, dir);
+                response.setStatus(HttpServletResponse.SC_CREATED);
+            } else {
+                response.addHeader("Content-Disposition", "inline; filename=\"" + fname + "\"");
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.setCharacterEncoding(Constants.ENCODING);
+                response.setContentType(MediaType.APPLICATION_XML_VALUE);
+                response.getOutputStream().write(Xml.getString(element).getBytes());
+            }
+        } finally {
+            if (tempDir != null) {
+                FileUtils.deleteQuietly(tempDir);
+            }
+        }
+    }
+
+    public Element convertCsvToSkos(Path csvFile,
+                                    String[] languages,
+                                    String encoding,
+                                    String thesaurusNs,
+                                    String thesaurusTitle,
+                                    String conceptIdColumn,
+                                    String conceptLabelColumn,
+                                    String conceptDescriptionColumn,
+                                    String conceptBroaderIdColumn,
+                                    String conceptNarrowerIdColumn,
+                                    String conceptRelatedIdColumn,
+                                    String conceptLinkSeparator) throws IOException {
+       Log.debug(Geonet.THESAURUS, "Convert CSV file SKOS" + csvFile.getFileName());
+
+       String thesaurusNamespaceUrl = StringUtils.isEmpty(thesaurusNs) ?
+           csvFile.getFileName().toString() + "#" : thesaurusNs;
+        Element thesaurus = new Element("RDF", RDF_NAMESPACE);
+
+        try (
+            Reader reader = Files.newBufferedReader(csvFile, Charset.forName(encoding));
+            CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                .withFirstRecordAsHeader()
+                .withIgnoreHeaderCase()
+                .withTrim());
+        ) {
+
+            Map<String, KeywordBean> allConcepts = new LinkedHashMap<>();
+            Map<String, List<String>> broaderLinks = new HashMap<>();
+            Map<String, List<String>> narrowerLinks = new HashMap<>();
+            Map<String, List<String>> relatedLinks = new HashMap<>();
+            List<String> topConcepts = new ArrayList<>();
+
+            for (CSVRecord csvRecord : csvParser) {
+                try {
+                    KeywordBean keyword = new KeywordBean(languagesMapper);
+                    keyword.setNamespaceCode(thesaurusNamespaceUrl);
+                    keyword.setKeywordUrl(thesaurusNamespaceUrl);
+                    keyword.setUriCode(csvRecord.get(conceptIdColumn));
+                    Arrays.stream(languages).forEach(l -> {
+                        // Try to get column matching each languages
+                        // If preflabel is in a column label,
+                        // check first if label_eng exist and use it, if not use default
+                        String column = conceptLabelColumn + "_" + l;
+                        Integer position = csvParser.getHeaderMap().get(column);
+                        if (position != null) {
+                            keyword.setValue(csvRecord.get(column), l);
+                        } else {
+                            keyword.setValue(csvRecord.get(conceptLabelColumn), l);
+                        }
+                        if (StringUtils.isNotEmpty(conceptDescriptionColumn)) {
+                            String desccolumn = conceptDescriptionColumn + "_" + l;
+                            Integer descColumnPosition = csvParser.getHeaderMap().get(desccolumn);
+                            if (descColumnPosition != null) {
+                                keyword.setDefinition(csvRecord.get(desccolumn), l);
+                            } else if (csvParser.getHeaderMap().get(conceptDescriptionColumn) != null) {
+                                keyword.setDefinition(csvRecord.get(conceptDescriptionColumn), l);
+                            }
+                        }
+                    });
+
+                    String key = keyword.getKeywordUrl() + keyword.getUriCode();
+
+                    extractRelated(key, thesaurusNamespaceUrl, csvParser, csvRecord,
+                        conceptLinkSeparator, conceptBroaderIdColumn,
+                        broaderLinks);
+                    if (broaderLinks.get(key) == null || broaderLinks.get(key).size() == 0) {
+                        topConcepts.add(key);
+                    }
+                    extractRelated(key, thesaurusNamespaceUrl, csvParser, csvRecord,
+                        conceptLinkSeparator, conceptNarrowerIdColumn,
+                        narrowerLinks);
+                    extractRelated(key, thesaurusNamespaceUrl, csvParser, csvRecord,
+                        conceptLinkSeparator, conceptRelatedIdColumn,
+                        relatedLinks);
+
+                    allConcepts.put(key, keyword);
+                } catch (Exception ex) {
+                    Log.error(Geonet.THESAURUS, String.format(
+                        "Error reading CSV line '%s'. Error is %s",
+                        csvRecord.toString(),
+                        ex.getMessage()));
+
+                }
+            }
+
+            Element scheme = buildConceptScheme(csvFile, thesaurusTitle, thesaurusNamespaceUrl);
+            if(broaderLinks.size() > 0 && topConcepts.size() > 0) {
+                topConcepts.forEach(t -> {
+                    Element topConcept = new Element("hasTopConcept", SKOS_NAMESPACE);
+                    topConcept.setAttribute("resource", t, RDF_NAMESPACE);
+                    scheme.addContent(topConcept);
+                });
+            }
+            thesaurus.addContent(scheme);
+
+            allConcepts.forEach((uri, keyword) -> {
+                Element keywordSkos = keyword.getSkos();
+                addRelated(uri, keywordSkos, "broader", broaderLinks);
+                addRelated(uri, keywordSkos, "narrower", narrowerLinks);
+                addRelated(uri, keywordSkos, "related", relatedLinks);
+                thesaurus.addContent(keywordSkos);
+            });
+        }
+        return thesaurus;
+    }
+
+    private void extractRelated(String key, String thesaurusNamespaceUrl, CSVParser csvParser, CSVRecord csvRecord, String conceptLinkSeparator, String column, Map<String, List<String>> list) {
+        if (csvParser.getHeaderMap().get(column) != null) {
+            list.put(
+                key,
+                Arrays.stream(csvRecord.get(column).split(conceptLinkSeparator))
+                    .filter(StringUtils::isNotEmpty)
+                    .map(c -> {
+                        return thesaurusNamespaceUrl + c;
+                    })
+                    .collect(Collectors.toList())
+            );
+        }
+    }
+
+    private void addRelated(String uri, Element keywordSkos, String type, Map<String, List<String>> broaderLinks) {
+        Optional.ofNullable(broaderLinks.get(uri))
+            .orElseGet(Collections::emptyList)
+            .stream()
+            .filter(Objects::nonNull).forEach(b -> {
+            Element broader = new Element(type, SKOS_NAMESPACE);
+            broader.setAttribute("resource", b, RDF_NAMESPACE);
+            keywordSkos.addContent(broader);
+        });
+    }
+
+    public Element buildConceptScheme(Path csvFile, String thesaurusTitle, String thesaurusNamespaceUrl) {
+        Element conceptScheme = new Element("ConceptScheme", SKOS_NAMESPACE);
+        conceptScheme.setAttribute("about", thesaurusNamespaceUrl, RDF_NAMESPACE);
+        Element conceptSchemeTitle = new Element("title", NAMESPACE_DC);
+        conceptSchemeTitle.setText(StringUtils.isEmpty(thesaurusTitle) ? csvFile.getFileName().toString() : thesaurusTitle);
+        conceptScheme.addContent(conceptSchemeTitle);
+
+        Element conceptSchemeDateIssued = new Element("issued", NAMESPACE_DCT);
+        Element conceptSchemeDateModified = new Element("issued", NAMESPACE_DCT);
+        String now = new ISODate().toString();
+        conceptSchemeDateIssued.setText(now);
+        conceptSchemeDateModified.setText(now);
+        conceptScheme.addContent(conceptSchemeDateIssued);
+        conceptScheme.addContent(conceptSchemeDateModified);
+        return conceptScheme;
+    }
+
+
+    public enum REGISTRY_TYPE {
+        re3gistry,
+        ldRegistry
+    }
 
     /**
      * Upload thesaurus.
      *
-     * @param url the url
-     * @param registryUrl the registry url
+     * @param url              the url
+     * @param registryUrl      the registry url
      * @param registryLanguage the languages to retrieve from the registry
-     * @param type the type
-     * @param dir the dir
-     * @param stylesheet the stylesheet
-     * @param request the request
+     * @param type             the type
+     * @param dir              the dir
+     * @param stylesheet       the stylesheet
+     * @param request          the request
      * @return the element
      * @throws Exception the exception
      */
-    @ApiOperation(
-        value = "Uploads a new thesaurus from URL or Registry",
-        nickname = "uploadThesaurusFromUrl",
-        notes = "Uploads a new thesaurus."
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Uploads a new thesaurus from URL or Registry",
+        description = "Uploads a new thesaurus."
     )
     @RequestMapping(
         method = RequestMethod.PUT,
         produces = MediaType.TEXT_XML_VALUE
     )
     @ApiResponses(value = {
-        @ApiResponse(code = 201, message = "Thesaurus uploaded in SKOS format."),
-        @ApiResponse(code = 403, message = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_REVIEWER)
+        @ApiResponse(responseCode = "201", description = "Thesaurus uploaded in SKOS format."),
+        @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_REVIEWER)
     })
-    @PreAuthorize("hasRole('Reviewer')")
+    @PreAuthorize("hasAuthority('Reviewer')")
     @ResponseBody
     @ResponseStatus(value = HttpStatus.CREATED)
     public String uploadThesaurusFromUrl(
-        @ApiParam(
-            value = "If set, try to download from the Internet.")
+        @Parameter(
+            description = "If set, try to download from the Internet.")
         @RequestParam(value = "url", required = false)
             String url,
-        @ApiParam(
-            value = "If set, try to download from a registry.")
+        @Parameter(
+            description = "If set, try to download from a registry.")
         @RequestParam(value = "registryUrl", required = false)
             String registryUrl,
-        @ApiParam(
-            value = "Languages to download from a registry.")
+        @Parameter(
+            description = "If using registryUrl, then define the type of registry." +
+                " If not set, default mode is re3gistry.")
+        @RequestParam(value = "registryType", required = false)
+            REGISTRY_TYPE registryType,
+        @Parameter(
+            description = "Languages to download from a registry.")
         @RequestParam(value = "registryLanguage", required = false)
             String[] registryLanguage,
-        @ApiParam(
-            value = "Local or external (default).")
+        @Parameter(
+            description = "Local or external (default).")
         @RequestParam(value = "type", defaultValue = "external")
             String type,
-        @ApiParam(
-            value = "Type of thesaurus, usually one of the ISO thesaurus type codelist value. Default is theme.")
+        @Parameter(
+            description = "Type of thesaurus, usually one of the ISO thesaurus type codelist value. Default is theme.")
         @RequestParam(value = "dir", defaultValue = "theme")
             String dir,
-        @ApiParam(
-            value = "XSL to be use to convert the thesaurus before load. Default _none_.")
+        @Parameter(
+            description = "XSL to be use to convert the thesaurus before load. Default _none_.")
         @RequestParam(value = "stylesheet", defaultValue = "_none_")
             String stylesheet,
         HttpServletRequest request
@@ -778,7 +1120,7 @@ public class KeywordsApi {
             Log.debug(Geonet.THESAURUS, "Uploading thesaurus from URL: " + url);
 
             rdfFile = getXMLContentFromUrl(url, context);
-            fname = url.substring(url.lastIndexOf("/") + 1, url.length()).replaceAll("\\s+", "");
+            fname = url.substring(url.lastIndexOf("/") + 1).replaceAll("\\s+", "");
 
             // File with no extension in URL
             if (fname.lastIndexOf('.') == -1) {
@@ -787,15 +1129,15 @@ public class KeywordsApi {
 
 
         } else if (registryUpload) {
-            if(ArrayUtils.isEmpty(registryLanguage)) {
+            if (ArrayUtils.isEmpty(registryLanguage)) {
                 throw new MissingServletRequestParameterException("Select at least one language.", "language");
             }
 
             Log.debug(Geonet.THESAURUS, "Uploading thesaurus from registry : " + registryUrl);
 
-            String itemName = registryUrl.substring( (registryUrl.lastIndexOf("/")+1), registryUrl.length() );
+            String itemName = registryUrl.substring((registryUrl.lastIndexOf("/") + 1));
 
-            rdfFile = extractSKOSFromRegistry(registryUrl, itemName, registryLanguage, context);
+            rdfFile = extractSKOSFromRegistry(registryUrl, registryType, itemName, registryLanguage, context);
             fname = registryUrl.replaceAll("[^A-Za-z]+", "") +
                 "-" +
                 itemName + ".rdf";
@@ -843,37 +1185,47 @@ public class KeywordsApi {
         return String.format("Thesaurus '%s' loaded in %d sec.",
             fname, duration);
     }
+
     /**
      * Extract SKOS from registry.
-     *
+     * <p>
      * Download for each language the codelist from the registry. Combine
      * them into one XML document which is then XSLT processed for SKOS conversion.
      *
      * @param registryUrl the registry url
-     * @param itemName the item name
-     * @param lang the selected languages
-     * @param context the context
+     * @param registryType
+     * @param itemName    the item name
+     * @param lang        the selected languages
+     * @param context     the context
      * @return the path
      * @throws Exception the exception
      */
-    private Path extractSKOSFromRegistry(String registryUrl, String itemName, String[] lang, ServiceContext context)
-            throws Exception {
-        if(lang != null) {
+    private Path extractSKOSFromRegistry(String registryUrl, REGISTRY_TYPE registryType, String itemName, String[] lang, ServiceContext context)
+        throws Exception {
+        if (lang != null) {
             Element documents = new Element("documents");
-            for (String language : lang) {
-                try {
-                    String languageFileUrl = registryUrl + "/" + itemName + "." + language + ".xml";
-                    Path localRdf = getXMLContentFromUrl(languageFileUrl, context);
-                    Element codeList = Xml.loadFile(localRdf);
-                    documents.addContent(codeList);
-                } catch(Exception e) {
-                    Log.debug(Geonet.THESAURUS, "Thesaurus not found for the requested translation: " + itemName + " " + language);
-                    throw new ResourceNotFoundException("Thesaurus not found for the requested translation: " + itemName + " " + language);
+            if (registryType == REGISTRY_TYPE.ldRegistry) {
+                Path localRdf = getXMLContentFromUrl(registryUrl + "?_view=with_metadata&_format=rdf", context);
+                Element ldRegistryCodelistAsRdf = Xml.loadFile(localRdf);
+                documents.addContent(ldRegistryCodelistAsRdf);
+            } else {
+                for (String language : lang) {
+                    try {
+                        String languageFileUrl = registryUrl + "/" + itemName + "." + language + ".xml";
+                        Path localRdf = getXMLContentFromUrl(languageFileUrl, context);
+                        Element codeList = Xml.loadFile(localRdf);
+                        documents.addContent(codeList);
+                    } catch (Exception e) {
+                        Log.debug(Geonet.THESAURUS, "Thesaurus not found for the requested translation: " + itemName + " " + language);
+                        throw new ResourceNotFoundException("Thesaurus not found for the requested translation: " + itemName + " " + language);
+                    }
                 }
             }
 
             // Convert to SKOS
-            Path skosTransform = dataDirectory.getWebappDir().resolve("xslt/services/thesaurus/registry-to-skos.xsl");
+            Path skosTransform = dataDirectory.getWebappDir().resolve(String.format(
+                "xslt/services/thesaurus/%s-to-skos.xsl",
+                registryType == REGISTRY_TYPE.ldRegistry ? "ldregistry" : "registry"));
             Element transform = Xml.transform(documents, skosTransform);
             // Convert to file and return
             Path rdfFile = Files.createTempFile("thesaurus", ".rdf");
@@ -892,11 +1244,11 @@ public class KeywordsApi {
     /**
      * Gets the XML content from url.
      *
-     * @param url the url
+     * @param url     the url
      * @param context the context
      * @return the rdf content from url
-     * @throws URISyntaxException the URI syntax exception
-     * @throws IOException Signals that an I/O exception has occurred.
+     * @throws URISyntaxException    the URI syntax exception
+     * @throws IOException           Signals that an I/O exception has occurred.
      * @throws MalformedURLException the malformed URL exception
      */
     private Path getXMLContentFromUrl(String url, ServiceContext context) throws URISyntaxException, IOException, MalformedURLException {
@@ -915,17 +1267,17 @@ public class KeywordsApi {
      * Load a thesaurus in the catalogue and optionnaly convert it using XSL.
      *
      * @param rdfFile the rdf file
-     * @param style the style
+     * @param style   the style
      * @param context the context
-     * @param fname the fname
-     * @param type the type
-     * @param dir the dir
+     * @param fname   the fname
+     * @param type    the type
+     * @param dir     the dir
      * @return Element thesaurus uploaded
      * @throws Exception the exception
      */
     private void uploadThesaurus(Path rdfFile, String style,
-            ServiceContext context, String fname, String type, String dir)
-                    throws Exception {
+                                 ServiceContext context, String fname, String type, String dir)
+        throws Exception {
 
         Path stylePath = context.getAppPath().resolve(Geonet.Path.STYLESHEETS);
 
@@ -944,7 +1296,7 @@ public class KeywordsApi {
 
         // Load document and check namespace
         if (tsXml.getNamespacePrefix().equals("rdf")
-                && tsXml.getName().equals("RDF")) {
+            && tsXml.getName().equals("RDF")) {
 
             // copy to directory according to type
             Path path = thesaurusMan.buildThesaurusFilePath(fname, type, dir);
@@ -964,16 +1316,16 @@ public class KeywordsApi {
     /**
      * Parses the builder.
      *
-     * @param uiLang the ui lang
-     * @param q the q
-     * @param maxResults the max results
-     * @param offset the offset
-     * @param targetLangs the target langs
-     * @param thesauri the thesauri
+     * @param uiLang             the ui lang
+     * @param q                  the q
+     * @param maxResults         the max results
+     * @param offset             the offset
+     * @param targetLangs        the target langs
+     * @param thesauri           the thesauri
      * @param thesauriDomainName the thesauri domain name
-     * @param typeSearch the type search
-     * @param uri the uri
-     * @param mapper the mapper
+     * @param typeSearch         the type search
+     * @param uri                the uri
+     * @param mapper             the mapper
      * @return the keyword search params builder
      */
     private KeywordSearchParamsBuilder parseBuilder(String uiLang, String q, int maxResults, int offset,
@@ -981,7 +1333,7 @@ public class KeywordsApi {
                                                     KeywordSearchType typeSearch, String uri, IsoLanguagesMapper mapper) {
         KeywordSearchParamsBuilder parsedParams =
             new KeywordSearchParamsBuilder(mapper)
-            .lenient(true);
+                .lenient(true);
 
         if (q != null) {
             parsedParams.keyword(q, typeSearch, true);
@@ -1012,7 +1364,7 @@ public class KeywordsApi {
         }
 
         boolean addedLang = false;
-        if(targetLangs != null) {
+        if (targetLangs != null) {
             for (String targetLang : targetLangs) {
                 if (!targetLang.trim().isEmpty()) {
                     parsedParams.addLang(targetLang.trim());

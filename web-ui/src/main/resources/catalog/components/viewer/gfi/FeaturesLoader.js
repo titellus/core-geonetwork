@@ -27,9 +27,9 @@
   var module = angular.module('gn_featurestable_loader', []);
 
   var linkTpl = '<span class="fa-stack">' +
-    '<i class="fa fa-square fa-stack-2x"></i>' +
-    '<i class="fa fa-link fa-stack-1x fa-inverse"></i>' +
-    '</span>';
+      '<i class="fa fa-square fa-stack-2x"></i>' +
+      '<i class="fa fa-link fa-stack-1x fa-inverse"></i>' +
+      '</span>';
 
   geonetwork.inherits = function(childCtor, parentCtor) {
     function tempCtor() {
@@ -77,16 +77,16 @@
   };
 
   geonetwork.inherits(geonetwork.GnFeaturesGFILoader,
-    geonetwork.GnFeaturesLoader);
+      geonetwork.GnFeaturesLoader);
 
   geonetwork.GnFeaturesGFILoader.prototype.loadAll = function() {
     var layer = this.layer,
-      map = this.map,
-      coordinates = this.coordinates;
+        map = this.map,
+        coordinates = this.coordinates;
 
     var uuid;
     if(layer.get('md')) {
-      uuid = layer.get('md').getUuid();
+      uuid = layer.get('md').uuid;
     } else if(layer.get('metadataUuid')) {
       uuid = layer.get('metadataUuid');
     }
@@ -132,11 +132,11 @@
       layer.infoFormat = infoFormat;
     }
 
-    var uri = layer.getSource().getGetFeatureInfoUrl(
-      coordinates,
-      map.getView().getResolution(),
-      map.getView().getProjection(),
-      { INFO_FORMAT: infoFormat });
+    var uri = layer.getSource().getFeatureInfoUrl(
+        coordinates,
+        map.getView().getResolution(),
+        map.getView().getProjection(),
+        { INFO_FORMAT: infoFormat });
     uri += '&FEATURE_COUNT=2147483647';
 
     this.loading = true;
@@ -147,16 +147,18 @@
       }
     }).then(function(response) {
 
-      if(infoFormat.toLowerCase().localeCompare('application/json') == 0 ||
-          infoFormat.toLowerCase().localeCompare('application/geojson') == 0 ) {
+      if(infoFormat &&
+        (infoFormat.toLowerCase().localeCompare('application/json') == 0 ||
+          infoFormat.toLowerCase().localeCompare('application/geojson') == 0 )) {
         var jsonf = new ol.format.GeoJSON();
         var features = [];
         response.data.features.forEach(function(f) {
           features.push(jsonf.readFeature(f));
         });
         this.features = features;
-      } else if(infoFormat.toLowerCase().localeCompare('text/xml') == 0
-        || infoFormat.toLowerCase().localeCompare('application/vnd.ogc.gml') == 0 ) {
+      } else if(infoFormat &&
+        (infoFormat.toLowerCase().localeCompare('text/xml') == 0
+        || infoFormat.toLowerCase().localeCompare('application/vnd.ogc.gml') == 0 )) {
         var format = new ol.format.WMSGetFeatureInfo();
         this.features = format.readFeatures(response.data, {
           featureProjection: map.getView().getProjection()
@@ -182,20 +184,20 @@
 
     }.bind(this));
 
-    this.dictionary = null;
+        this.dictionary = null;
 
-    if(uuid) {
-      this.dictionary = this.$http.get('../api/records/'+uuid+'/featureCatalog?_content_type=json')
-        .then(function(response) {
-          if(response.data['decodeMap']!=null) {
-            return response.data['decodeMap'];
-          } else {
-            return null;
-          }
-        }.bind(this), function(err) {
-          return null;
-        }.bind(this));
-    }
+        if(uuid) {
+          this.dictionary = this.$http.get('../api/records/'+uuid+'/featureCatalog?_content_type=json')
+          .then(function(response) {
+            if(response.data['decodeMap']!=null) {
+              return response.data['decodeMap'];
+            } else {
+              return null;
+        	}
+          }.bind(this), function(err) {
+        	return null;
+          }.bind(this));
+        }
 
   };
 
@@ -213,7 +215,7 @@
     var promises = [
       this.promise,
       this.dictionary
-    ];
+      ];
 
     return $q.all(promises).then(function(data) {
 
@@ -223,19 +225,12 @@
       if (!features || features.length == 0) {
         return;
       }
-      var httpLink = null;
 
       var data = features.map(function(f) {
         var obj = f.getProperties();
         Object.keys(obj).forEach(function(key) {
           if (exclude.indexOf(key) == -1) {
             var value = obj[key];
-            if (value && value.indexOf &&
-              value.indexOf('http') === 0) {
-              httpLink = value;
-              // Open a link if one found.
-              window.open(httpLink);
-            }
             if (!(obj[key] instanceof Object)) {
               //Make sure it is a string and not a number
               obj[key] = obj[key]+'';
@@ -250,7 +245,7 @@
               }
               if (obj[key]) {
                 obj[key] = obj[key].replace(/>(.)*</, ' ' +
-                  'target="_blank">' + linkTpl + '<');
+                    'target="_blank">' + linkTpl + '<');
               }
             } else {
               // Exclude objects which will not be displayed properly
@@ -301,7 +296,7 @@
   };
 
   geonetwork.GnFeaturesGFILoader.prototype.getFeatureFromRow = function(row) {
-    var geoms = ['the_geom', 'thegeom', 'boundedBy'];
+    var geoms = ['the_geom', 'thegeom', 'boundedBy', 'geometry'];
     for (var i = 0; i < geoms.length; i++) {
       var geom = row[geoms[i]];
       if (geoms[i] == 'boundedBy' && jQuery.isArray(geom)) {
@@ -312,9 +307,9 @@
         }
         if (this.projection) {
           geom = geom.transform(
-            this.projection,
-            this.map.getView().getProjection()
-          );
+              this.projection,
+              this.map.getView().getProjection()
+              );
         }
       }
       if (geom instanceof ol.geom.Geometry) {
@@ -338,7 +333,7 @@
   };
 
   geonetwork.inherits(geonetwork.GnFeaturesINDEXLoader,
-    geonetwork.GnFeaturesLoader);
+      geonetwork.GnFeaturesLoader);
 
   /**
    * Format an url type attribute to a html link <a href=...">.
@@ -352,8 +347,8 @@
     var link = $filter('linky')(url, '_blank');
     if (link != url) {
       link = link.replace(/>(.)*</,
-        ' ' + 'target="_blank">' + linkTpl + '<'
-      );
+          ' ' + 'target="_blank">' + linkTpl + '<'
+          );
     }
     return link;
   };
@@ -370,36 +365,36 @@
    * @private
    */
   geonetwork.GnFeaturesINDEXLoader.prototype.fillUrlWithFilter_ =
-    function(url) {
+      function(url) {
 
-      var indexFilters = this.indexObject.getState();
+    var indexFilters = this.indexObject.getState();
 
-      var URL_SUBSTITUTE_PREFIX = 'filtre_';
-      var regex = /\$\{(\w+)\}/g;
-      var placeholders = [];
-      var urlFilters = [];
-      var paramsToAdd = {};
-      var match;
+    var URL_SUBSTITUTE_PREFIX = 'filtre_';
+    var regex = /\$\{(\w+)\}/g;
+    var placeholders = [];
+    var urlFilters = [];
+    var paramsToAdd = {};
+    var match;
 
-      while (match = regex.exec(url)) {
-        placeholders.push(match[0]);
-        urlFilters.push(match[1].substring(
+    while (match = regex.exec(url)) {
+      placeholders.push(match[0]);
+      urlFilters.push(match[1].substring(
           URL_SUBSTITUTE_PREFIX.length, match[1].length));
+    }
+
+    urlFilters.forEach(function(p, i) {
+      var name = p;
+      var idxName = this.indexObject.getIdxNameObj_(name).idxName;
+      var fValue = indexFilters.qParams[idxName];
+      url = url.replace(placeholders[i], '');
+
+      if (fValue) {
+        paramsToAdd[name] = Object.keys(fValue.values)[0];
       }
+    }.bind(this));
 
-      urlFilters.forEach(function(p, i) {
-        var name = p;
-        var idxName = this.indexObject.getIdxNameObj_(name).idxName;
-        var fValue = indexFilters.qParams[idxName];
-        url = url.replace(placeholders[i], '');
-
-        if (fValue) {
-          paramsToAdd[name] = Object.keys(fValue.values)[0];
-        }
-      }.bind(this));
-
-      return this.urlUtils.append(url, this.urlUtils.toKeyValue(paramsToAdd));
-    };
+    return this.urlUtils.append(url, this.urlUtils.toKeyValue(paramsToAdd));
+  };
 
   geonetwork.GnFeaturesINDEXLoader.prototype.getBsTableConfig = function() {
     var $q = this.$injector.get('$q');
@@ -407,10 +402,10 @@
     var $filter = this.$injector.get('$filter');
 
     var pageList = [5, 10, 50, 100],
-      columns = [],
-      index = this.indexObject,
-      map = this.map,
-      fields = index.indexFields || index.filteredDocTypeFieldsInfo;
+        columns = [],
+        index = this.indexObject,
+        map = this.map,
+        fields = index.indexFields || index.filteredDocTypeFieldsInfo;
 
     fields.forEach(function(field) {
       if ($.inArray(field.idxName, this.excludeCols) === -1) {
@@ -443,7 +438,7 @@
       method: 'POST',
       queryParams: function(p) {
         var queryObject = this.indexObject.buildESParams(state, {},
-          p.offset || 0, p.limit || 10000);
+            p.offset || 0, p.limit || 10000);
         if (p.sort) {
           queryObject.sort = [];
           var sort = {};
@@ -501,6 +496,74 @@
   };
 
 
+  /**
+   * Features loader tailored for the ESRI ArcGis REST API
+   * @constructor
+   */
+  geonetwork.GnFeaturesESRILoader = function(config, $injector) {
+    geonetwork.GnFeaturesGFILoader.call(this, config, $injector);
+
+    this.coordinates = config.coordinates;
+  };
+
+  geonetwork.inherits(geonetwork.GnFeaturesESRILoader,
+    geonetwork.GnFeaturesGFILoader);
+
+  geonetwork.GnFeaturesESRILoader.prototype.loadAll = function() {
+    var layer = this.layer;
+    var map = this.map;
+    var coordinates = this.coordinates;
+
+    var uuid;
+    if(layer.get('md')) {
+      uuid = layer.get('md').uuid;
+    } else if(layer.get('metadataUuid')) {
+      uuid = layer.get('metadataUuid');
+    }
+
+    this.loading = true;
+    var mapExtent = map.getView().calculateExtent();
+    var mapSize = map.getSize();
+    var layerId = layer.getSource().getParams().LAYERS;
+
+    var layerParam = 'top'; // only the top most features will be returned
+    if (!!layerId) {
+      layerParam = 'all:' + layerId; // look into the specified layer instead
+    }
+
+    // we use the identify operation on the image service, see:
+    // https://developers.arcgis.com/rest/services-reference/identify-map-service-.htm
+    var identifyUrl = layer.getSource().getUrl() +
+      '/identify?geometryType=esriGeometryPoint&geometry=' + coordinates[0] + ',' + coordinates[1] +
+      '&tolerance=4&mapExtent=' + mapExtent.join(',') + '&imageDisplay=' + mapSize.join(',') + ',96' +
+      '&f=json&layers=' + layerParam;
+
+    var format = new ol.format.EsriJSON();
+
+    this.promise = this.$http.get(identifyUrl).then(function (response) {
+      this.loading = false;
+      this.features = response.data.results.map(function (result) {
+        return format.readFeature(result, {
+          featureProjection: map.getView().getProjection()
+        });
+      });
+      return this.features;
+    }.bind(this));
+
+    this.dictionary = null;
+
+    if(uuid) {
+      this.dictionary = this.$http.get('../api/records/'+uuid+'/featureCatalog?_content_type=json')
+        .then(function(response) {
+          if(response.data['decodeMap']!=null) {
+            return response.data['decodeMap'];
+          }
+        }, function () {
+          return null;
+        });
+    }
+
+  };
 
   /**
    *

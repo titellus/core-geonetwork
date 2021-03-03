@@ -37,15 +37,16 @@
    */
   module.directive('gnWmsImport', [
     'gnOwsCapabilities',
+    'gnAlertService',
     'gnMap',
     '$translate',
     '$timeout',
-    'gnSearchManagerService',
+    'gnESClient',
     'Metadata',
     'gnViewerSettings',
     'gnGlobalSettings',
-    function(gnOwsCapabilities, gnMap, $translate, $timeout,
-             gnSearchManagerService, Metadata, gnViewerSettings,
+    function(gnOwsCapabilities, gnAlertService, gnMap, $translate, $timeout,
+             gnESClient, Metadata, gnViewerSettings,
              gnGlobalSettings) {
       return {
         restrict: 'A',
@@ -69,7 +70,7 @@
           this.addLayer = function(getCapLayer, style) {
             getCapLayer.version = $scope.capability.version;
             getCapLayer.capRequest = $scope.capability.Request;
-  
+
             //check if proxy is needed
             var url = $scope.url.split('/');
             getCapLayer.useProxy = false;
@@ -79,7 +80,12 @@
             }
             if ($scope.format == 'wms') {
               var layer =
-                  gnMap.addWmsToMapFromCap($scope.map, getCapLayer, style);
+                  gnMap.addWmsToMapFromCap($scope.map, getCapLayer, $scope.url, style);
+                  gnAlertService.addAlert({
+                    msg: $translate.instant('layerAdded',
+                        {layer: layer.get('label'), extent: layer.get('cextent').toString()}),
+                    type: 'success'
+                  },4);
               gnMap.feedLayerMd(layer);
               return layer;
             } else if ($scope.format == 'wfs') {
@@ -90,6 +96,8 @@
             } else if ($scope.format == 'wmts') {
               return gnMap.addWmtsToMapFromCap($scope.map, getCapLayer,
                   $scope.capability);
+            } else {
+              console.log($scope.format+ ' not supported');
             }
           };
         }],
@@ -113,8 +121,8 @@
             angular.forEach(md.getLinksByType(type), function(link) {
               if (link.url) {
                 scope.catServicesList.push({
-                  title: md.title || md.defaultTitle,
-                  uuid: md.getUuid(),
+                  title: md.resourceTitle,
+                  uuid: md.uuid,
                   name: link.name,
                   desc: link.desc,
                   type: type,
@@ -126,14 +134,18 @@
           // Get the list of services registered in the catalog
           if (attrs.servicesListFromCatalog) {
             // FIXME: Only load the first 100 services
-            gnSearchManagerService.gnSearch({
-              fast: 'index',
-              _content_type: 'json',
-              from: 1,
-              to: 100,
-              serviceType: 'OGC:WMS or OGC:WFS or OGC:WMTS'
+            gnESClient.search(
+              {
+                'from': 0,
+                'size':100,
+                'sort': [{'resourceTitleObject.default.keyword': 'asc'}],
+                'query':{
+                  'query_string': {
+                    'query': '+isTemplate:n +serviceType:("OGC:WMS" OR "OGC:WFS" OR "OGC:WMTS")'
+                  }
+                }
             }).then(function(data) {
-              angular.forEach(data.metadata, function(record) {
+              angular.forEach(data.hits.hits, function(record) {
                 var md = new Metadata(record);
                 if (scope.format === 'all') {
                   addLinks(md, 'wms');
@@ -199,10 +211,10 @@
    */
 
   module.directive('gnKmlImport', [
-    'ngeoDecorateLayer',
+    'olDecorateLayer',
     'gnAlertService',
     '$translate',
-    function(ngeoDecorateLayer, gnAlertService, $translate) {
+    function(olDecorateLayer, gnAlertService, $translate) {
       return {
         restrict: 'A',
         replace: true,
@@ -254,7 +266,7 @@
             };
 
             $scope.addToMap = function(layer, map) {
-              ngeoDecorateLayer(layer);
+              olDecorateLayer(layer);
               layer.displayInLayerManager = true;
               map.getLayers().push(layer);
               map.getView().fit(layer.getSource().getExtent(),
@@ -367,7 +379,7 @@
               var listenerKey = vector.getSource().on('change',
                   function(evt) {
                     if (vector.getSource().getState() == 'ready') {
-                      vector.getSource().unByKey(listenerKey);
+                      ol.Observable.unByKey(listenerKey);
                       scope.addToMap(vector, scope.map);
                       entry.loading = false;
                     }
@@ -405,15 +417,20 @@
    * gnCapTreeElt directive.
    */
   module.directive('gnCapTreeCol', [
-    function() {
+    '$translate',
+    function($translate) {
+
+      var label= $translate.instant('filter');
+
       return {
         restrict: 'E',
         replace: true,
         scope: {
           collection: '='
         },
-        template: "<ul class='list-group'><li data-ng-show='collection.length > 10' >" +
-            "<input class='form-control input-sm' data-ng-model-options='{debounce: 200}' data-ng-model='layerSearchText'/>" +
+        template: "<ul class='gn-layer-tree'><li data-ng-show='collection.length > 10' >" +
+            "<div class='input-group input-group-sm'><span class='input-group-addon'><i class='fa fa-filter'></i></span>" +
+            "<input class='form-control' aria-label='" + label + "' data-ng-model-options='{debounce: 200}' data-ng-model='layerSearchText'/></div>" +
             "</li>" +
             '<gn-cap-tree-elt ng-repeat="member in collection | filter:layerSearchText | orderBy: \'Title\'" member="member">' +
             '</gn-cap-tree-elt></ul>'
@@ -447,8 +464,8 @@
           var el = element;
 
           scope.toggleNode = function(evt) {
-            el.find('.fa').first().toggleClass('fa-folder-o')
-                .toggleClass('fa-folder-open-o');
+            el.find('.fa').first().toggleClass('fa-folder-open-o')
+                .toggleClass('fa-folder-o');
             el.children('ul').toggle();
             evt.stopPropagation();
           };
@@ -461,7 +478,7 @@
 
           // Add all subchildren
           if (angular.isArray(scope.member.Layer)) {
-            element.append("<gn-cap-tree-col class='list-group' " +
+            element.append("<gn-cap-tree-col " +
                 "collection='member.Layer'></gn-cap-tree-col>");
             $compile(element.find('gn-cap-tree-col'))(scope);
           }

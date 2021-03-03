@@ -28,7 +28,8 @@
     <relation type="related|services|children">
       + super-brief representation.
 -->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:gmd="http://www.isotc211.org/2005/gmd"
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:gmd="http://www.isotc211.org/2005/gmd"
                 xmlns:gco="http://www.isotc211.org/2005/gco"
                 xmlns:gmx="http://www.isotc211.org/2005/gmx"
                 xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -63,10 +64,11 @@
   to the GN localized string structure -->
   <xsl:template mode="get-iso19139-localized-string" match="*">
 
-    <xsl:variable name="mainLanguage"
-                  select="string(ancestor::metadata/*[@gco:isoType='gmd:MD_Metadata' or name()='gmd:MD_Metadata']/
-                            gmd:language/gco:CharacterString|ancestor::metadata/*[@gco:isoType='gmd:MD_Metadata' or name()='gmd:MD_Metadata']/
-                            gmd:language/gmd:LanguageCode/@codeListValue)"/>
+    <xsl:variable name="mainLanguage">
+      <xsl:call-template name="langId_from_gmdlanguage19139">
+          <xsl:with-param name="gmdlanguage" select="ancestor::metadata/*[@gco:isoType='gmd:MD_Metadata' or name()='gmd:MD_Metadata']/gmd:language"/>
+      </xsl:call-template>
+    </xsl:variable>
 
     <xsl:for-each select="gco:CharacterString|gmx:Anchor|
                           gmd:PT_FreeText/*/gmd:LocalisedCharacterString">
@@ -89,10 +91,11 @@
                 match="metadata[gmd:MD_Metadata or *[contains(@gco:isoType, 'MD_Metadata')]]"
                 priority="99">
 
-    <xsl:variable name="mainLanguage"
-                  select="string(
-                            */gmd:language/gco:CharacterString|
-                            */gmd:language/gmd:LanguageCode/@codeListValue)"/>
+    <xsl:variable name="mainLanguage">
+      <xsl:call-template name="langId_from_gmdlanguage19139">
+          <xsl:with-param name="gmdlanguage" select="*/gmd:language"/>
+      </xsl:call-template>
+    </xsl:variable>
 
     <xsl:if test="count(*/descendant::*[name(.) = 'gmd:graphicOverview']/*) > 0">
       <thumbnails>
@@ -139,7 +142,7 @@
               <xsl:value-of select="gmd:function/*/@codeListValue"/>
             </function>
             <applicationProfile>
-              <xsl:value-of select="gmd:applicationProfile/gco:CharacterString"/>
+              <xsl:value-of select="gmd:applicationProfile/*/text()"/>
             </applicationProfile>
             <description>
               <xsl:apply-templates mode="get-iso19139-localized-string"
@@ -153,5 +156,33 @@
         </xsl:for-each>
       </onlines>
     </xsl:if>
+<!--
+    <xsl:if test="count(*//gco:CharacterString[contains(., 'http')] > 0">
+      <embeddedLinks>
+        <xsl:for-each select="*//gco:CharacterString[contains(., 'http')]">
+          <xsl:analyze-string select="."
+                              regex="(regextforurl)*">
+
+            <xsl:matching-substring>
+              <item>
+                <xsl:variable name="langCode">
+                  <xsl:value-of select="concat('#', upper-case(util:twoCharLangCode($lang, 'EN')))"/>
+                </xsl:variable>
+                <xsl:variable name="url" select="regex-group(1)"/>
+                <id>
+                  <xsl:value-of select="regex-group(1)"/>
+                </id>
+                <url>
+                  <value lang="{$mainLanguage}">
+                    <xsl:value-of select="regex-group(1)"/>
+                  </value>
+                </url>
+                <type>embeddedLinks</type>
+              </item>
+            </xsl:matching-substring>
+          </xsl:analyze-string>
+        </xsl:for-each>
+      </embeddedLinks>
+    </xsl:if>-->
   </xsl:template>
 </xsl:stylesheet>

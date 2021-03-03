@@ -40,11 +40,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -59,6 +55,7 @@ import org.fao.geonet.domain.Group;
 import org.fao.geonet.domain.AbstractMetadata;
 import org.fao.geonet.domain.ISODate;
 import org.fao.geonet.domain.MetadataCategory;
+import org.fao.geonet.domain.MetadataResource;
 import org.fao.geonet.domain.MetadataType;
 import org.fao.geonet.domain.Operation;
 import org.fao.geonet.domain.OperationAllowed;
@@ -145,7 +142,7 @@ public class MEFLib {
                                     boolean approved)
         throws Exception {
         return MEF2Exporter.doExport(context, uuids, Format.parse(format),
-            skipUUID, stylePath, resolveXlink, removeXlinkAttribute, 
+            skipUUID, stylePath, resolveXlink, removeXlinkAttribute,
             skipError, addSchemaLocation, approved);
     }
 
@@ -324,7 +321,8 @@ public class MEFLib {
      * Build an info file.
      */
     static String buildInfoFile(ServiceContext context, AbstractMetadata md,
-                                Format format, Path pubDir, Path priDir, boolean skipUUID)
+                                Format format, List<MetadataResource> pubResources,
+                                List<MetadataResource> priResources, boolean skipUUID)
         throws Exception {
         Element info = new Element("info");
         info.setAttribute("version", VERSION);
@@ -333,8 +331,12 @@ public class MEFLib {
         info.addContent(buildInfoCategories(md));
         info.addContent(buildInfoPrivileges(context, md));
 
-        info.addContent(buildInfoFiles("public", pubDir.toString()));
-        info.addContent(buildInfoFiles("private", priDir.toString()));
+        info.addContent(buildInfoFiles("public", pubResources));
+        if (priResources != null) {
+            info.addContent(buildInfoFiles("private", priResources));
+        } else {
+            info.addContent(new Element("private"));
+        }
 
         return Xml.getString(new Document(info));
     }
@@ -434,15 +436,24 @@ public class MEFLib {
 
         for (OperationAllowed operationAllowed : opsAllowed) {
             int grpId = operationAllowed.getId().getGroupId();
-            Group group = groupRepository.findOne(grpId);
-            String grpName = group.getName();
+            Optional<Group> group = groupRepository.findById(grpId);
+
+            if (!group.isPresent()) {
+                continue;
+            }
+
+            String grpName = group.get().getName();
 
             if (!userGroups.contains(grpId)) {
                 continue;
             }
 
-            Operation operation = operationRepository.findOne(operationAllowed.getId().getOperationId());
-            String operName = operation.getName();
+            Optional<Operation> operation = operationRepository.findById(operationAllowed.getId().getOperationId());
+            if (!operation.isPresent()) {
+                continue;
+            }
+
+            String operName = operation.get().getName();
 
             if (grpOwnerId != null && grpOwnerId == grpId) {
                 grpOwnerName = grpName;
@@ -486,17 +497,16 @@ public class MEFLib {
     /**
      * Build file section of info file.
      */
-    static Element buildInfoFiles(String name, String dir) {
+    static Element buildInfoFiles(String name, List<MetadataResource> resources) {
         Element root = new Element(name);
 
-        File[] files = new File(dir).listFiles(filter);
 
-        if (files != null)
-            for (File file : files) {
-                String date = new ISODate(file.lastModified(), false).toString();
+        if (resources != null)
+            for (MetadataResource resource : resources) {
+                String date = new ISODate(resource.getLastModification().getTime(), false).toString();
 
                 Element el = new Element("file");
-                el.setAttribute("name", file.getName());
+                el.setAttribute("name", resource.getFilename());
                 el.setAttribute("changeDate", date);
 
                 root.addContent(el);

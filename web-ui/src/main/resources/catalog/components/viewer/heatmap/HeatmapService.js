@@ -57,17 +57,20 @@
         var bufferedSize = map.getSize().map(function(value) {
           return value * BUFFER_RATIO;
         });
-        var extent = map.getView().calculateExtent(bufferedSize);
+        var extent = ol.proj.transformExtent(
+          map.getView().calculateExtent(bufferedSize),
+          map.getView().getProjection().getCode(),
+          "EPSG:4326");
         var zoom = map.getView().getZoom();
 
         // data precision is deduced from current zoom view
         var geohashLength = 2;
-        if (zoom > 3) { geohashLength = 3; }
-        if (zoom > 5) { geohashLength = 4; }
+        if (zoom > 3.3) { geohashLength = 3; }
+        if (zoom > 5.6) { geohashLength = 4; }
 
         // viewbox filter
-        var topLeft = ol.proj.toLonLat(ol.extent.getTopLeft(extent));
-        var bottomRight = ol.proj.toLonLat(ol.extent.getBottomRight(extent));
+        var topLeft = ol.extent.getTopLeft(extent);
+        var bottomRight = ol.extent.getBottomRight(extent);
 
         // cap extent values to world map
         if (bottomRight[0] < topLeft[0]) { bottomRight[0] += 360; }
@@ -82,7 +85,10 @@
           query: {
             bool: {
               must: [{
-                match_all: {}
+                query_string: {
+                  query: params || '*:*'
+                }
+
               }, {
                 match_phrase: {
                   featureTypeId: {
@@ -177,7 +183,8 @@
           [min[0], min[1]],
           [max[0], min[1]],
           [max[0], max[1]],
-          [min[0], max[1]]
+          [min[0], max[1]],
+          [min[0], min[1]]
         ]], 'XY');
       };
 

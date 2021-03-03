@@ -28,17 +28,37 @@
   var module = angular.module('gn_sources_controller',
       []);
 
+
   module.controller('GnSourcesController', [
     '$scope', '$http', '$rootScope', '$translate',
     function($scope, $http, $rootScope, $translate) {
       $scope.sources = [];
       $scope.uiConfigurations = [];
       $scope.source = null;
+      $scope.filteredSources = null;
+      $scope.filter = {
+        types: {'portal': true, 'subportal': true, 'externalportal': true, 'harvester': true}
+      };
       $scope.selectSource = function(source) {
         source.uiConfig = source.uiConfig && source.uiConfig.toString();
         source.groupOwner = source.groupOwner != null ? source.groupOwner + '' : null;
         $scope.source = source;
       };
+
+      function filterSources() {
+        $scope.filteredSources = [];
+        $scope.sources.forEach(function(s) {
+          if ($scope.filter.types[s.type] === true) {
+            $scope.filteredSources.push(s);
+          }
+        });
+      }
+
+      $scope.$watch('filter', function(n, o) {
+        if (n !== o) {
+          filterSources();
+        }
+      }, true);
 
       function loadSources() {
         var url = '../api/sources';
@@ -48,6 +68,7 @@
         $http.get(url)
             .success(function(data) {
               $scope.sources = data;
+              filterSources();
               $scope.isNew = false;
             });
       }
@@ -76,14 +97,29 @@
           logo: '',
           uiConfig: '',
           filter: '',
+          serviceRecord: null,
           groupOwner: null
         };
         // TODO: init labels
       };
+      function loadServiceRecords() {
+        var id = $scope.source.serviceRecord;
+        if (angular.isDefined(id) && id != -1){
+          $http.get('qi?_content_type=json&fast=index&_uuid=' + id,
+            {cache: true}).then(function(r) {
+            $scope.cswServiceRecord = r.data.metadata;
+          });
+        }
+      }
+      $scope.$watchCollection('source.serviceRecord', function(n, o){
+        if (n != o) {
+          loadServiceRecords();
+        }
+      });
 
       $scope.updateSource = function() {
-        var url = '../api/sources/' + (
-          $scope.isNew ? '' : $scope.source.uuid);
+        var url = '../api/sources' + (
+          $scope.isNew ? '' : '/' + $scope.source.uuid);
         $http.put(url,
                   $scope.source)
             .success(function(data) {
@@ -153,7 +189,7 @@
 
       // upload directive options
       $scope.logoUploadOptions = {
-        autoUpload: false,
+        autoUpload: true,
         url: "../api/logos?_csrf=" + $scope.csrf,
         dataType: "text",
         maxNumberOfFiles: 1,

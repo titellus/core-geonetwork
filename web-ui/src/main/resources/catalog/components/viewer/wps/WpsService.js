@@ -84,6 +84,7 @@
              gnMap, $q, $translate) {
 
       this.WMS_MIMETYPE_REGEX = /.*ogc-wms/;
+      this.GEOM_MIMETYPE_REGEX = /application\/(xml|geo\+json|json|gml\+xml)/;
 
       /**
        * @ngdoc method
@@ -144,7 +145,7 @@
        *  requests are cancelled
        */
       this.getCapabilities = function(url, options) {
-        url = gnOwsCapabilities.mergeDefaultParams(url, {
+        var url = gnOwsCapabilities.mergeDefaultParams(url, {
           service: 'WPS',
           version: '1.0.0',
           request: 'GetCapabilities'
@@ -247,6 +248,7 @@
               data: {
                 boundingBoxData: {
                   dimensions: 2,
+                  crs: 'EPSG:4326',
                   lowerCorner: [bbox[0], bbox[1]],
                   upperCorner: [bbox[2], bbox[3]]
                 }
@@ -270,7 +272,7 @@
         // generate response document based on output info
         var responseDocument = {
           lineage: output.lineage || false,
-          storeExecuteResponse: output.storeExecuteResponse || true,
+          storeExecuteResponse: output.storeExecuteResponse === true,
           status: output.status || false,
           output: []
         };
@@ -353,9 +355,7 @@
       this.getStatus = function(url) {
         var defer = $q.defer();
 
-        $http.get(url, {
-          cache: true
-        }).then(
+        $http.get(url).then(
             function(data) {
               var response = unmarshaller.unmarshalString(data.data).value;
               defer.resolve(response);
@@ -372,15 +372,62 @@
        * Returns true if the mime type matches a WMS service
        *
        * @param {object} response excecuteProcess response object.
-       * @return {bool} true if WMS service
+       * @return {number} index of the output with the WMS service info; null if none found
        */
       this.responseHasWmsService = function(response) {
-        try {
-          var mimeType = response.processOutputs.output[0].reference.mimeType;
-          return this.WMS_MIMETYPE_REGEX.test(mimeType);
-        } catch (e) {
-          return false;
+        var outputs = response.processOutputs.output;
+        for (var i = 0; i < outputs.length; i++) {
+          try {
+            var mimeType = outputs[i].reference.mimeType;
+            if (this.WMS_MIMETYPE_REGEX.test(mimeType)) {
+              return i;
+            }
+          } catch (e) {
+          }
         }
+        return null;
+      };
+      this.getGeometryOutput = function(response, loadReference) {
+        var defer = $q.defer(), outputs = response.processOutputs.output;
+        for (var i = 0; i < outputs.length; i++) {
+          if (outputs[i].data) {
+            try {
+              var mimeType = outputs[i].data.complexData.mimeType || 'application/json';
+              if (this.GEOM_MIMETYPE_REGEX.test(mimeType)) {
+                var complexData = outputs[i].data.complexData,
+                  content = '',
+                  geom = null;
+                if (complexData.encoding === 'base64') {
+                  content = atob(complexData.content);
+                } else {
+                  content = complexData.content;
+                }
+                if (mimeType.indexOf('json') != -1) {
+                  var format = new ol.format.GeoJSON();
+                  geom = format.readFeatures(content, {
+                    // dataProjection: 'EPSG:3035',
+                    // featureProjection: 'EPSG:3857'
+                  });
+                } else if (mimeType.indexOf('xml') != -1) {
+                  // GML ?
+                }
+                defer.resolve({data: geom});
+              }
+            } catch (e) {
+              console.warn("Error while trying to decode complexData content from WPS response.", complexData, e)
+            }
+          } else if (loadReference && outputs[i].reference) {
+            $http.get(outputs[i].reference.href).then(function(r) {
+              var format = new ol.format.GeoJSON();
+              geom = format.readFeatures(r.data, {
+                // dataProjection: 'EPSG:3035',
+                // featureProjection: 'EPSG:3857'
+              });
+              defer.resolve({data: geom});
+            });
+          }
+        }
+        return defer.promise;
       };
 
       /**
@@ -423,14 +470,15 @@
        * in the layer manager.
        *
        * @param {object} response excecuteProcess response object.
+       * @param {number} index index of the output with the WMS service info
        * @param {ol.Map} map
        * @param {ol.layer.Base} parentLayer optional
        */
-      this.extractWmsLayerFromResponse =
-          function(response, map, parentLayer) {
-
+      this.extractWmsLayerFromResponse = function(response, index, map, parentLayer) {
         try {
-          var ref = response.processOutputs.output[0].reference;
+          var output = response.processOutputs.output[index];
+          var ref = output.reference;
+          var identifier = output.identifier.value;
           gnMap.addWmsAllLayersFromCap(map, ref.href, true).
               then(function(layers) {
                 layers.forEach(function(l) {

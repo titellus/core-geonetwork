@@ -35,7 +35,7 @@
   module.value('gfiTemplateURL', gfiTemplateURL);
 
   module.directive('gnVectorFeatureToolTip',
-      ['ngeoDebounce', function(ngeoDebounce) {
+      ['gnDebounce', function(gnDebounce) {
         return {
           restrict: 'A',
           scope: {
@@ -65,10 +65,10 @@
                  if (layer && layer.get('featureTooltip')) {
                    return feature;
                  }
-               }, undefined, function(layer) {
-                return layer instanceof ol.layer.Vector;
-
-              });
+               }.bind(this), {
+                layerFilter: function(layer) {
+                  return layer instanceof ol.layer.Vector;
+              }});
               if (feature) {
                 var props = feature.getProperties();
                 var tooltipContent = '<ul>';
@@ -86,7 +86,7 @@
               }
             };
 
-            scope.map.on('pointermove', ngeoDebounce(function(evt) {
+            scope.map.on('pointermove', gnDebounce(function(evt) {
               if (evt.dragging) {
                 //info.hide();
                 info.popover('hide');
@@ -137,13 +137,14 @@
     map.addOverlay(this.overlay);
 
     map.on('singleclick', function(e) {
+      if (!this.canApply()) {
+        return;
+      }
       this.$scope.$apply(function() {
-        if (!this.canApply()) {
-          return;
-        }
         var layers = map.getLayers().getArray().filter(function(layer) {
           return (layer.getSource() instanceof ol.source.ImageWMS ||
-              layer.getSource() instanceof ol.source.TileWMS) &&
+              layer.getSource() instanceof ol.source.TileWMS ||
+              layer.getSource() instanceof ol.source.ImageArcGISRest) &&
               layer.getVisible();
         }).reverse();
 
@@ -164,6 +165,9 @@
 
   geonetwork.GnGfiController.prototype.canApply = function() {
     var map = this.map;
+    if (map.get('disable-gfi')) {
+      return;
+    }
     for (var i = 0; i < map.getInteractions().getArray().length; i++) {
       var interaction = map.getInteractions().getArray()[i];
       if ((interaction instanceof ol.interaction.Draw ||
@@ -182,7 +186,13 @@
     layers.forEach(function(layer) {
 
       var indexObject = layer.get('indexObject');
-      var type = indexObject ? 'index' : 'gfi';
+      var isArcGis = layer.getSource() instanceof ol.source.ImageArcGISRest;
+      var type = 'gfi';
+      if (!!indexObject) {
+        type = 'index';
+      } else if (isArcGis) {
+        type = 'esri';
+      }
 
       this.gnFeaturesTableManager.addTable({
         name: layer.get('label') || layer.get('name'),

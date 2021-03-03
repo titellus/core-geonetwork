@@ -42,6 +42,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.util.Optional;
+
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -75,7 +77,7 @@ public class GroupsApiTest extends AbstractServiceIntegrationTest {
             .accept(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", hasSize(1)))
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE));
+            .andExpect(content().contentType(API_JSON_EXPECTED_ENCODING));
     }
 
     @Test
@@ -91,7 +93,7 @@ public class GroupsApiTest extends AbstractServiceIntegrationTest {
             .andExpect(jsonPath("$[*].name", hasItem("GUEST")))
             .andExpect(jsonPath("$[*].name", hasItem("all")))
             .andExpect(jsonPath("$[*].name", hasItem("intranet")))
-            .andExpect(content().contentType("application/json")).andReturn();
+            .andExpect(content().contentType(API_JSON_EXPECTED_ENCODING)).andReturn();
 
         System.out.println(result.getResponse().getContentAsString());
     }
@@ -107,7 +109,7 @@ public class GroupsApiTest extends AbstractServiceIntegrationTest {
             .accept(MediaType.parseMediaType("application/json")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name", is("sample")))
-            .andExpect(content().contentType("application/json"));
+            .andExpect(content().contentType(API_JSON_EXPECTED_ENCODING));
     }
 
 
@@ -125,13 +127,13 @@ public class GroupsApiTest extends AbstractServiceIntegrationTest {
             .accept(MediaType.parseMediaType("application/json")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", hasSize(2)))
-            .andExpect(content().contentType("application/json"));
+            .andExpect(content().contentType(API_JSON_EXPECTED_ENCODING));
     }
 
     @Test
     public void getGroupUsersNonExistingGroup() throws Exception {
-        Group nonExistingGroup = _groupRepo.findOne(222);
-        Assert.assertNull(nonExistingGroup);
+        Optional<Group> nonExistingGroup = _groupRepo.findById(222);
+        Assert.assertFalse(nonExistingGroup.isPresent());
 
         this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
 
@@ -176,8 +178,8 @@ public class GroupsApiTest extends AbstractServiceIntegrationTest {
     public void deleteNonExistingGroup() throws Exception {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
 
-        Group groupToDelete = _groupRepo.findOne(222);
-        Assert.assertNull(groupToDelete);
+        Optional<Group> groupToDelete = _groupRepo.findById(222);
+        Assert.assertFalse(groupToDelete.isPresent());
 
         this.mockHttpSession = loginAsAdmin();
 
@@ -185,7 +187,7 @@ public class GroupsApiTest extends AbstractServiceIntegrationTest {
             .session(this.mockHttpSession)
             .accept(MediaType.parseMediaType("application/json")))
             .andExpect(status().is(404))
-            .andExpect(content().contentType("application/json"));
+            .andExpect(content().contentType(API_JSON_EXPECTED_ENCODING));
     }
 
     @Test
@@ -209,7 +211,7 @@ public class GroupsApiTest extends AbstractServiceIntegrationTest {
 
         this.mockMvc.perform(put("/srv/api/groups/" + groupToUpdate.getId())
             .content(json)
-            .contentType(MediaType.APPLICATION_JSON)
+            .contentType(API_JSON_EXPECTED_ENCODING)
             .session(this.mockHttpSession)
             .accept(MediaType.parseMediaType("application/json")))
             .andExpect(status().is(204));
@@ -218,10 +220,10 @@ public class GroupsApiTest extends AbstractServiceIntegrationTest {
 
     @Test
     public void updateNonExistingGroup() throws Exception {
-        Group groupToUpdate = _groupRepo.findOne(222);
-        Assert.assertNull(groupToUpdate);
+        Optional<Group> groupToUpdateOptional = _groupRepo.findById(222);
+        Assert.assertFalse(groupToUpdateOptional.isPresent());
 
-        groupToUpdate = new Group();
+        Group groupToUpdate = new Group();
         groupToUpdate.setId(222);
         groupToUpdate.setEmail("group@mail.com");
         groupToUpdate.setDescription("A test group");
@@ -239,7 +241,7 @@ public class GroupsApiTest extends AbstractServiceIntegrationTest {
 
         this.mockMvc.perform(put("/srv/api/groups/" + groupToUpdate.getId())
             .content(json)
-            .contentType(MediaType.APPLICATION_JSON)
+            .contentType(API_JSON_EXPECTED_ENCODING)
             .session(this.mockHttpSession)
             .accept(MediaType.parseMediaType("application/json")))
             .andExpect(status().is(404));
@@ -270,7 +272,7 @@ public class GroupsApiTest extends AbstractServiceIntegrationTest {
 
         this.mockMvc.perform(put("/srv/api/groups")
             .content(json)
-            .contentType(MediaType.APPLICATION_JSON)
+            .contentType(API_JSON_EXPECTED_ENCODING)
             .session(this.mockHttpSession)
             .accept(MediaType.parseMediaType("application/json")))
             .andExpect(status().is(201));
@@ -305,7 +307,7 @@ public class GroupsApiTest extends AbstractServiceIntegrationTest {
 
         this.mockMvc.perform(put("/srv/api/groups")
             .content(json)
-            .contentType(MediaType.APPLICATION_JSON)
+            .contentType(API_JSON_EXPECTED_ENCODING)
             .session(this.mockHttpSession)
             .accept(MediaType.parseMediaType("application/json")))
             .andExpect(status().is(400))

@@ -56,7 +56,15 @@
 
     return threeCharLang.substring(0, 2) || 'en';
   });
-  module.constant('$LOCALES', ['core']);
+  module.constant('$LOCALES', []);
+
+  module.factory('inlineLoaderFactory', ['$q', function($q) {
+    return function(options) {
+      var deferred = $q.defer();
+      deferred.resolve(options[options.key]);
+      return deferred.promise;
+    };
+  }]);
 
   module.factory('localeLoader', [
     '$http', '$q', 'gnLangs', '$translate', '$timeout',
@@ -87,10 +95,10 @@
         };
         var allPromises = [];
 
-        options.locales.push('custom');
-
         angular.forEach(options.locales, function(value, index) {
-          var langUrl = buildUrl(options.prefix, options.key,
+          var langUrl = value.startsWith('../') ?
+                          value :
+                          buildUrl(options.prefix, options.key,
               value, options.suffix);
 
           var deferredInst = $q.defer();
@@ -101,7 +109,8 @@
             url: langUrl,
             headers: {
               'Accept-Language': options.key
-            }
+            },
+            cache: true
           }).success(function(data) {
             deferredInst.resolve(data);
           }).error(function() {
@@ -140,6 +149,7 @@
           gnGlobalSettings.gnCfg.langDetector,
           gnGlobalSettings
       );
+      gnLangs.provider = $translateProvider;
 
       $translateProvider.preferredLanguage(gnGlobalSettings.iso3lang);
       // $translateProvider.useSanitizeValueStrategy('escape');

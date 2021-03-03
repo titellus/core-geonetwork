@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2016 Food and Agriculture Organization of the
+ * Copyright (C) 2001-2020 Food and Agriculture Organization of the
  * United Nations (FAO-UN), United Nations World Food Programme (WFP)
  * and United Nations Environment Programme (UNEP)
  *
@@ -23,12 +23,11 @@
 
 package org.fao.geonet.domain;
 
-import java.io.Serializable;
-
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
+import java.io.Serializable;
 
 /**
  * Id object for the {@link MetadataValidation} entity.
@@ -39,6 +38,8 @@ import javax.persistence.Embeddable;
 @Access(AccessType.PROPERTY)
 public class MetadataValidationId implements Serializable {
     private static final long serialVersionUID = -7162983572434017017L;
+    public static final String METADATA_ID_COLUMN_NAME = "metadataId";
+    public static final String VALIDATION_TYPE_COLUMN_NAME = "valType";
     private int _metadataId;
     private String _validationType;
 
@@ -62,6 +63,7 @@ public class MetadataValidationId implements Serializable {
     /**
      * Get the id of the associate metadata.
      */
+    @Column(name = METADATA_ID_COLUMN_NAME)
     public int getMetadataId() {
         return _metadataId;
     }
@@ -82,7 +84,7 @@ public class MetadataValidationId implements Serializable {
      * @return a string representing the type of validation of this validation entity (example:
      * iso19139)
      */
-    @Column(name = "valType", length = 40)
+    @Column(name = VALIDATION_TYPE_COLUMN_NAME, length = 128)
     public String getValidationType() {
         return _validationType;
     }

@@ -50,6 +50,7 @@ import org.fao.geonet.ApplicationContextHolder;
 import org.fao.geonet.GeonetContext;
 import org.fao.geonet.Logger;
 import org.fao.geonet.api.records.attachments.FilesystemStore;
+import org.fao.geonet.api.records.attachments.Store;
 import org.fao.geonet.constants.Geonet;
 import org.fao.geonet.domain.AbstractMetadata;
 import org.fao.geonet.domain.Metadata;
@@ -58,7 +59,6 @@ import org.fao.geonet.domain.MetadataResource;
 import org.fao.geonet.domain.MetadataResourceVisibility;
 import org.fao.geonet.domain.MetadataType;
 import org.fao.geonet.kernel.DataManager;
-import org.fao.geonet.kernel.GeonetworkDataDirectory;
 import org.fao.geonet.kernel.SchemaManager;
 import org.fao.geonet.kernel.UpdateDatestamp;
 import org.fao.geonet.kernel.datamanager.IMetadataManager;
@@ -79,7 +79,6 @@ import org.fao.geonet.repository.MetadataRepository;
 import org.fao.geonet.util.Sha1Encoder;
 import org.fao.geonet.utils.BinaryFile;
 import org.fao.geonet.utils.GeonetHttpRequestFactory;
-import org.fao.geonet.utils.IO;
 import org.fao.geonet.utils.Xml;
 import org.fao.geonet.utils.XmlRequest;
 import org.jdom.Document;
@@ -257,6 +256,7 @@ class Harvester extends BaseAligner<OgcWxSParams> implements IHarvester<HarvestR
         dataMan.batchIndexInThreadPool(context, ids);
 
         result.totalMetadata = result.addedMetadata + result.updatedMetadata;
+        Store store = context.getBean("resourceStore", Store.class);
 
         //-----------------------------------------------------------------------
         //--- remove old metadata
@@ -273,7 +273,7 @@ class Harvester extends BaseAligner<OgcWxSParams> implements IHarvester<HarvestR
                     log.debug("  - Removing old metadata before update with id: " + id);
 
                 //--- remove the metadata directory including the public and private directories.
-                IO.deleteFileOrDirectory(Lib.resource.getMetadataDir(context.getBean(GeonetworkDataDirectory.class), id));
+                store.delResources(context, uuid);
 
                 // Remove metadata
                 metadataManager.deleteMetadata(context, id);
@@ -349,6 +349,7 @@ class Harvester extends BaseAligner<OgcWxSParams> implements IHarvester<HarvestR
             // and add the metadata
             XPath xp = XPath.newInstance("//Layer[count(./*[name(.)='Layer'])=0] | " +
                 "//wms:Layer[count(./*[name(.)='Layer'])=0] | " +
+                "//wmts:Layer[count(./*[local-name(.)='Layer'])=0] | " +
                 "//wfs:FeatureType | " +
                 "//wcs:CoverageOfferingBrief | " +
                 "//sos:ObservationOffering | " +
@@ -356,6 +357,7 @@ class Harvester extends BaseAligner<OgcWxSParams> implements IHarvester<HarvestR
             xp.addNamespace("wfs", "http://www.opengis.net/wfs");
             xp.addNamespace("wcs", "http://www.opengis.net/wcs");
             xp.addNamespace("wms", "http://www.opengis.net/wms");
+            xp.addNamespace("wmts", "http://www.opengis.net/wmts/1.0");
             xp.addNamespace("wps", "http://www.opengis.net/wps/2.0");
             xp.addNamespace("sos", "http://www.opengis.net/sos/1.0");
 
@@ -426,7 +428,7 @@ class Harvester extends BaseAligner<OgcWxSParams> implements IHarvester<HarvestR
 
         if (!dataMan.existsMetadataUuid(uuid)) {
             result.addedMetadata++;
-            metadata = metadataManager.insertMetadata(context, metadata, md, true, false, false, UpdateDatestamp.NO, false, false);
+            metadata = metadataManager.insertMetadata(context, metadata, md, false, false, UpdateDatestamp.NO, false, false);
         } else {
             result.updatedMetadata++;
             String id = dataMan.getMetadataId(uuid);
@@ -616,6 +618,9 @@ class Harvester extends BaseAligner<OgcWxSParams> implements IHarvester<HarvestR
         } else if (params.ogctype.substring(0, 3).equals("SOS")) {
             Namespace gml = Namespace.getNamespace("http://www.opengis.net/gml");
             reg.name = layer.getChild("name", gml).getValue();
+        } else if (params.ogctype.substring(0, 4).equals("WMTS")) {
+            Namespace ows = Namespace.getNamespace("http://www.opengis.net/ows/1.1");
+            reg.name = layer.getChild("Identifier", ows).getValue();
         }
 
         //--- md5 the full capabilities URL + the layer, coverage or feature name
@@ -625,9 +630,9 @@ class Harvester extends BaseAligner<OgcWxSParams> implements IHarvester<HarvestR
 
         if (params.useLayerMd && (
             params.ogctype.substring(0, 3).equals("WMS") ||
-                params.ogctype.substring(0, 3).equals("WFS") ||
-                params.ogctype.substring(0, 3).equals("WPS") ||
-                params.ogctype.substring(0, 3).equals("WCS"))) {
+            params.ogctype.substring(0, 3).equals("WFS") ||
+            params.ogctype.substring(0, 3).equals("WPS") ||
+            params.ogctype.substring(0, 3).equals("WCS"))) {
 
             log.info("  - Searching for metadataUrl for layer " + reg.name);
 
@@ -814,13 +819,14 @@ class Harvester extends BaseAligner<OgcWxSParams> implements IHarvester<HarvestR
             metadata.getSourceInfo().
                 setSourceId(params.getUuid()).
                 setOwner(Integer.parseInt(
-                        StringUtils.isNumeric(params.getOwnerIdUser()) ? params.getOwnerIdUser() : params.getOwnerId()));
+                        StringUtils.isNotEmpty(params.getOwnerIdUser()) && StringUtils.isNumeric(params.getOwnerIdUser()) ?
+                            params.getOwnerIdUser() : params.getOwnerId()));
             metadata.getHarvestInfo().
                 setHarvested(true).
                 setUuid(params.getUuid()).
                 setUri(params.url);
             if (params.datasetCategory != null && !params.datasetCategory.equals("")) {
-                MetadataCategory metadataCategory = context.getBean(MetadataCategoryRepository.class).findOne(Integer.parseInt(params.datasetCategory));
+                MetadataCategory metadataCategory = context.getBean(MetadataCategoryRepository.class).findById(Integer.parseInt(params.datasetCategory)).get();
 
                 if (metadataCategory == null) {
                     throw new IllegalArgumentException("No category found with name: " + params.datasetCategory);
@@ -829,7 +835,7 @@ class Harvester extends BaseAligner<OgcWxSParams> implements IHarvester<HarvestR
             }
             if (!dataMan.existsMetadataUuid(reg.uuid)) {
                 result.addedMetadata++;
-                metadata = metadataManager.insertMetadata(context, metadata, xml, true, false, false, UpdateDatestamp.NO, false, false);
+                metadata = metadataManager.insertMetadata(context, metadata, xml, false, false, UpdateDatestamp.NO, false, false);
             } else {
                 result.updatedMetadata++;
                 String id = dataMan.getMetadataId(reg.uuid);
@@ -906,7 +912,7 @@ class Harvester extends BaseAligner<OgcWxSParams> implements IHarvester<HarvestR
             Path filename = getMapThumbnail(layer);
 
             // Add downloaded file to metadata store
-            FilesystemStore store = new FilesystemStore();
+            Store store = context.getBean(FilesystemStore.class);
             try {
                 store.delResource(context, layer.uuid, filename.getFileName().toString());
             } catch (Exception e) {}

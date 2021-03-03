@@ -36,7 +36,7 @@
             'partials/infolist.html',
         link: function linkFn(scope, element, attr) {
           scope.showMore = function(isDisplay) {
-            var div = $('#gn-info-list' + this.md.getUuid());
+            var div = $('#gn-info-list' + this.md.uuid);
             $(div.children()[isDisplay ? 0 : 1]).addClass('hidden');
             $(div.children()[isDisplay ? 1 : 0]).removeClass('hidden');
           };
@@ -86,8 +86,9 @@
     }
   ]);
 
-  module.directive('gnMdActionsMenu', ['gnMetadataActions', '$http', 'gnConfig', 'gnConfigService',
-    function(gnMetadataActions, $http, gnConfig, gnConfigService) {
+  module.directive('gnMdActionsMenu', ['gnMetadataActions',
+    '$http', 'gnConfig', 'gnConfigService', 'gnGlobalSettings',
+    function(gnMetadataActions, $http, gnConfig, gnConfigService, gnGlobalSettings) {
       return {
         restrict: 'A',
         replace: true,
@@ -96,6 +97,7 @@
         link: function linkFn(scope, element, attrs) {
           scope.mdService = gnMetadataActions;
           scope.md = scope.$eval(attrs.gnMdActionsMenu);
+          scope.formatterList = gnGlobalSettings.gnCfg.mods.search.downloadFormatter;
 
           scope.tasks = [];
           scope.hasVisibletasks = false;
@@ -130,7 +132,7 @@
                 // TODO: Add has DOI already
                 return md && md.isPublished()
                   && md.isTemplate === 'n'
-                  && md.isHarvested === 'n';
+                  && JSON.parse(md.isHarvested) === false;
               }
             }
           };
@@ -194,6 +196,88 @@
             }
             scope.dateTo = today.clone().add(1, 'day').format(scope.format);
           };
+        }
+      };
+    }
+  ]);
+
+
+  /**
+   * https://www.elastic.co/guide/en/elasticsearch/reference/current/range.html
+   */
+  module.directive('gnDateRangeFilter', [
+    function() {
+      return {
+        restrict: 'A',
+        replace: true,
+        templateUrl: '../../catalog/views/default/directives/' +
+          'partials/dateRangeFilter.html',
+        scope: {
+          label: '@gnDateRangeFilter',
+          field: '='
+        },
+        link: function linkFn(scope, element, attr) {
+          var today = moment();
+          scope.relations = ["intersects", "within", "contains"];
+          scope.relation = scope.relations[0];
+          scope.field = {
+            "range" : {
+              "resourceTemporalDateRange" : {
+                "gte" : null,
+                "lte" : null,
+                "relation" : scope.relation
+              }
+            }
+          };
+
+          scope.setRange = function() {
+            scope.field.range.resourceTemporalDateRange.gte = scope.dateFrom;
+            scope.field.range.resourceTemporalDateRange.lte = scope.dateTo;
+            scope.field.range.resourceTemporalDateRange.relation = scope.relation;
+          };
+
+          scope.format = 'YYYY-MM-DD';
+          scope.options = ['today', 'yesterday', 'thisWeek', 'thisMonth',
+            'last3Months', 'last6Months', 'thisYear'];
+          scope.setPeriod = function(option) {
+            if (option === 'today') {
+              var date = today.format(scope.format);
+              scope.dateFrom = date;
+            } else if (option === 'yesterday') {
+              var date = today.clone().subtract(1, 'day')
+                .format(scope.format);
+              scope.dateFrom = date;
+              scope.dateTo = today.format(scope.format);
+              return;
+            } else if (option === 'thisWeek') {
+              scope.dateFrom = today.clone().startOf('week')
+                .format(scope.format);
+            } else if (option === 'thisMonth') {
+              scope.dateFrom = today.clone().startOf('month')
+                .format(scope.format);
+            } else if (option === 'last3Months') {
+              scope.dateFrom = today.clone().startOf('month').
+              subtract(3, 'month').format(scope.format);
+            } else if (option === 'last6Months') {
+              scope.dateFrom = today.clone().startOf('month').
+              subtract(6, 'month').format(scope.format);
+            } else if (option === 'thisYear') {
+              scope.dateFrom = today.clone().startOf('year')
+                .format(scope.format);
+            }
+            scope.dateTo = today.clone().add(1, 'day').format(scope.format);
+            scope.setRange();
+          };
+          scope.$watch('dateFrom', function(n, o) {
+            if (n !== o) {
+              scope.setRange();
+            }
+          });
+          scope.$watch('dateTo', function(n, o) {
+            if (n !== o) {
+              scope.setRange();
+            }
+          });
         }
       };
     }

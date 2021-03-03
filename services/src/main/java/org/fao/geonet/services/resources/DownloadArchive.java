@@ -23,31 +23,18 @@
 
 package org.fao.geonet.services.resources;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-
+import jeeves.interfaces.Service;
+import jeeves.server.ServiceConfig;
+import jeeves.server.UserSession;
+import jeeves.server.context.ServiceContext;
 import org.fao.geonet.GeonetContext;
 import org.fao.geonet.Util;
 import org.fao.geonet.ZipUtil;
+import org.fao.geonet.api.exception.ResourceNotFoundException;
+import org.fao.geonet.api.records.attachments.Store;
 import org.fao.geonet.constants.Geonet;
 import org.fao.geonet.constants.Params;
-import org.fao.geonet.domain.AbstractMetadata;
-import org.fao.geonet.domain.Group;
-import org.fao.geonet.domain.OperationAllowed;
-import org.fao.geonet.domain.ReservedOperation;
-import org.fao.geonet.domain.User;
+import org.fao.geonet.domain.*;
 import org.fao.geonet.exceptions.MetadataNotFoundEx;
 import org.fao.geonet.exceptions.ResourceNotFoundEx;
 import org.fao.geonet.kernel.DataManager;
@@ -64,10 +51,19 @@ import org.fao.geonet.util.MailSender;
 import org.fao.geonet.utils.*;
 import org.jdom.Element;
 
-import jeeves.interfaces.Service;
-import jeeves.server.ServiceConfig;
-import jeeves.server.UserSession;
-import jeeves.server.context.ServiceContext;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.List;
 
 //=============================================================================
 
@@ -76,7 +72,7 @@ import jeeves.server.context.ServiceContext;
  */
 
 public class DownloadArchive implements Service {
-    private static String FS = File.separator;
+    private static final String FS = File.separator;
     private Path stylePath;
 
     //----------------------------------------------------------------------------
@@ -116,16 +112,18 @@ public class DownloadArchive implements Service {
         String id = Utils.getIdentifierFromParameters(params, context);
         String access = Util.getParam(params, Params.ACCESS, Params.Access.PUBLIC);
 
+        final Store store = context.getBean("resourceStore", Store.class);
+        final IMetadataUtils metadataUtils = context.getBean(IMetadataUtils.class);
+        final String uuid = metadataUtils.getMetadataUuid(id);
+
         //--- resource required is public (thumbnails)
         if (access.equals(Params.Access.PUBLIC)) {
-            Path dir = Lib.resource.getDir(context, access, id);
             String fname = Util.getParam(params, Params.FNAME);
-
-			FilePathChecker.verify(fname);
-
-			Path file = dir.resolve(fname);
-			return BinaryFile.encode(200, file, false).getElement();
-		}
+            FilePathChecker.verify(fname);
+            try (Store.ResourceHolder resource = store.getResource(context, uuid, MetadataResourceVisibility.PUBLIC, fname, true)) {
+                return BinaryFile.encode(200, resource.getPath(), false).getElement();
+            }
+        }
 
         //--- from here on resource required is private datafile(s)
 
@@ -174,7 +172,6 @@ public class DownloadArchive implements Service {
         try (FileSystem zipFs = ZipUtil.openZipFs(zFile)) {
             //--- now add the files chosen from the interface and record in 'downloaded'
             Element downloaded = new Element("downloaded");
-            Path dir = Lib.resource.getDir(context, access, id);
 
             @SuppressWarnings("unchecked")
             List<Element> files = params.getChildren(Params.FNAME);
@@ -187,37 +184,37 @@ public class DownloadArchive implements Service {
                     continue;
                 }
 
-                Path file = dir.resolve(fname);
-                if (!Files.exists(file))
-                    throw new ResourceNotFoundEx(file.toAbsolutePath().normalize().toString());
+                try (Store.ResourceHolder resource = store.getResource(context, uuid, MetadataResourceVisibility.parse(access), fname,
+                    true)) {
+                    Element fileInfo = new Element("file");
 
-                Element fileInfo = new Element("file");
-
-                BinaryFile details = BinaryFile.encode(200, file.toAbsolutePath().normalize(), false);
-                String remoteURL = details.getElement().getAttributeValue("remotepath");
-                if (remoteURL != null) {
-                    if (context.isDebugEnabled())
-                        context.debug("Downloading " + remoteURL + " to archive " + zFile.getFileName());
-                    fileInfo.setAttribute("size", "unknown");
-                    fileInfo.setAttribute("datemodified", "unknown");
-                    fileInfo.setAttribute("name", remoteURL);
-                    notifyAndLog(doNotify, id, info.getUuid(), access, username, remoteURL + " (local config: " + file.toAbsolutePath()
-                        .normalize() + ")", context);
-                    fname = details.getElement().getAttributeValue("remotefile");
-                } else {
-                    if (context.isDebugEnabled())
-                        context.debug("Writing " + fname + " to archive " + zFile.getFileName());
-                    fileInfo.setAttribute("size", Files.size(file) + "");
-                    fileInfo.setAttribute("name", fname);
-                    Date date = new Date(Files.getLastModifiedTime(file).toMillis());
-                    fileInfo.setAttribute("datemodified", sdf.format(date));
-                    notifyAndLog(doNotify, id, info.getUuid(), access, username, file.toAbsolutePath().normalize().toString(), context);
+                    BinaryFile details = BinaryFile.encode(200, resource.getPath(), false);
+                    String remoteURL = details.getElement().getAttributeValue("remotepath");
+                    if (remoteURL != null) {
+                        if (context.isDebugEnabled())
+                            context.debug("Downloading " + remoteURL + " to archive " + zFile.getFileName());
+                        fileInfo.setAttribute("size", "unknown");
+                        fileInfo.setAttribute("datemodified", "unknown");
+                        fileInfo.setAttribute("name", remoteURL);
+                        notifyAndLog(doNotify, id, info.getUuid(), access, username,
+                            remoteURL + " (local config: " + resource.getPath() + ")", context);
+                        fname = details.getElement().getAttributeValue("remotefile");
+                    } else {
+                        if (context.isDebugEnabled())
+                            context.debug("Writing " + fname + " to archive " + zFile.getFileName());
+                        fileInfo.setAttribute("size", Long.toString(resource.getMetadata().getSize()));
+                        fileInfo.setAttribute("name", fname);
+                        fileInfo.setAttribute("datemodified", sdf.format(resource.getMetadata().getLastModification()));
+                        notifyAndLog(doNotify, id, info.getUuid(), access, username, resource.getPath().toString(), context);
+                    }
+                    final Path dest = zipFs.getPath(fname);
+                    try (OutputStream zos = Files.newOutputStream(dest)) {
+                        details.write(zos);
+                    }
+                    downloaded.addContent(fileInfo);
+                } catch (ResourceNotFoundException e) {
+                    throw new ResourceNotFoundEx(e.toString());
                 }
-                final Path dest = zipFs.getPath(fname);
-                try (OutputStream zos = Files.newOutputStream(dest)) {
-                    details.write(zos);
-                }
-                downloaded.addContent(fileInfo);
             }
 
             //--- get metadata
@@ -228,8 +225,7 @@ public class DownloadArchive implements Service {
                 throw new MetadataNotFoundEx("Metadata not found - deleted?");
 
             //--- manage the download hook
-            IResourceDownloadHandler downloadHook = (IResourceDownloadHandler) context.getApplicationContext().getBean
-                ("resourceDownloadHandler");
+            IResourceDownloadHandler downloadHook = context.getBean("resourceDownloadHandler", IResourceDownloadHandler.class);
             Element response = downloadHook.onDownloadMultiple(context, params, Integer.parseInt(id), files);
 
             // Return null to do the default processing. TODO: Check to move the code to the default hook.
@@ -278,8 +274,7 @@ public class DownloadArchive implements Service {
     //----------------------------------------------------------------------------
 
     private void includeLicenseFiles(ServiceContext context,
-                                     FileSystem zipFs, Element root) throws Exception,
-        MalformedURLException, FileNotFoundException, IOException {
+                                     FileSystem zipFs, Element root) throws Exception {
         Element license = Xml.selectElement(root, "metadata/*/licenseLink");
         if (license != null) {
             String licenseURL = license.getText();
@@ -376,7 +371,7 @@ public class DownloadArchive implements Service {
                 final GroupRepository groupRepository = context.getBean(GroupRepository.class);
 
                 for (OperationAllowed opAllowed : opsAllowed) {
-                    Group group = groupRepository.findOne(opAllowed.getId().getGroupId());
+                    Group group = groupRepository.findById(opAllowed.getId().getGroupId()).get();
                     String name = group.getName();
                     String email = group.getEmail();
 

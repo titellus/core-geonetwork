@@ -115,11 +115,11 @@
         };
       })
 
-      /* filter to strip html tags, for strings
+      /* filter to strip html tags & accolades, for strings
       that come in via userinput to prevent xss */
       .filter('htmlToPlaintext', function() {
         return function(text) {
-          return text ? String(text).replace(/<[^>]+>+/gm, '') : '';
+          return text ? String(text).replace(/<[^>]+>+/gm, '').replace(/\{|\}/g,'') : '';
         };
       })
 
@@ -194,5 +194,25 @@
           }
           return input.split(splitChar)[splitIndex];
         }
-      });
+      })
+
+      .filter('capitalize', function() {
+        return function(input) {
+          return (typeof input === 'string' && input.length > 0) ?
+            input.charAt(0).toUpperCase() + input.substr(1) :
+            input;
+        }
+      })
+
+      /**
+       * Filter to call window.encodeURIComponent.
+       *
+       * The encodeURIComponent() function encodes a URI by replacing each instance of certain characters by one,
+       * two, three, or four escape sequences representing the UTF-8 encoding of the character (will only
+       * be four escape sequences for characters composed of two "surrogate" characters).
+       * See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent
+       */
+      .filter('encodeURIComponent', function() {
+          return window.encodeURIComponent;
+        });
 })();

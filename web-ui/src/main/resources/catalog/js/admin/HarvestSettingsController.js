@@ -40,18 +40,18 @@
    *
    */
   module.controller('GnHarvestSettingsController', [
-    '$scope', '$http', '$translate', '$injector', '$rootScope',
+    '$scope', '$q', '$http', '$translate', '$injector', '$rootScope',
     'gnSearchManagerService', 'gnUtilityService', '$timeout',
     'Metadata', 'gnMapsManager',
-    function($scope, $http, $translate, $injector, $rootScope,
+    function($scope, $q, $http, $translate, $injector, $rootScope,
              gnSearchManagerService, gnUtilityService, $timeout,
              Metadata, gnMapsManager) {
 
       $scope.searchObj = {
         internal: true,
         params: {
-          template: 'y or s or n',
-          sortBy: 'title'
+          isTemplate: ['y', 'n', 's', 't'],
+          sortBy: 'resourceTitleObject.default.keyword'
         }};
 
       $scope.harvesterTypes = {};
@@ -71,6 +71,7 @@
 
       var unbindStatusListener = null;
 
+      var bboxProperties = ['bbox-xmin', 'bbox-ymin', 'bbox-xmax', 'bbox-ymax'];
 
       function loadHarvester(id) {
         $scope.isLoadingOneHarvester = true;
@@ -89,6 +90,8 @@
               if ($scope.harvesterSelected.content && $scope.harvesterSelected.content.batchEdits) {
                 if (angular.isObject($scope.harvesterSelected.content.batchEdits)) {
                   $scope.harvesterSelected.content.batchEdits = angular.toJson($scope.harvesterSelected.content.batchEdits, true);
+                } else {
+                  $scope.harvesterSelected.content.batchEdits = '';
                 }
               }
               if ($scope.harvesterSelected.searches) {
@@ -102,19 +105,34 @@
                   new Date($scope.harvesterSelected.searches[0].until);
                 }
 
+
+                s = $scope.harvesterSelected.searches[0];
                 if ($scope.harvesterSelected.searches[0]['bbox-xmin']) {
+                  bboxProperties.forEach(function(coordinate) {
+                    s[coordinate].value = parseFloat(s[coordinate].value);
+                  });
                   $scope.extent.md = [
-                    parseFloat($scope.harvesterSelected.searches[0]['bbox-xmin'].value),
-                    parseFloat($scope.harvesterSelected.searches[0]['bbox-ymin'].value),
-                    parseFloat($scope.harvesterSelected.searches[0]['bbox-xmax'].value),
-                    parseFloat($scope.harvesterSelected.searches[0]['bbox-ymax'].value)
+                    s['bbox-xmin'].value,
+                    s['bbox-ymin'].value,
+                    s['bbox-xmax'].value,
+                    s['bbox-ymax'].value
                   ];
                   $scope.extent.form = [
-                    parseFloat($scope.harvesterSelected.searches[0]['bbox-xmin'].value),
-                    parseFloat($scope.harvesterSelected.searches[0]['bbox-ymin'].value),
-                    parseFloat($scope.harvesterSelected.searches[0]['bbox-xmax'].value),
-                    parseFloat($scope.harvesterSelected.searches[0]['bbox-ymax'].value)
+                    s['bbox-xmin'].value,
+                    s['bbox-ymin'].value,
+                    s['bbox-xmax'].value,
+                    s['bbox-ymax'].value
                   ];
+                } else {
+                  s['bbox-xmin'] = {value: NaN};
+                  s['bbox-ymin'] = {value: NaN};
+                  s['bbox-xmax'] = {value: NaN};
+                  s['bbox-ymax'] = {value: NaN};
+                  $scope.extent = {
+                    md: [],
+                    map: [],
+                    form: []
+                  };
                 }
               }
             }).error(function(data) {
@@ -266,45 +284,53 @@
       };
 
 
-      $scope.saveHarvester = function() {
-        // Activate or disable it
-        $scope.setHarvesterSchedule();
+      $scope.saveHarvester = function () {
 
         var body = window['gnHarvester' + $scope.harvesterSelected['@type']]
-            .buildResponse($scope.harvesterSelected, $scope);
+          .buildResponse($scope.harvesterSelected, $scope);
+        var deferred = $q.defer();
 
-        return $http.post('admin.harvester.' +
-            ($scope.harvesterNew ? 'add' : 'update') +
-            '?_content_type=json', body, {
-              headers: {'Content-type': 'application/xml'}
-            }).success(function(data) {
-          if (!$scope.harvesterSelected['@id']) {
-            $scope.harvesterSelected['@id'] = data[0];
-          }
-          $scope.$parent.loadHarvesters().then(refreshSelectedHarvester);
-          $rootScope.$broadcast('StatusUpdated', {
-            msg: $translate.instant('harvesterUpdated'),
-            timeout: 2,
-            type: 'success'});
-        }).error(function(data) {
-          $rootScope.$broadcast('StatusUpdated', {
-            msg: $translate.instant('harvesterUpdated'),
-            error: data,
-            timeout: 2,
-            type: 'danger'});
-        });
+        $http.post('admin.harvester.' +
+          ($scope.harvesterNew ? 'add' : 'update') +
+          '?_content_type=json', body, {
+          headers: {'Content-type': 'application/xml'}
+        }).success(
+          function (data) {
+            if (!$scope.harvesterSelected['@id']) {
+              $scope.harvesterSelected['@id'] = data[0];
+            }
+            // Activate or disable it
+            $scope.setHarvesterSchedule().finally(function() {
+              $scope.$parent.loadHarvesters().then(refreshSelectedHarvester);
+            });
+
+            $rootScope.$broadcast('StatusUpdated', {
+              msg: $translate.instant('harvesterUpdated'),
+              timeout: 2,
+              type: 'success'
+            });
+            deferred.resolve(data);
+          }).error(function (data) {
+            deferred.reject(data);
+            $rootScope.$broadcast('StatusUpdated', {
+                msg: $translate.instant('harvesterUpdated'),
+                error: data,
+                timeout: 2,
+                type: 'danger'
+              });
+          });
+
+        return deferred.promise;
       };
+
       $scope.selectHarvester = function(h) {
 
         // TODO: Specific to thredds
         if (h['@type'] === 'thredds') {
-
           $scope.threddsCollectionsMode =
               h.options.outputSchemaOnAtomicsDIF !== '' ? 'DIF' : 'UNIDATA';
           $scope.threddsAtomicsMode =
               h.options.outputSchemaOnCollectionsDIF !== '' ? 'DIF' : 'UNIDATA';
-
-
         }
 
         $scope.harvesterSelected = h;
@@ -318,7 +344,7 @@
 
           // Retrieve records in that harvester
           angular.extend($scope.searchObj.params, {
-            siteId: $scope.harvesterSelected.site.uuid
+            harvesterUuid: $scope.harvesterSelected.site.uuid
           });
           $scope.$broadcast('resetSearch', $scope.searchObj.params);
         });
@@ -408,23 +434,30 @@
       };
 
       $scope.setHarvesterSchedule = function() {
+        var deferred = $q.defer();
+
         if (!$scope.harvesterSelected) {
-          return;
+          deferred.resolve();
+          return deferred.promise;
         }
         var status = $scope.harvesterSelected.options.status;
+
         $http.get('admin.harvester.' +
             (status === 'active' ? 'start' : 'stop') +
             '?_content_type=json&id=' +
             $scope.harvesterSelected['@id'])
             .success(function(data) {
+              deferred.resolve(data);
 
             }).error(function(data) {
+              deferred.reject(data);
               $rootScope.$broadcast('StatusUpdated', {
                 title: $translate.instant('harvesterSchedule' + status),
                 error: data,
                 timeout: 0,
                 type: 'danger'});
             });
+        return deferred.promise;
       };
 
       // Register status listener
@@ -482,34 +515,64 @@
       // OGCWxS
       var ogcwxsGet = function() {
         $scope.ogcwxsTemplates = [];
-        gnSearchManagerService.search('qi?_content_type=json&' +
-          'fast=index&from=1&to=200&_isTemplate=y&type=service').
-        then(function(data) {
+        var query = {
+          "size": "200",
+          "query": {
+            "bool": {
+              "must": [{
+                "terms": {
+                  "isTemplate": ["y"]
+                }
+              },
+              {
+                "terms": {
+                  "cl_hierarchyLevel.key": ["service"]
+                }
+              }]
+            }
+          },
+          "_source": ["resourceTitleObject.default"]
+        };
+        $http.post('../api/search/records/_search', query).then(function(r) {
           // List of template including an empty one if user
           // wants to build the service metadata record
           // from the GetCapabilities only
-          $scope.ogcwxsTemplates = [{
-            getTitle:function (){return ''},
-            'geonet:info': {'uuid': ''}}];
-          for (var i = 0; i < data.metadata.length; i++) {
-            $scope.ogcwxsTemplates.push(new Metadata(data.metadata[i]));
-          }
+          var ogcwxsTemplates = [{
+          '_source': {resourceTitleObject: {default: ''}},
+            '_id': ''}];
+          $scope.ogcwxsTemplates =
+            ogcwxsTemplates.concat(r.data.hits.hits);
         }, function(data) {
         });
 
         $scope.ogcwxsDatasetTemplates = [];
-        gnSearchManagerService.search('qi?_content_type=json&' +
-          'fast=index&from=1&to=200&_isTemplate=y&type=dataset').
-        then(function(data) {
+        var query = {
+          "size": "200",
+          "query": {
+            "bool": {
+              "must": [{
+                "terms": {
+                  "isTemplate": ["y"]
+                }
+              },
+                {
+                  "terms": {
+                    "cl_hierarchyLevel.key": ["dataset"]
+                  }
+                }]
+            }
+          },
+          "_source": ["resourceTitleObject.default"]
+        };
+        $http.post('../api/search/records/_search', query).then(function(r) {
           // List of template including an empty one if user
           // wants to build the service metadata record
           // from the GetCapabilities only
-          $scope.ogcwxsDatasetTemplates = [{
-            getTitle:function (){return ''},
-            'geonet:info': {'uuid': ''}}];
-          for (var i = 0; i < data.metadata.length; i++) {
-            $scope.ogcwxsDatasetTemplates.push(new Metadata(data.metadata[i]));
-          }
+          var ogcwxsDatasetTemplates = [{
+            '_source': {resourceTitleObject: {default: ''}},
+            '_id': ''}];
+          $scope.ogcwxsDatasetTemplates =
+            ogcwxsDatasetTemplates.concat(r.data.hits.hits);
         }, function(data) {
         });
       };
@@ -563,15 +626,15 @@
       };
 
       $scope.$watchCollection('extent', function(n, o) {
-        if (n !== o && $scope.harvesterSelected
+        if (n !== o && n.md != null && $scope.harvesterSelected
           && $scope.harvesterSelected.searches
           && $scope.harvesterSelected.searches[0]
           && $scope.harvesterSelected.searches[0]['bbox-xmin']
           && angular.isDefined($scope.harvesterSelected.searches[0]['bbox-xmin'].value)) {
-          $scope.harvesterSelected.searches[0]['bbox-xmin'].value = n.md[0];
-          $scope.harvesterSelected.searches[0]['bbox-ymin'].value = n.md[1];
-          $scope.harvesterSelected.searches[0]['bbox-xmax'].value = n.md[2];
-          $scope.harvesterSelected.searches[0]['bbox-ymax'].value = n.md[3];
+          $scope.harvesterSelected.searches[0]['bbox-xmin'].value = parseFloat(n.md[0]);
+          $scope.harvesterSelected.searches[0]['bbox-ymin'].value = parseFloat(n.md[1]);
+          $scope.harvesterSelected.searches[0]['bbox-xmax'].value = parseFloat(n.md[2]);
+          $scope.harvesterSelected.searches[0]['bbox-ymax'].value = parseFloat(n.md[3]);
         }
       });
 
@@ -647,13 +710,13 @@
                     }
                   };
                   $scope.cswBboxFilter = false;
-                  var bboxProperties = ['bbox-xmin', 'bbox-ymin', 'bbox-xmax', 'bbox-ymax']
                   var checkSpatialCapabilities = function() {
                     if ($(this).attr("name") === 'BBOX') {
                       $scope.cswBboxFilter = true;
                       for (var i = 0; i < bboxProperties.length; i ++) {
-                      if (!$scope.harvesterSelected.searches[0][bboxProperties[i]])
-                        $scope.harvesterSelected.searches[0][bboxProperties[i]] = {value: ''};
+                        if (!$scope.harvesterSelected.searches[0][bboxProperties[i]]) {
+                          $scope.harvesterSelected.searches[0][bboxProperties[i]] = {value: ''};
+                        }
                       }
                     }
                   };

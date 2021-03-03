@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2016 Food and Agriculture Organization of the
+ * Copyright (C) 2001-2020 Food and Agriculture Organization of the
  * United Nations (FAO-UN), United Nations World Food Programme (WFP)
  * and United Nations Environment Programme (UNEP)
  *
@@ -24,6 +24,7 @@
 package org.fao.geonet.domain;
 
 import org.fao.geonet.entitylistener.MetadataValidationEntityListenerManager;
+import org.hibernate.annotations.Type;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
@@ -35,16 +36,20 @@ import javax.persistence.*;
  */
 @Entity
 @Access(AccessType.PROPERTY)
-@Table(name = "Validation",
+@Table(name = MetadataValidation.TABLE_NAME,
     indexes = { @Index(name = "idx_validation_metadataid", columnList = "metadataid") })
 @EntityListeners(MetadataValidationEntityListenerManager.class)
 public class MetadataValidation extends GeonetEntity {
+    public static final String TABLE_NAME = "Validation";
+    public static final String VALIDATION_DATE_COLUMN_NAME = "valDate";
     private MetadataValidationId id;
     private MetadataValidationStatus status;
     private int numTests = 0;
     private int numFailures = 0;
     private ISODate validationDate = new ISODate();
     private Boolean required = Boolean.TRUE;
+    private String reportUrl;
+    private String reportContent;
 
     /**
      * Return the id object of this entity.
@@ -114,7 +119,7 @@ public class MetadataValidation extends GeonetEntity {
      *
      * @return The moment that the validation completed.
      */
-    @AttributeOverride(name = "dateAndTime", column = @Column(name = "valDate", length = 30))
+    @AttributeOverride(name = "dateAndTimeUtc", column = @Column(name = VALIDATION_DATE_COLUMN_NAME, length = 30))
     public ISODate getValidationDate() {
         return validationDate;
     }
@@ -181,6 +186,29 @@ public class MetadataValidation extends GeonetEntity {
         return this;
     }
 
+    @Column
+    public String getReportUrl() {
+        return reportUrl;
+    }
+
+    public MetadataValidation setReportUrl(String reportUrl) {
+        this.reportUrl = reportUrl;
+        return this;
+    }
+
+    @Column
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Type(type = "org.hibernate.type.TextType")
+    public String getReportContent() {
+        return reportContent;
+    }
+
+    public MetadataValidation setReportContent(String reportContent) {
+        this.reportContent = reportContent;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "MetadataValidation{" + id +
@@ -189,6 +217,8 @@ public class MetadataValidation extends GeonetEntity {
             ", numFailures=" + numFailures +
             ", validationDate=" + validationDate +
             ", required=" + required +
+            ", reportUrl=" + reportUrl +
+            ", reportContent=" + reportContent +
             '}';
     }
 }

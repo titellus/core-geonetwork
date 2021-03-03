@@ -53,19 +53,21 @@
           $scope.cswTests = data;
         });
 
-        $http.get('../api/csw/virtuals').
+        $http.get('../api/sources/subportal').
             success(function(data) {
               $scope.cswVirtual = data;
             });
       }
 
       $scope.setCswUrl = function(url) {
-        $scope.cswUrl = url;
+        $scope.cswUrl = "../../" + url + "/" + $scope.lang + "/csw";
       };
 
       $scope.$watch('currentTestId', function() {
         if ($scope.currentTestId !== null) {
-          $http.get('../../xml/csw/test/' + $scope.currentTestId + '.xml')
+          $http.get('../../xml/csw/test/' + $scope.currentTestId + '.xml', {headers: {
+              Accept: 'application/xml'
+            }})
               .success(function(data) {
                 $scope.currentTest = data;
                 $scope.runCSWRequest();

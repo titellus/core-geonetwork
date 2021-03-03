@@ -24,47 +24,54 @@
 package org.fao.geonet.api.links;
 
 import com.google.common.collect.Sets;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jeeves.server.UserSession;
+import jeeves.server.context.ServiceContext;
 import org.apache.commons.lang.StringUtils;
 import org.fao.geonet.api.API;
 import org.fao.geonet.api.ApiParams;
 import org.fao.geonet.api.ApiUtils;
+import org.fao.geonet.api.processing.report.SimpleMetadataProcessingReport;
+import org.fao.geonet.domain.AbstractMetadata;
 import org.fao.geonet.domain.Link;
-import org.fao.geonet.domain.Link_;
 import org.fao.geonet.domain.Metadata;
+import org.fao.geonet.domain.Profile;
+import org.fao.geonet.exceptions.OperationNotAllowedEx;
+import org.fao.geonet.kernel.AccessManager;
 import org.fao.geonet.kernel.DataManager;
+import org.fao.geonet.kernel.datamanager.IMetadataUtils;
 import org.fao.geonet.kernel.url.UrlAnalyzer;
-import org.fao.geonet.kernel.url.UrlChecker;
 import org.fao.geonet.repository.LinkRepository;
-import org.fao.geonet.repository.LinkStatusRepository;
-import org.fao.geonet.repository.MetadataLinkRepository;
 import org.fao.geonet.repository.MetadataRepository;
-import org.fao.geonet.repository.SortUtils;
+import org.fao.geonet.repository.specification.LinkSpecs;
 import org.jdom.JDOMException;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jmx.export.MBeanExporter;
+import org.springframework.jmx.export.naming.SelfNaming;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import springfox.documentation.annotations.ApiIgnore;
 
+import javax.annotation.PostConstruct;
+import javax.management.MalformedObjectNameException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.sql.SQLException;
+import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Set;
 
@@ -72,97 +79,199 @@ import static org.fao.geonet.api.ApiParams.API_PARAM_RECORD_UUIDS_OR_SELECTION;
 
 @EnableWebMvc
 @Service
+@RestController
 @RequestMapping(value = {
-    "/{portal}/api/records/links",
-    "/{portal}/api/" + API.VERSION_0_1 +
-        "/records/links"
+    "/{portal}/api/records/links"
 })
-@Api(value = "links",
-    tags = "links",
+@Tag(name = "links",
     description = "Record link operations")
 public class LinksApi {
+    private static final int NUMBER_OF_SUBSEQUENT_PROCESS_MBEAN_TO_KEEP = 5;
+    @Autowired
+    protected ApplicationContext appContext;
     @Autowired
     LinkRepository linkRepository;
-
     @Autowired
-    LinkStatusRepository linkStatusRepository;
-
-    @Autowired
-    MetadataLinkRepository metadataLinkRepository;
-
+    IMetadataUtils metadataUtils;
     @Autowired
     MetadataRepository metadataRepository;
-
     @Autowired
     DataManager dataManager;
-
     @Autowired
     UrlAnalyzer urlAnalyser;
-
     @Autowired
-    UrlChecker urlChecker;
+    MBeanExporter mBeanExporter;
+    @Autowired
+    AccessManager accessManager;
 
-    @ApiOperation(
-        value = "Get record links",
-        notes = "",
-        nickname = "getRecordLinks")
-    @RequestMapping(
-        produces = MediaType.APPLICATION_JSON_VALUE,
-        method = RequestMethod.GET)
-    @ResponseStatus(value = HttpStatus.OK)
-    @PreAuthorize("isAuthenticated()")
-    @ResponseBody
-    public List<Link> getRecordLinks(
-        @ApiParam(value = "From page",
-            required = false)
-        @RequestParam(required = false, defaultValue = "0")
-            Integer from,
-        @ApiParam(value = "Number of records to return",
-            required = false)
-        @RequestParam(required = false, defaultValue = "200")
-            Integer size,
-        @ApiIgnore
-            HttpSession httpSession
-    ) {
-        UserSession session = ApiUtils.getUserSession(httpSession);
+    private ArrayDeque<SelfNaming> mAnalyseProcesses = new ArrayDeque<>(NUMBER_OF_SUBSEQUENT_PROCESS_MBEAN_TO_KEEP);
 
-        Sort sortByStateThenUrl = new Sort(Sort.Direction.ASC, SortUtils.createPath(Link_.lastState), SortUtils.createPath(Link_.url));
-
-        int page = (from / size);
-        final PageRequest pageRequest = new PageRequest(page, size, sortByStateThenUrl);
-
-        // TODO: Add filter by URL, UUID, status, failing
-        final Page<Link> all = linkRepository.findAll(pageRequest);
-
-        List<Link> response = new ArrayList<>();
-        all.forEach(e -> response.add(e));
-        return response;
+    @PostConstruct
+    public void iniMBeansSlidingWindowWithEmptySlot() {
+        for (int i = 0; i < NUMBER_OF_SUBSEQUENT_PROCESS_MBEAN_TO_KEEP; i++) {
+            EmptySlot emptySlot = new EmptySlot(i);
+            mAnalyseProcesses.addFirst(emptySlot);
+            try {
+                mBeanExporter.registerManagedResource(emptySlot, emptySlot.getObjectName());
+            } catch (MalformedObjectNameException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
-    @ApiOperation(
-        value = "Analyze records links",
-        notes = "",
-        nickname = "analyzeRecordLinks")
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Get record links",
+        description = "")
+    @Parameters({
+        @Parameter(name = "page",
+            //dataType = "integer", paramType = "query",
+            description = "Results page you want to retrieve (0..N)"),
+        @Parameter(name = "size",
+            //dataType = "integer", paramType = "query",
+            description = "Number of records per page."),
+        @Parameter(name = "sort",
+            //allowMultiple = false, dataType = "string", paramType = "query",
+            description = "Sorting criteria in the format: property(,asc|desc). " +
+                "Default sort order is ascending. ")
+    })
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public Page<Link> getRecordLinks(
+        @Parameter(description = "Filter, e.g. \"{url: 'png', lastState: 'ko', records: 'e421', groupId: 12}\", lastState being 'ok'/'ko'/'unknown'", required = false)
+        @RequestParam(required = false)
+            JSONObject filter,
+        @Parameter(description = "Optional, filter links to records published in that group.", required = false)
+        @RequestParam(required = false)
+            Integer[] groupIdFilter,
+        @Parameter(description = "Optional, filter links to records created in that group.", required = false)
+        @RequestParam(required = false)
+            Integer[] groupOwnerIdFilter,
+        @Parameter(hidden = true)
+            Pageable pageRequest,
+        @Parameter(hidden = true)
+            HttpSession session,
+        @Parameter(hidden = true)
+            HttpServletRequest request) throws Exception {
+
+        final UserSession userSession = ApiUtils.getUserSession(session);
+        return getLinks(filter, groupIdFilter, groupOwnerIdFilter, pageRequest, userSession);
+    }
+
+    private Page<Link> getLinks(
+        JSONObject filter,
+        Integer[] groupIdFilter,
+        Integer[] groupOwnerIdFilter,
+        Pageable pageRequest,
+        UserSession userSession) throws SQLException, JSONException {
+        Integer[] editingGroups = null;
+        if (userSession.getProfile() != Profile.Administrator) {
+            final List<Integer> editingGroupList = AccessManager.getGroups(userSession, Profile.Editor);
+            if (editingGroupList.size() > 0) {
+                editingGroups = editingGroupList.toArray(new Integer[editingGroupList.size()]);
+            }
+        }
+
+        if (filter == null && (groupIdFilter != null || groupOwnerIdFilter != null || editingGroups != null)) {
+            return linkRepository.findAll(LinkSpecs.filter(null, null, null, groupIdFilter, groupOwnerIdFilter, editingGroups), pageRequest);
+        }
+
+        if (filter != null) {
+            Integer stateToMatch = null;
+            String url = null;
+            String associatedRecord = null;
+            if (filter.has("lastState")) {
+                stateToMatch = 0;
+                if (filter.getString("lastState").equalsIgnoreCase("ok")) {
+                    stateToMatch = 1;
+                } else if (filter.getString("lastState").equalsIgnoreCase("ko")) {
+                    stateToMatch = -1;
+                }
+            }
+
+            if (filter.has("url")) {
+                url = filter.getString("url");
+            }
+
+            if (filter.has("records")) {
+                associatedRecord = filter.getString("records");
+            }
+
+            return linkRepository.findAll(LinkSpecs.filter(url, stateToMatch, associatedRecord, groupIdFilter, groupOwnerIdFilter, editingGroups), pageRequest);
+        } else {
+            return linkRepository.findAll(pageRequest);
+        }
+    }
+
+
+    @Operation(
+        description = "Get record links as CSV")
+    @Parameters({
+        @Parameter(name = "page",
+            //dataType = "integer", paramType = "query",
+            description = "Results page you want to retrieve (0..N)"),
+        @Parameter(name = "size",
+            //dataType = "integer", paramType = "query",
+            description = "Number of records per page."),
+        @Parameter(name = "sort",
+            //allowMultiple = false, dataType = "string", paramType = "query",
+            description = "Sorting criteria in the format: property(,asc|desc). " +
+                "Default sort order is ascending. ")
+    })
+    @RequestMapping(
+        path = "/csv",
+        method = RequestMethod.GET,
+        produces = MediaType.TEXT_PLAIN_VALUE
+    )
+    @PreAuthorize("isAuthenticated()")
+    @ResponseBody
+    public void getRecordLinksAsCsv(
+        @Parameter(description = "Filter, e.g. \"{url: 'png', lastState: 'ko', records: 'e421', groupId: 12}\", lastState being 'ok'/'ko'/'unknown'", required = false)
+        @RequestParam(required = false)
+            JSONObject filter,
+        @Parameter(description = "Optional, filter links to records published in that group.", required = false)
+        @RequestParam(required = false)
+            Integer[] groupIdFilter,
+        @Parameter(description = "Optional, filter links to records created in that group.", required = false)
+        @RequestParam(required = false)
+            Integer[] groupOwnerIdFilter,
+        @Parameter(hidden = true)
+            Pageable pageRequest,
+        @Parameter(hidden = true)
+            HttpSession session,
+        @Parameter(hidden = true)
+            HttpServletResponse response) throws Exception {
+        final UserSession userSession = ApiUtils.getUserSession(session);
+
+        final Page<Link> links = getLinks(filter, groupIdFilter, groupOwnerIdFilter, pageRequest, userSession);
+        response.setHeader("Content-disposition", "attachment; filename=links.csv");
+        LinkAnalysisReport.create(links, response.getWriter());
+    }
+
+
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Analyze records links",
+        description = "One of uuids or bucket parameter is required if not an Administrator. Only records that you can edit will be validated.")
     @RequestMapping(
         produces = MediaType.APPLICATION_JSON_VALUE,
         method = RequestMethod.POST)
-    @ResponseStatus(value = HttpStatus.OK)
-    @PreAuthorize("hasRole('Administrator')")
+    @PreAuthorize("hasAuthority('Editor')")
+    @ResponseStatus(HttpStatus.CREATED)
     @ResponseBody
-    public ResponseEntity analyzeRecordLinks(
-        @ApiParam(value = API_PARAM_RECORD_UUIDS_OR_SELECTION,
-            required = false,
-            example = "")
+    public SimpleMetadataProcessingReport analyzeRecordLinks(
+        @Parameter(description = API_PARAM_RECORD_UUIDS_OR_SELECTION)
         @RequestParam(required = false)
             String[] uuids,
-        @ApiParam(
-            value = ApiParams.API_PARAM_BUCKET_NAME,
+        @Parameter(
+            description = ApiParams.API_PARAM_BUCKET_NAME,
             required = false)
         @RequestParam(
             required = false
         )
             String bucket,
+        @Parameter(
+            description = "Only allowed if Administrator."
+        )
         @RequestParam(
             required = false,
             defaultValue = "true")
@@ -171,68 +280,94 @@ public class LinksApi {
             required = false,
             defaultValue = "false")
             boolean analyze,
-        @ApiIgnore
+        @Parameter(hidden = true)
             HttpSession httpSession,
-        @ApiIgnore
+        @Parameter(hidden = true)
             HttpServletRequest request
     ) throws IOException, JDOMException {
-        if (removeFirst) {
-            urlAnalyser.deleteAll();
+        MAnalyseProcess registredMAnalyseProcess = getRegistredMAnalyseProcess();
+
+        ServiceContext serviceContext = ApiUtils.createServiceContext(request);
+        UserSession session = ApiUtils.getUserSession(httpSession);
+
+        boolean isAdministrator = session.getProfile() == Profile.Administrator;
+        if (isAdministrator && removeFirst) {
+            registredMAnalyseProcess.deleteAll();
         }
 
-        UserSession session = ApiUtils.getUserSession(httpSession);
+        SimpleMetadataProcessingReport report =
+            new SimpleMetadataProcessingReport();
 
         Set<Integer> ids = Sets.newHashSet();
 
         if (uuids != null || StringUtils.isNotEmpty(bucket)) {
-            Set<String> records = ApiUtils.getUuidsParameterOrSelection(uuids, bucket, session);
-
-            for (String uuid : records) {
-                try {
-                    final String metadataId = dataManager.getMetadataId(uuid);
-                    if (metadataId != null) {
-                        ids.add(Integer.valueOf(metadataId));
+            try {
+                Set<String> records = ApiUtils.getUuidsParameterOrSelection(uuids, bucket, session);
+                for (String uuid : records) {
+                    if (!metadataUtils.existsMetadataUuid(uuid)) {
+                        report.incrementNullRecords();
                     }
-                } catch (Exception e) {
-                    try {
-                        ids.add(Integer.valueOf(uuid));
-                    } catch (NumberFormatException nfe) {
-                        // skip
+                    for (AbstractMetadata record : metadataRepository.findAllByUuid(uuid)) {
+                        if (!accessManager.canEdit(serviceContext, String.valueOf(record.getId()))) {
+                            report.addNotEditableMetadataId(record.getId());
+                        } else {
+                            ids.add(record.getId());
+                            report.addMetadataId(record.getId());
+                            report.incrementProcessedRecords();
+                        }
                     }
                 }
+            } catch (Exception e) {
+                report.addError(e);
+            } finally {
+                report.close();
             }
         } else {
-            // Process all
-            final List<Metadata> metadataList = metadataRepository.findAll();
-            for (Metadata m : metadataList) {
-                ids.add(m.getId());
+            if (isAdministrator) {
+                // Process all
+                final List<Metadata> metadataList = metadataRepository.findAll();
+                for (Metadata m : metadataList) {
+                    ids.add(m.getId());
+                    report.addMetadataId(m.getId());
+                    report.incrementProcessedRecords();
+                }
+            } else {
+                throw new OperationNotAllowedEx(String.format(
+                    "Only administrator can trigger link analysis on the entire catalogue. This is not allowed for %s.",
+                    session.getProfile()
+                ));
             }
+            report.close();
         }
 
-        for (int i : ids) {
-            final Metadata metadata = metadataRepository.findOne(i);
-            urlAnalyser.processMetadata(metadata.getXmlData(false), metadata);
-        }
-
-        if (analyze) {
-            linkRepository.findAll().stream().forEach(urlAnalyser::testLink);
-        }
-        return new ResponseEntity(HttpStatus.CREATED);
+        registredMAnalyseProcess.processMetadataAndTestLink(analyze, ids);
+        return report;
     }
 
 
-    @ApiOperation(
-        value = "Remove all links and status history",
-        notes = "",
-        nickname = "purgeAll")
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Remove all links and status history",
+        description = "")
     @RequestMapping(
         produces = MediaType.APPLICATION_JSON_VALUE,
         method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    @PreAuthorize("hasRole('Administrator')")
+    @PreAuthorize("hasAuthority('Administrator')")
     @ResponseBody
     public ResponseEntity purgeAll() throws IOException, JDOMException {
         urlAnalyser.deleteAll();
         return new ResponseEntity(HttpStatus.NO_CONTENT);
+    }
+
+    private MAnalyseProcess getRegistredMAnalyseProcess() {
+        MAnalyseProcess mAnalyseProcess = new MAnalyseProcess(linkRepository, metadataRepository, urlAnalyser, appContext);
+        mBeanExporter.registerManagedResource(mAnalyseProcess, mAnalyseProcess.getObjectName());
+        try {
+            mBeanExporter.unregisterManagedResource(mAnalyseProcesses.removeLast().getObjectName());
+        } catch (MalformedObjectNameException e) {
+            e.printStackTrace();
+        }
+        mAnalyseProcesses.addFirst(mAnalyseProcess);
+        return mAnalyseProcess;
     }
 }

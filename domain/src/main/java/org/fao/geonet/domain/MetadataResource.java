@@ -26,6 +26,7 @@
 package org.fao.geonet.domain;
 
 
+import java.util.Date;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -36,11 +37,55 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "resource")
 @XmlAccessorType(XmlAccessType.FIELD)
 public interface MetadataResource {
+
+    /**
+     * Get the resource management properties for the resource. If null then the resource management link will not show up.
+     * The resource management link is a link to an external application that is more specialized on the management of the resource.
+     * This can include things such as archiving/retention, extra metadata...
+     */
+    class ExternalResourceManagementProperties {
+        private final String url;
+        private final String windowParameters;
+        private final boolean modal;
+
+        public ExternalResourceManagementProperties(String url, String windowParameters, boolean modal) {
+            this.url=url;
+            this.windowParameters=windowParameters;
+            this.modal=modal;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public String getWindowParameters() {
+            return windowParameters;
+        }
+
+        public boolean isModal() {
+            return modal;
+        }
+    }
+
     String getId();
 
     String getUrl();
 
-    String getType();
+    MetadataResourceVisibility getVisibility();
 
-    double getSize();
+    long getSize();
+
+    Date getLastModification();
+
+    String getFilename();
+
+    boolean isApproved();
+
+    int getMetadataId();
+
+    String getMetadataUuid();
+
+    String getVersion();
+
+    ExternalResourceManagementProperties getExternalResourceManagementProperties();
 }

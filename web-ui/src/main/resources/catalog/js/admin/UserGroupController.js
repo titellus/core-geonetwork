@@ -47,8 +47,8 @@
 
       $scope.searchObj = {
         params: {
-          template: 'y or n or s or t',
-          sortBy: 'title'
+          isTemplate: ['y', 'n', 's', 't'],
+          sortBy: 'resourceTitleObject.default.keyword'
         }
       };
 
@@ -275,9 +275,9 @@
 
         // Retrieve records in that group
         $scope.$broadcast('resetSearch', {
-          template: 'y or n or s or t',
-          _owner: u.id,
-          sortBy: 'title'
+          isTemplate: ['y', 'n', 's', 't'],
+          owner: u.id,
+          sortBy: 'resourceTitleObject.default.keyword'
         });
 
         $scope.userUpdated = false;
@@ -694,9 +694,9 @@
 
         // Retrieve records in that group
         $scope.$broadcast('resetSearch', {
-          template: 'y or n or s or t',
+          isTemplate: ['y', 'n', 's', 't'],
           group: g.id,
-          sortBy: 'title'
+          sortBy: 'resourceTitleObject.default.keyword'
         });
 
         loadGroupUsers($scope.groupSelected.id);
@@ -712,12 +712,15 @@
         $scope.groupUpdated = true;
       };
 
-      $scope.$watch('user', function(n, o) {
-        if (n && n.profile) {
+      var userAndGroupInitialized = false;
+      var unregister = $scope.$watch('user', function(n, o) {
+        if (!userAndGroupInitialized && n && n.profile) {
+          userAndGroupInitialized = true;
+          unregister();
           loadGroups();
           loadUsers();
         }
-      });
+      }, true);
     }]);
 
   module.filter('loggedUserIsUseradminOrMore', function() {

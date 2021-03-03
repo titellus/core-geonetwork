@@ -23,7 +23,7 @@
 
 package org.fao.geonet.domain.responses;
 
-import org.fao.geonet.domain.CswCapabilitiesInfoField;
+import org.fao.geonet.domain.Translations;
 
 import javax.xml.bind.annotation.*;
 
@@ -41,9 +41,7 @@ public class CswConfigurationResponse implements Serializable {
     private static final long serialVersionUID = -4426385060234828544L;
     private boolean cswEnabled;
     private boolean cswMetadataPublic;
-    private int cswContactId;
-    @XmlElement(name = "record")
-    private List<CswCapabilitiesInfoField> capabilitiesInfoFields;
+    private int capabilityRecordUuid;
 
     public boolean isCswEnabled() {
         return cswEnabled;
@@ -61,19 +59,11 @@ public class CswConfigurationResponse implements Serializable {
         this.cswMetadataPublic = cswMetadataPublic;
     }
 
-    public int getCswContactId() {
-        return cswContactId;
+    public int getCapabilityRecordUuid() {
+        return capabilityRecordUuid;
     }
 
-    public void setCswContactId(int cswContactId) {
-        this.cswContactId = cswContactId;
-    }
-
-    public List<CswCapabilitiesInfoField> getCapabilitiesInfoFields() {
-        return capabilitiesInfoFields;
-    }
-
-    public void setCapabilitiesInfoFields(List<CswCapabilitiesInfoField> capabilitiesInfoFields) {
-        this.capabilitiesInfoFields = capabilitiesInfoFields;
+    public void setCapabilityRecordUuid(int capabilityRecordUuid) {
+        this.capabilityRecordUuid = capabilityRecordUuid;
     }
 }

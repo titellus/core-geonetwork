@@ -1,6 +1,6 @@
 <!-- full width map -->
 <div class="row">
-  <div class="col-md-12" ngeo-map="ctrl.map"></div>
+  <div class="col-md-12" ol-map="ctrl.map"></div>
 </div>
 
 <div class="spacer" />
@@ -55,6 +55,12 @@
 </div>
 
 <div class="spacer" />
+
+<div ng-if="ctrl.dataOlProjection == null" class="alert alert-danger"
+     data-translate=""
+     data-translate-values="{srsName:'{{ctrl.dataProjection}}'}">
+  badGmlProjectionCode
+</div>
 
 <!-- input geometry field -->
 <div class="row">

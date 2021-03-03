@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2016 Food and Agriculture Organization of the
+ * Copyright (C) 2001-2020 Food and Agriculture Organization of the
  * United Nations (FAO-UN), United Nations World Food Programme (WFP)
  * and United Nations Environment Programme (UNEP)
  *
@@ -26,25 +26,11 @@ package org.fao.geonet.domain;
 import org.fao.geonet.ApplicationContextHolder;
 import org.fao.geonet.entitylistener.SourceEntityListenerManager;
 import org.fao.geonet.repository.LanguageRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.persistence.*;
 import java.util.Map;
 import java.util.UUID;
-
-import javax.persistence.Access;
-import javax.persistence.AccessType;
-import javax.persistence.AttributeOverride;
-import javax.persistence.CollectionTable;
-import javax.persistence.Column;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.MapKeyColumn;
-import javax.persistence.Table;
 
 /**
  * Entity representing a source catalogue.
@@ -58,15 +44,20 @@ import javax.persistence.Table;
  */
 @Entity
 @Access(AccessType.PROPERTY)
-@Table(name = "Sources")
+@Table(name = Source.TABLE_NAME)
 @EntityListeners(SourceEntityListenerManager.class)
 public class Source extends Localized {
+    public static final String TABLE_NAME = "Sources";
+    public static final String ID_COLUMN_NAME = "uuid";
+    public static final String CREATION_DATE_COLUMN_NAME = "creationDate";
+
     private String _uuid = UUID.randomUUID().toString();
     private String _name;
     private SourceType type = null;
     private String logo;
     private String filter;
     private String uiConfig;
+    private String serviceRecord;
     private ISODate creationDate = new ISODate();
     private Integer groupOwner;
 
@@ -108,6 +99,7 @@ public class Source extends Localized {
      * @return the uuid of the source.
      */
     @Id
+    @Column(name = ID_COLUMN_NAME)
     public String getUuid() {
         return _uuid;
     }
@@ -146,7 +138,7 @@ public class Source extends Localized {
     @ElementCollection(fetch = FetchType.LAZY, targetClass = String.class)
     @CollectionTable(joinColumns = @JoinColumn(name = "idDes"), name = "SourcesDes")
     @MapKeyColumn(name = "langId", length = 5)
-    @Column(name = "label", nullable = false, length = 96)
+    @Column(name = "label", nullable = false, length = 255)
     public Map<String, String> getLabelTranslations() {
         return super.getLabelTranslations();
     }
@@ -234,9 +226,9 @@ public class Source extends Localized {
      * @return the creation date.
      */
     @AttributeOverride(
-        name = "dateAndTime",
+        name = "dateAndTimeUtc",
         column = @Column(
-            name = "creationDate",
+            name = CREATION_DATE_COLUMN_NAME,
             nullable = true,
             length = 30))
     public ISODate getCreationDate() {
@@ -268,5 +260,14 @@ public class Source extends Localized {
     public Source setGroupOwner(Integer groupOwner) {
         this.groupOwner = groupOwner;
         return this;
+    }
+
+    @Column(name = "serviceRecord")
+    public String getServiceRecord() {
+        return serviceRecord;
+    }
+
+    public void setServiceRecord(String serviceRecord) {
+        this.serviceRecord = serviceRecord;
     }
 }

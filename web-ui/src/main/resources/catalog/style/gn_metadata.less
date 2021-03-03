@@ -32,6 +32,11 @@ header div.gn-abstract {
   margin-bottom: 1em;
 }
 
+[data-gn-more-like-this] {
+  span {
+    word-break: break-word;
+  }
+}
 
 /* Angular view */
 .gn-md-view {
@@ -68,6 +73,16 @@ header div.gn-abstract {
       }
     }
   }
+
+  dl.gn-table {
+    dt, dd {
+      width: 100% !important;
+      .table {
+        font-size: 14px;
+      }
+    }
+  }
+
   .badge {
     word-break: break-all;
     white-space: normal;
@@ -139,6 +154,12 @@ header div.gn-abstract {
     position: relative;
     margin: 2em 0 0 90px;
     border: 1px solid #ccc;
+  }
+  .gn-md-side-extent > .extent {
+    margin: 0 0 0 0;
+    .coord {
+      display: none;
+    }
   }
   .coord {
     @coord-half-width: 75px;
@@ -243,6 +264,15 @@ header div.gn-abstract {
     margin-left: 1em;
   }
 
+  .gn-field-template div.target {
+    margin-bottom: 2em;
+    dl:not(:first-child) {
+      dt:before {
+        border: none;
+      }
+    }
+  }
+
   .img-thumbnail {
     margin-bottom: 1em;
   }
@@ -315,6 +345,42 @@ header div.gn-abstract {
   }
 }
 
+.gn-period {
+  border-radius: 4px;
+  padding-left: 8px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.175);
+  margin-bottom: 5px;
+  background: rgb(255,255,255);
+  background: linear-gradient(90deg, rgba(255,255,255,1) 40%, rgba(204,204,204,1) 60%);
+
+  div:first-of-type {
+    width: 45%;
+    text-align: right;
+  }
+  div.spacer {
+    font-size: 28px;
+    color: #ccc;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.175);
+  }
+}
+
+.gn-vertical-range {
+  border-radius: 4px;
+  padding-left: 8px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.175);
+  margin-bottom: 5px;
+  min-height: 60px;
+
+  div.width-25 {
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    color: #ccc;
+  }
+  i {
+    font-size: 28px;
+  }
+}
+
 .gn-related-resources {
   .gn-related-item {
     h4 {
@@ -340,6 +406,9 @@ header div.gn-abstract {
   }
   p {
     word-wrap: break-word;
+  }
+  .btn {
+    white-space: normal;
   }
 }
 
@@ -489,6 +558,8 @@ ul.container-list {
 
 [data-gn-metadata-contacts], [gn-metadata-contacts] {
   .gn-contact {
-    margin-left: -1.7em;
+    address {
+      line-height: 1.7em;
+    }
   }
 }

@@ -22,32 +22,26 @@
  */
 
 (function() {
-
   goog.provide('gn_related_directive');
-
-
-
-
-
-
-
 
   goog.require('gn_atom');
   goog.require('gn_related_observer_directive');
   goog.require('gn_relatedresources_service');
   goog.require('gn_wms');
   goog.require('gn_wmts');
+  goog.require('gn_external_viewer');
 
   var module = angular.module('gn_related_directive', [
     'gn_relatedresources_service', 'gn_related_observer_directive', 'gn_wms',
-    'gn_wmts', 'gn_atom'
+    'gn_wmts', 'gn_atom', 'gn_external_viewer'
   ]);
 
   /**
    * Shows a list of related records given an uuid with the actions defined in
    * config.js
    */
-  module.service('gnRelatedService', ['$http', '$q', function($http, $q) {
+  module.service('gnRelatedService', ['$http', '$q',
+    function($http, $q) {
     this.get = function(uuidOrId, types) {
       var canceller = $q.defer();
       var request = $http({
@@ -83,7 +77,10 @@
       return (promise);
     };
 
-    this.getMdsRelated = function(uuids, types) {
+    this.getMdsRelated = function(mds, types) {
+      var uuids = mds.map(function (md) {
+        return md.uuid;
+      });
       var url = '../api/related';
       return $http.get(url, {
         params: {
@@ -92,17 +89,92 @@
         }
       });
     };
+    this.getMdsRelatedWithMultipleSearch = function(mds, types) {
+      var uuids = mds.map(function(md) {
+        return md.uuid;
+      });
+      // relatedIndexFields = ImmutableMap.<String, String>builder()
+      //   .put("children", "parentUuid")
+      //   .put("services", "recordOperateOn")
+      //   .put("hasfeaturecats", "hasfeaturecat")
+      //   .put("hassources", "hassources")
+      //   .put("associated", "agg_associated")
+      //   .put("datasets", "uuid")
+      //   .put("fcats", "uuid")
+      //   .put("sources", "uuid")
+      //   .put("parent", "uuid")
+      //   .build();
+      // type:children > Is a children: If record.parentUuid then uuid: record.parentUuid
+      // Is a service: If record.operatesOn then uuid: record.operatesOn
+      // Is a sibling?: agg_associated: record.uuid
+
+      var promise = $q.defer();
+      var body = '';
+      var searchFields = {
+        'children': 'parentUuid',
+        'services': 'recordOperateOn',
+        'hassources': 'hassources',
+        'associated': 'agg_associated',
+        'hasfeaturecats': 'hasfeaturecats'
+      };
+      for (var j = 0; j < mds.length; j++) {
+        for (var i = 0; i < types.length; i++) {
+          body += '{"index": "records"}\n';
+          switch (types[i]) {
+            case 'services':
+              body += '{' +
+                '"query": {"terms": {' +
+                '"' + (searchFields[types[i]] || 'uuid') + '": ["' + mds[j].uuid + '"]}}, ' +
+                '"_source":["resourceTitle*", "id"]}\n';
+              break;
+            case 'children':
+              body += '{' +
+                '"query": {"terms": {' +
+                '"' + (searchFields[types[i]] || 'uuid') + '": ["' + mds[j].uuid + '"]}}, ' +
+                '"_source":["resourceTitle*", "id"]}\n';
+              break;
+            default:
+              body += '{"query": {"match_all": {}}, "from": 0, "size": 0}\n'
+          }
+        }
+      }
+      $http.post('../api/search/records/_msearch', body).then(function (r) {
+        var related = {};
+        for (var j = 0; j < mds.length; j++) {
+          var uuid = mds[j].uuid;
+          related[uuid] = {};
+          for (var i = 0; i < types.length; i++) {
+            var t = types[i];
+            var values = [];
+            var results = r.data.responses[i + j];
+            if (results.hits.total.value > 0) {
+              for (var k = 0; k < results.hits.hits.length; k ++) {
+                var record = results.hits.hits[k];
+                values.push({
+                  id: record._source.id,
+                  title: {eng: record._source.resourceTitleObject.default}
+                });
+              }
+            }
+            related[uuid][t] = values.length > 0 ? values : undefined;
+          }
+        }
+        promise.resolve({data: related});
+      });
+
+      return promise.promise;
+    };
   }]);
   module
-      .directive(
-          'gnRelated',
-          [
+      .directive('gnRelated', [
         'gnRelatedService',
         'gnGlobalSettings',
         'gnSearchSettings',
         'gnRelatedResources',
+        'gnExternalViewer',
         function(gnRelatedService, gnGlobalSettings,
-                 gnSearchSettings, gnRelatedResources) {
+                 gnSearchSettings, gnRelatedResources,
+                 gnExternalViewer) {
           return {
             restrict: 'A',
             templateUrl: function(elem, attrs) {
@@ -116,6 +188,7 @@
               title: '@',
               list: '@',
               filter: '@',
+              container: '@',
               user: '=',
               hasResults: '=?'
             },
@@ -170,10 +243,28 @@
                          } else {
                            scope.relations[idx] = value;
                          }
+
+                         if (scope.relations.siblings && scope.relations.associated) {
+                           for (var i = 0; i < scope.relations.associated.length; i++) {
+                             if (scope.relations.siblings.filter(function (e) {
+                               return e.id === scope.relations.associated[i].id;
+                             }).length > 0) {
+                               /* siblings object contains associated element */
+                             } else {
+                               scope.relations.siblings.push(scope.relations.associated[i])
+                             }
+                           }
+                           scope.relations.associated = {};
+                         }
                        });
+
+                       if (angular.isDefined(scope.container)
+                           && scope.relations == null) {
+                         $(scope.container).hide();
+                       }
                        if (controller) {
-                          controller.finishRequest(elem, scope.relationFound);
-                        }
+                         controller.finishRequest(elem, scope.relationFound);
+                       }
                      } , function() {
                       if (controller) {
                         controller.finishRequest(elem, false);
@@ -194,8 +285,12 @@
                 }
                 return angular.isFunction(fn);
               };
+              scope.externalViewerAction = function(mainType, link, md) {
+                gnExternalViewer.viewService(md, link);
+              };
 
               scope.isLayerProtocol = gnRelatedResources.isLayerProtocol;
+              scope.externalViewerActionEnabled = gnExternalViewer.isEnabledViewAction();
 
               scope.config = gnRelatedResources;
 
@@ -205,7 +300,7 @@
                     promise.abort();
                   }
                   if (scope.md != null) {
-                    scope.id = scope.md.getId();
+                    scope.id = scope.md.id;
                   }
                   scope.updateRelations();
                 }

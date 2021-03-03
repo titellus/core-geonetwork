@@ -47,6 +47,17 @@
     function($scope, $location, $rootScope, $translate, $q, $http,
         gnSearchSettings, gnMetadataActions, gnGlobalSettings) {
 
+      // Used for INSPIRE validation task to force display progress bar when executed
+      $scope.forceRefreshTask = false;
+
+      $scope.$on('inspireMdValidationStart', function() {
+        $scope.forceRefreshTask = true;
+      });
+
+      $scope.$on('inspireMdValidationStop', function() {
+        $scope.forceRefreshTask = false;
+      });
+
       $scope.isFilterTagsDisplayed =
           gnGlobalSettings.gnCfg.mods.editor.isFilterTagsDisplayed;
       $scope.modelOptions = angular.copy(gnGlobalSettings.modelOptions);
@@ -56,16 +67,19 @@
         hitsperpageValues: gnSearchSettings.hitsperpageValues,
         selectionBucket: 'e101',
         filters: gnSearchSettings.filters,
+        configId: 'editor',
         params: {
-          sortBy: 'changeDate',
-          _isTemplate: 'y or n',
+          sortBy: 'dateStamp',
+          sortOrder: 'desc',
+          isTemplate: ['y', 'n'],
           resultType: $scope.facetsSummaryType,
           from: 1,
           to: 20
         },
         defaultParams: {
-          sortBy: 'changeDate',
-          _isTemplate: 'y or n',
+          sortBy: 'dateStamp',
+          sortOrder: 'desc',
+          isTemplate: ['y', 'n'],
           resultType: $scope.facetsSummaryType,
           from: 1,
           to: 20
@@ -80,11 +94,11 @@
       });
 
       var setOwner = function() {
-        $scope.searchObj.params['_owner'] = $scope.user.id;
+        $scope.searchObj.params['owner'] = $scope.user.id;
       };
 
       var unsetOwner = function() {
-        delete $scope.searchObj.params['_owner'];
+        delete $scope.searchObj.params['owner'];
       };
 
       $scope.$watch('user.id', function(newId, o) {
@@ -108,13 +122,13 @@
             then(function(data) {
               $rootScope.$broadcast('StatusUpdated', {
                 title: $translate.instant('metadataRemoved',
-                    {title: md.title || md.defaultTitle}),
+                    {title: md.resourceTitle}),
                 timeout: 2
               });
               deferred.resolve(data);
             }, function(reason) {
               $rootScope.$broadcast('StatusUpdated', {
-                title: $translate.instant(reason.data.error.message),
+                title: reason.data.description,
                 timeout: 0,
                 type: 'danger'
               });
@@ -170,17 +184,9 @@
           gnSearchSettings.resultViewTpls[0].tplUrl;
 
       $scope.facetsSummaryType = gnSearchSettings.facetsSummaryType = 'manager';
+      $scope.facetConfig = gnGlobalSettings.gnCfg.mods.editor.facetConfig;
 
-      gnSearchSettings.sortbyValues = [{
-        sortBy: 'relevance',
-        sortOrder: ''
-      }, {
-        sortBy: 'changeDate',
-        sortOrder: ''
-      }, {
-        sortBy: 'title',
-        sortOrder: 'reverse'
-      }];
+      gnSearchSettings.sortbyValues = gnSearchSettings.sortbyValues;
 
       gnSearchSettings.hitsperpageValues = [20, 50, 100];
 
@@ -208,42 +214,54 @@
             combo: 'd',
             description: $translate.instant('hotkeyDirectory'),
             callback: function(event) {
-              $location.path('/directory');
+              if ($location.path().indexOf("/metadata/") !== 0) {
+                $location.path('/directory');
+              }
             }
           }).add({
           combo: 'i',
           description: $translate.instant('hotkeyImportRecord'),
           callback: function(event) {
-            $location.path('/import');
+            if ($location.path().indexOf("/metadata/") !== 0) {
+              $location.path('/import');
+            }
           }
         }).add({
           combo: 'r',
           description: $translate.instant('hotkeyAccessManager'),
           callback: function(event) {
-            $location.path('/accessManager');
+            if ($location.path().indexOf("/metadata/") !== 0) {
+              $location.path('/accessManager');
+            }
           }
         }).add({
           combo: 'h',
           description: $translate.instant('hotkeyEditorBoard'),
           callback: function(event) {
-            $location.path('/board');
+            if ($location.path().indexOf("/metadata/") !== 0) {
+              $location.path('/board');
+            }
           }
         }).add({
           combo: '+',
           description: $translate.instant('hotkeyAddRecord'),
           callback: function(event) {
-            $location.path('/create');
+            if ($location.path().indexOf("/metadata/") !== 0) {
+              $location.path('/create');
+            }
           }
         }).add({
           combo: 't',
           description: $translate.instant('hotkeyFocusToSearch'),
           callback: function(event) {
-            event.preventDefault();
-            var anyField = $('#gn-any-field');
-            if (anyField) {
-              gnUtilityService.scrollTo();
-              $location.path('/board');
-              anyField.focus();
+            if ($location.path().indexOf("/metadata/") !== 0) {
+              event.preventDefault();
+              var anyField = $('#gn-any-field');
+              if (anyField) {
+                gnUtilityService.scrollTo();
+                $location.path('/board');
+                anyField.focus();
+              }
             }
           }
         }).add({
@@ -251,14 +269,18 @@
           description: $translate.instant('hotkeySearchTheCatalog'),
           allowIn: ['INPUT'],
           callback: function() {
-            angular.element($('#gn-any-field'))
-              .scope().triggerSearch()
+            if ($location.path().indexOf("/metadata/") !== 0) {
+              angular.element($('#gn-any-field'))
+                .scope().triggerSearch()
+            }
           }
         }).add({
           combo: 'b',
           description: $translate.instant('hotkeyBatchEdit'),
           callback: function(event) {
-            $location.path('/batchedit');
+            if ($location.path().indexOf("/metadata/") !== 0) {
+              $location.path('/batchedit');
+            }
           }
         });
       }, 500);

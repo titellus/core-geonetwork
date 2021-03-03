@@ -1,19 +1,22 @@
 package org.fao.geonet.api.records.editing;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.IOException;
-
+import jeeves.server.context.ServiceContext;
+import org.fao.geonet.api.exception.ResourceNotFoundException;
+import org.fao.geonet.domain.MetadataValidationStatus;
 import org.fao.geonet.services.AbstractServiceIntegrationTest;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
 
-import javassist.NotFoundException;
-import jeeves.server.context.ServiceContext;
+import java.io.IOException;
 
-public class InspireValidatorUtilsTest extends AbstractServiceIntegrationTest {
+import static org.junit.Assert.assertEquals;
+
+@ContextConfiguration(inheritLocations = true, locations = "classpath:inspire-validator-test-context.xml")
+public class InspireValidatorUtilsTest
+    extends AbstractServiceIntegrationTest {
 
     private static String URL = "http://inspire-sandbox.jrc.ec.europa.eu/etf-webapp";
 
@@ -66,7 +69,7 @@ public class InspireValidatorUtilsTest extends AbstractServiceIntegrationTest {
                 // Valid but not found test ID
                 inspireValidatorUtils.isReady(context, URL, "IED123456789012345678901234567890123");
                 assertEquals("No exception!", "NotFoundException", "No Exception");
-            } catch (NotFoundException e) {
+            } catch (ResourceNotFoundException e) {
                 // RIGHT EXCEPTION
             } catch (Exception e) {
                 assertEquals("Wrong exception.", "NotFoundException", "Exception");
@@ -85,6 +88,31 @@ public class InspireValidatorUtilsTest extends AbstractServiceIntegrationTest {
 
     }
 
+    @Test public void testCalculateValidationStatus() {
+        MetadataValidationStatus metadataValidationStatus = inspireValidatorUtils
+            .calculateValidationStatus(inspireValidatorUtils.TEST_STATUS_INTERNAL_ERROR);
 
+        assertEquals(MetadataValidationStatus.NEVER_CALCULATED, metadataValidationStatus);
+
+        metadataValidationStatus = inspireValidatorUtils.calculateValidationStatus(inspireValidatorUtils.TEST_STATUS_UNDEFINED);
+
+        assertEquals(MetadataValidationStatus.NEVER_CALCULATED, metadataValidationStatus);
+
+        metadataValidationStatus = inspireValidatorUtils.calculateValidationStatus(inspireValidatorUtils.TEST_STATUS_NOT_APPLICABLE);
+
+        assertEquals(MetadataValidationStatus.DOES_NOT_APPLY, metadataValidationStatus);
+
+        metadataValidationStatus = inspireValidatorUtils.calculateValidationStatus(inspireValidatorUtils.TEST_STATUS_PASSED);
+
+        assertEquals(MetadataValidationStatus.VALID, metadataValidationStatus);
+
+        metadataValidationStatus = inspireValidatorUtils.calculateValidationStatus(inspireValidatorUtils.TEST_STATUS_PASSED_MANUAL);
+
+        assertEquals(MetadataValidationStatus.VALID, metadataValidationStatus);
+
+        metadataValidationStatus = inspireValidatorUtils.calculateValidationStatus(inspireValidatorUtils.TEST_STATUS_FAILED);
+
+        assertEquals(MetadataValidationStatus.INVALID, metadataValidationStatus);
+    }
 }
 

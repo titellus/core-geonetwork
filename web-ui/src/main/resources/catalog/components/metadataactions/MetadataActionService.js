@@ -60,8 +60,8 @@
       var windowName = 'geonetwork';
       var windowOption = '';
       var translations = null;
-      $translate(['metadataPublished', 'metadataUnpublished',
-        'metadataPublishedError', 'metadataUnpublishedError']).then(function(t) {
+      $translate(['metadataPublished', 'metadataUnpublished', 'metadataLinksValidated',
+        'metadataPublishedError', 'metadataUnpublishedError', 'metadataValidated']).then(function(t) {
         translations = t;
       });
       var alertResult = function(msg) {
@@ -103,7 +103,7 @@
       this.metadataPrint = function(params, bucket) {
         var url;
         if (angular.isObject(params) && params.sortBy) {
-          url = gnHttp.getService('mdGetPDFSelection');
+          url = '../api/records/pdf';
           url += '?sortBy=' + params.sortBy;
           if (params.sortOrder) {
             url += '&sortOrder=' + params.sortOrder;
@@ -128,10 +128,10 @@
        */
       this.metadataRDF = function(uuid, approved) {
         var url = gnHttp.getService('mdGetRDF') + '?uuid=' + uuid;
-        
+
         url += angular.isDefined(approved) ?
             '&approved=' + approved : '';
-        
+
         location.replace(url);
       };
 
@@ -141,10 +141,10 @@
        * @param {string} uuid
        */
       this.metadataMEF = function(uuid, bucket, approved) {
-        
-        var url = gnHttp.getService('mdGetMEF') + '?version=2';
+
+        var url = '../api/records/zip?';
         url += angular.isDefined(uuid) ?
-            '&uuid=' + uuid : '&format=full';
+            '&uuids=' + uuid : '';
         url += angular.isDefined(bucket) ?
             '&bucket=' + bucket : '';
         url += angular.isDefined(approved) ?
@@ -154,15 +154,35 @@
       };
 
       this.exportCSV = function(bucket) {
-        window.open(gnHttp.getService('csv') +
+        window.open('../api/records/csv' +
             '?bucket=' + bucket, windowName, windowOption);
+      };
+      this.validateMdLinks = function(bucket) {
+        $rootScope.$broadcast('operationOnSelectionStart');
+        return gnHttp.callService('../api/records/links?' +
+          'bucket=' + bucket, null, {
+          method: 'POST'
+        }).then(function(data) {
+          $rootScope.processReport = data.data;
+
+          // A report is returned
+          gnUtilityService.openModal({
+            title: translations.metadataLinksValidated,
+            content: '<div gn-batch-report="processReport"></div>',
+            className: 'gn-validation-popup',
+            onCloseCallback: function () {
+              $rootScope.$broadcast('operationOnSelectionStop');
+              $rootScope.$broadcast('search');
+              $rootScope.processReport = null;
+            }
+          }, $rootScope, 'metadataLinksValidated');
+        });
       };
       this.validateMd = function(md, bucket) {
 
         $rootScope.$broadcast('operationOnSelectionStart');
         if (md) {
-          return gnMetadataManager.validate(md.getId()).then(function() {
-            $rootScope.$broadcast('operationOnSelectionStop');
+          return gnMetadataManager.validate(md.id).then(function() {
             $rootScope.$broadcast('search');
           });
         } else {
@@ -170,41 +190,58 @@
               'bucket=' + bucket, null, {
                     method: 'PUT'
                   }).then(function(data) {
-            alertResult(data.data);
-            $rootScope.$broadcast('operationOnSelectionStop');
-            $rootScope.$broadcast('search');
+            $rootScope.processReport = data.data;
+
+            // A report is returned
+            gnUtilityService.openModal({
+              title: translations.metadataValidated,
+              content: '<div gn-batch-report="processReport"></div>',
+              className: 'gn-validation-popup',
+              onCloseCallback: function () {
+                $rootScope.$broadcast('operationOnSelectionStop');
+                $rootScope.$broadcast('search');
+                $rootScope.processReport = null;
+              }
+            }, $rootScope, 'metadataValidationUpdated');
           });
         }
       };
 
       this.deleteMd = function(md, bucket) {
-        $rootScope.$broadcast('operationOnSelectionStart');
+        var deferred = $q.defer();
         if (md) {
-          return gnMetadataManager.remove(md.getId()).then(function() {
+          gnMetadataManager.remove(md.id).then(function(data) {
+            $timeout(function() {
+              $rootScope.$broadcast('search');
+            }, 5000);
+            deferred.resolve(data);
+          }, function(data) {
+            deferred.reject(data);
+          });
+        } else {
+          $rootScope.$broadcast('operationOnSelectionStart');
+          $http.delete('../api/records?' +
+              'bucket=' + bucket).then(function(data) {
             $rootScope.$broadcast('mdSelectNone');
             $rootScope.$broadcast('operationOnSelectionStop');
-            // TODO: Here we may introduce a delay to not display the deleted
-            // record in results.
-            // https://github.com/geonetwork/core-geonetwork/issues/759
             $rootScope.$broadcast('search');
+            $timeout(function() {
+              $rootScope.$broadcast('search');
+            }, 5000);
+            deferred.resolve(data);
+          }, function(data) {
+            deferred.reject(data);
           });
         }
-        else {
-          return $http.delete('../api/records?' +
-              'bucket=' + bucket).then(function() {
-            $rootScope.$broadcast('mdSelectNone');
-            $rootScope.$broadcast('operationOnSelectionStop');
-            $rootScope.$broadcast('search');
-          });
-        }
+        return deferred.promise;
       };
 
 
       this.openPrivilegesPanel = function(md, scope) {
         gnUtilityService.openModal({
           title: $translate.instant('privileges') + ' - ' +
-              (md.title || md.defaultTitle),
-          content: '<div gn-share="' + md.getId() + '"></div>',
+              md.resourceTitle,
+          content: '<div gn-share="' + md.id + '"></div>',
           className: 'gn-privileges-popup'
         }, scope, 'PrivilegesUpdated');
       };
@@ -221,7 +258,7 @@
       };
 
       this.startWorkflow = function(md, scope) {
-        return $http.put('../api/records/' + md.getId() +
+        return $http.put('../api/records/' + md.id +
             '/status', {status: 1, changeMessage: 'Enable workflow'}).then(
             function(response) {
               gnMetadataManager.updateMdObj(md);
@@ -263,7 +300,7 @@
       };
 
       this.openTransferOwnership = function(md, bucket, scope) {
-        var uuid = md ? md.getUuid() : '';
+        var uuid = md ? md.uuid : '';
         var ownerId = md ? md.getOwnerId() : '';
         var groupOwner = md ? md.getGroupOwner() : '';
         gnUtilityService.openModal({
@@ -279,7 +316,7 @@
        * @param {string} md
        */
       this.duplicate = function(md) {
-        duplicateMetadata(md.getId(), false);
+        duplicateMetadata(md.id, false);
       };
 
       /**
@@ -287,7 +324,7 @@
        * @param {string} md
        */
       this.createChild = function(md) {
-        duplicateMetadata(md.getId(), true);
+        duplicateMetadata(md.id, true);
       };
 
       /**
@@ -306,19 +343,19 @@
 
         scope.isMdWorkflowEnable = gnConfig['metadata.workflow.enable'];
 
-        //Warn about possible workflow changes on batch changes 
-        // or when record is not approved 
+        //Warn about possible workflow changes on batch changes
+        // or when record is not approved
         if((!md || md.mdStatus != 2) && flag === 'on' && scope.isMdWorkflowEnable) {
           if(!confirm($translate.instant('warnPublishDraft'))){
             return;
           }
         }
-        
+
         scope.$broadcast('operationOnSelectionStart');
         var onOrOff = flag === 'on';
 
         return gnShareService.publish(
-            angular.isDefined(md) ? md.getId() : undefined,
+            angular.isDefined(md) ? md.id : undefined,
             angular.isDefined(md) ? undefined : bucket,
             onOrOff, $rootScope.user)
             .then(
@@ -409,8 +446,8 @@
        */
       this.getPermalink = function(md) {
         var url = $location.absUrl().split('#')[0] + '#/metadata/' +
-            md.getUuid();
-        gnUtilityService.getPermalink(md.title || md.defaultTitle, url);
+            md.uuid;
+        gnUtilityService.getPermalink(md.resourceTitle, url);
       };
 
       /**
@@ -433,6 +470,42 @@
             msg: $translate.instant('selection.indexing.error'),
             type: 'danger'
           });
+        });
+      };
+
+      /**
+       * Validates the current selection of metadata records.
+       * @param {String} bucket
+       */
+      this.validateMdInspire = function(bucket, mode) {
+
+        $rootScope.$broadcast('operationOnSelectionStart');
+        $rootScope.$broadcast('inspireMdValidationStart');
+
+        var url = '../api/records/validate/inspire?' +
+          'bucket=' + bucket;
+        if (angular.isDefined(mode)) {
+          url += '&mode=' + mode;
+        }
+        return gnHttp.callService(url, null, {
+          method: 'PUT'
+        }).then(function(data) {
+          $rootScope.$broadcast('inspireMdValidationStop');
+          $rootScope.$broadcast('operationOnSelectionStop');
+          $rootScope.$broadcast('search');
+        });
+      };
+
+
+      this.clearValidationStatus = function(bucket) {
+        $rootScope.$broadcast('operationOnSelectionStart');
+        var url = '../api/records/validate?' +
+          'bucket=' + bucket;
+        return gnHttp.callService(url, null, {
+          method: 'DELETE'
+        }).then(function(data) {
+          $rootScope.$broadcast('operationOnSelectionStop');
+          $rootScope.$broadcast('search');
         });
       };
 

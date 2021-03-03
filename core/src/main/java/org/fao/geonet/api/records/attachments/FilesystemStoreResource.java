@@ -26,8 +26,11 @@
 package org.fao.geonet.api.records.attachments;
 
 
+import com.google.common.net.UrlEscapers;
 import org.fao.geonet.domain.MetadataResource;
 import org.fao.geonet.domain.MetadataResourceVisibility;
+
+import java.util.Date;
 
 /**
  * Metadata resource stored in the file system.
@@ -35,24 +38,55 @@ import org.fao.geonet.domain.MetadataResourceVisibility;
  * Created by francois on 31/12/15.
  */
 public class FilesystemStoreResource implements MetadataResource {
-    private final String filename;
     private final String url;
     private final MetadataResourceVisibility metadataResourceVisibility;
-    private double size = -1;
+    private final long size;
+    private final Date lastModification;
+    private final int metadataId;
+    private final String metadataUuid;
+    private final String filename;
+    private final String version;
+    private final ExternalResourceManagementProperties externalResourceManagementProperties;
+    private final boolean approved;
 
-    public FilesystemStoreResource(String id,
+    public FilesystemStoreResource(String metadataUuid,
+                                   int metadataId,
+                                   String filename,
                                    String baseUrl,
                                    MetadataResourceVisibility metadataResourceVisibility,
-                                   double size) {
-        this.filename = id;
-        this.url = baseUrl + id;
+                                   long size,
+                                   Date lastModification,
+                                   String version,
+                                   ExternalResourceManagementProperties externalResourceManagementProperties,
+                                   boolean approved) {
+        this.metadataUuid = metadataUuid;
+        this.metadataId = metadataId;
+        this.approved=approved;
+        this.filename = filename;
+        this.url = baseUrl + getId();
         this.metadataResourceVisibility = metadataResourceVisibility;
-        this.size = Double.isNaN(size) ? -1 : size;
+        this.size = size;
+        this.lastModification = lastModification;
+        this.version=version;
+        this.externalResourceManagementProperties = externalResourceManagementProperties;
+    }
+
+    public FilesystemStoreResource(String metadataUuid,
+                                   int metadataId,
+                                   String filename,
+                                   String baseUrl,
+                                   MetadataResourceVisibility metadataResourceVisibility,
+                                   long size,
+                                   Date lastModification,
+                                   boolean approved) {
+        this(metadataUuid, metadataId, filename, baseUrl, metadataResourceVisibility, size, lastModification, null, null, approved);
     }
 
     @Override
     public String getId() {
-        return filename;
+        return UrlEscapers.urlFragmentEscaper().escape(metadataUuid) +
+                "/attachments/" +
+                UrlEscapers.urlFragmentEscaper().escape(filename);
     }
 
     @Override
@@ -61,23 +95,63 @@ public class FilesystemStoreResource implements MetadataResource {
     }
 
     @Override
-    public String getType() {
-        return metadataResourceVisibility.toString();
+    public MetadataResourceVisibility getVisibility() {
+        return metadataResourceVisibility;
     }
 
     @Override
-    public double getSize() {
+    public long getSize() {
         return size;
     }
+
+    @Override
+    public Date getLastModification() {
+        return lastModification;
+    }
+
+    @Override public String getFilename() {
+        return filename;
+    }
+
+    @Override
+    public boolean isApproved() {
+        return approved;
+    }
+
+    @Override
+    public int getMetadataId() {
+        return metadataId;
+    }
+
+    @Override
+    public String getMetadataUuid() {
+        return metadataUuid;
+    }
+
+    @Override
+    public String getVersion() {
+        return version;
+    }
+
+    @Override
+    public ExternalResourceManagementProperties getExternalResourceManagementProperties() {
+        return externalResourceManagementProperties;
+    }
+
 
     @Override
     public String toString() {
         StringBuffer sb = new StringBuffer(this.getClass().getSimpleName());
         sb.append("\n");
-        sb.append("Id: ").append(filename).append("\n");
+        sb.append("Metadata: ").append(metadataUuid).append("\n");
+        sb.append("Filename: ").append(filename).append("\n");
         sb.append("URL: ").append(url).append("\n");
         sb.append("Type: ").append(metadataResourceVisibility).append("\n");
         sb.append("Size: ").append(size).append("\n");
+        sb.append("Last modification: ").append(lastModification).append("\n");
+        sb.append("Approved: ").append(approved).append("\n");
+        sb.append("Version: ").append(version).append("\n");
+        sb.append("ExternalResourceManagementProperties.url: ").append(externalResourceManagementProperties.getUrl()).append("\n");
         return sb.toString();
     }
 }

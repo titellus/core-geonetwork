@@ -1,5 +1,5 @@
 //=============================================================================
-//===	Copyright (C) 2001-2013 Food and Agriculture Organization of the
+//===	Copyright (C) 2001-2020 Food and Agriculture Organization of the
 //===	United Nations (FAO-UN), United Nations World Food Programme (WFP)
 //===	and United Nations Environment Programme (UNEP)
 //===
@@ -23,6 +23,8 @@
 
 package org.fao.geonet.kernel.setting;
 
+import jeeves.server.context.ServiceContext;
+import jeeves.server.sources.http.ServletPathFinder;
 import org.apache.commons.lang.StringUtils;
 import org.fao.geonet.ApplicationContextHolder;
 import org.fao.geonet.NodeInfo;
@@ -31,7 +33,6 @@ import org.fao.geonet.domain.HarvesterSetting;
 import org.fao.geonet.domain.Setting;
 import org.fao.geonet.domain.SettingDataType;
 import org.fao.geonet.domain.Setting_;
-import org.fao.geonet.domain.Source;
 import org.fao.geonet.repository.LanguageRepository;
 import org.fao.geonet.repository.SettingRepository;
 import org.fao.geonet.repository.SortUtils;
@@ -40,21 +41,20 @@ import org.fao.geonet.utils.Log;
 import org.jdom.Element;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-
 import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.ServletContext;
-
-import jeeves.server.context.ServiceContext;
-import jeeves.server.sources.http.ServletPathFinder;
+import java.sql.SQLException;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.TimeZone;
 
 import static com.google.common.xml.XmlEscapers.xmlContentEscaper;
 import static org.fao.geonet.kernel.setting.Settings.SYSTEM_SITE_NAME_PATH;
@@ -66,6 +66,13 @@ import static org.fao.geonet.kernel.setting.Settings.SYSTEM_SITE_NAME_PATH;
  */
 public class SettingManager {
 
+    /**
+     * This value stores the original server timezone id had when it was started and  can be used to
+     * recover the server timezone in case the value of the setting {@link Settings#SYSTEM_SERVER_TIMEZONE}
+     * is set to empty or {@code null}.
+     */
+    public static final ZoneId DEFAULT_SERVER_TIMEZONE = ZoneId.systemDefault();
+
     @PersistenceContext
     private EntityManager _entityManager;
 
@@ -73,9 +80,6 @@ public class SettingManager {
     private ServletContext servletContext;
 
     private ServletPathFinder pathFinder;
-
-    @Autowired
-    NodeInfo node;
 
     @Autowired
     SettingRepository repo;
@@ -86,6 +90,10 @@ public class SettingManager {
     @PostConstruct
     private void init() {
         this.pathFinder = new ServletPathFinder(servletContext);
+        // Set the default timezone
+        String zoneId = StringUtils.defaultIfBlank(getValue(Settings.SYSTEM_SERVER_TIMEZONE), DEFAULT_SERVER_TIMEZONE.getId());
+        TimeZone tzFromSettings = TimeZone.getTimeZone(zoneId);
+        TimeZone.setDefault(tzFromSettings);
     }
 
     public List<Setting> getAll() {
@@ -178,8 +186,8 @@ public class SettingManager {
             Log.debug(Geonet.SETTINGS, "Requested setting with name: " + path);
         }
 
-        Setting se = repo.findOne(path);
-        if (se == null) {
+        Optional<Setting> se = repo.findById(path);
+        if (!se.isPresent()) {
             // TODO : When a settings is not available in the settings table
             // we end here. It could be relevant to add a list of default
             // settings and populate the settings table when the settings is
@@ -187,7 +195,7 @@ public class SettingManager {
             Log.error(Geonet.SETTINGS, "  Requested setting with name: " + path + "  not found. Add it to the settings table.");
             return null;
         }
-        String value = se.getValue();
+        String value = se.get().getValue();
         if (value == null && ! nullable) {
             Log.warning(Geonet.SETTINGS, "  Requested setting with name: " + path + " but null value found. Check the settings table.");
         }
@@ -203,11 +211,11 @@ public class SettingManager {
         List<Setting> settings = new ArrayList<>();
         for (int i = 0; i < keys.length; i++) {
             String key = keys[i];
-            Setting se = repo.findOne(key);
-            if (se == null) {
+            Optional<Setting> se = repo.findById(key);
+            if (!se.isPresent()) {
                 Log.warning(Geonet.SETTINGS, "  Requested setting with name: " + key + " not found. Add it to the settings table.");
             } else {
-                settings.add(se);
+                settings.add(se.get());
             }
         }
         return settings;
@@ -222,11 +230,11 @@ public class SettingManager {
         Element env = new Element("settings");
         for (int i = 0; i < keys.length; i++) {
             String key = keys[i];
-            Setting se = repo.findOne(key);
-            if (se == null) {
+            Optional<Setting> se = repo.findById(key);
+            if (se.isPresent()) {
                 Log.error(Geonet.SETTINGS, "  Requested setting with name: " + key + " not found. Add it to the settings table.");
             } else {
-                String value = se.getValue();
+                String value = se.get().getValue();
                 if (value != null) {
                     Element setting = new Element("setting");
                     setting.setAttribute("name", key).setAttribute("value", value);
@@ -291,17 +299,19 @@ public class SettingManager {
             Log.debug(Geonet.SETTINGS, "Setting with name: " + key + ", value: " + value);
         }
 
-        Setting setting = repo.findOne(key);
+        Optional<Setting> settingOpt = repo.findById(key);
 
-        if (setting == null) {
+        if (!settingOpt.isPresent()) {
             throw new NoSuchElementException("There is no existing setting element with the key: " + key);
         }
 
-        setting.getDataType().validate(value);
+        Setting setting = settingOpt.get();
 
+        setting.getDataType().validate(value);
         setting.setValue(value);
 
         repo.save(setting);
+
         return true;
     }
 
@@ -391,7 +401,14 @@ public class SettingManager {
     public
     @Nonnull
     String getNodeURL() {
-        String locServ = getBaseURL() + node.getId() + "/";
+        String nodeId = NodeInfo.DEFAULT_NODE;
+        try {
+            NodeInfo node = ApplicationContextHolder.get().getBean(NodeInfo.class);
+            if (node != null) {
+                nodeId = node.getId();
+            }
+        } catch (Exception e) {}
+        String locServ = getBaseURL() + nodeId + "/";
         return locServ;
     }
     /**

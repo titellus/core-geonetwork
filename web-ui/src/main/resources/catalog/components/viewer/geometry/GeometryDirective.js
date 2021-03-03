@@ -65,12 +65,12 @@
         controller: [
           '$scope',
           '$attrs',
-          'ngeoDecorateInteraction',
+          'olDecorateInteraction',
           'gnGeometryService',
           function GeometryToolController(
               $scope,
               $attrs,
-              ngeoDecorateInteraction,
+              olDecorateInteraction,
               gnGeometryService) {
             var ctrl = this;
             var layer = gnGeometryService.getCommonLayer(ctrl.map);
@@ -98,8 +98,8 @@
             ctrl.map.addInteraction(ctrl.modifyInteraction);
             ctrl.drawInteraction.setActive(false);
             ctrl.modifyInteraction.setActive(false);
-            ngeoDecorateInteraction(ctrl.drawInteraction);
-            ngeoDecorateInteraction(ctrl.modifyInteraction);
+            olDecorateInteraction(ctrl.drawInteraction);
+            olDecorateInteraction(ctrl.modifyInteraction);
 
             // cleanup when scope is destroyed
             $scope.$on('$destroy', function() {
@@ -131,8 +131,7 @@
                   {
                     crs: ctrl.outputCrs,
                     format: ctrl.outputFormat,
-                    outputAsWFSFeaturesCollection:
-                    ctrl.outputAsFeatures
+                    outputAsWFSFeaturesCollection: ctrl.outputAsFeatures
                     // TODO: make sure this works everytime?
                   }
                   );
@@ -153,6 +152,12 @@
                   ctrl.zoomInteraction.setActive(true);
                 }, 251);
               }
+
+              // prevent interference from GFI
+              ctrl.map.set('disable-gfi', true);
+              setTimeout(function() {
+                ctrl.map.set('disable-gfi', false);
+              }, 1000);
             });
 
             // update output on modify end

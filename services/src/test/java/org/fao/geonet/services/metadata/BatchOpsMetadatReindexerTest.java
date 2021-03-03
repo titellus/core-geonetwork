@@ -2,7 +2,9 @@ package org.fao.geonet.services.metadata;
 
 import org.fao.geonet.ApplicationContextHolder;
 import org.fao.geonet.kernel.DataManager;
+import org.fao.geonet.kernel.search.EsSearchManager;
 import org.fao.geonet.kernel.search.ISearchManager;
+import org.fao.geonet.kernel.search.index.BatchOpsMetadataReindexer;
 import org.fao.geonet.util.ThreadUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,7 +33,7 @@ public class BatchOpsMetadatReindexerTest {
     @Test
     public void syncMonoThread() throws Exception {
         int numberOfAvailableThreads = 1;
-        final Set<Thread> usedTread = new HashSet();
+        final Set<Thread> usedTread = new HashSet<>();
         prepareEnvMocks(numberOfAvailableThreads);
         DataManager mockDataMan = createMockDataManager(usedTread);
         Set<Integer> toIndex = createMetadataToIndex();
@@ -48,7 +50,7 @@ public class BatchOpsMetadatReindexerTest {
     @Test
     public void syncMultiThread() throws Exception {
         int numberOfAvailableThreads = 4;
-        final Set<Thread> usedTread = new HashSet();
+        final Set<Thread> usedTread = new HashSet<>();
         prepareEnvMocks(numberOfAvailableThreads);
         DataManager mockDataMan = createMockDataManager(usedTread);
         Set<Integer> toIndex = createMetadataToIndex();
@@ -64,7 +66,7 @@ public class BatchOpsMetadatReindexerTest {
     @Test
     public void syncManyThreadButRunInCurrent() throws Exception {
         int numberOfAvailableThreads = 4;
-        final Set<Thread> usedTread = new HashSet();
+        final Set<Thread> usedTread = new HashSet<>();
         prepareEnvMocks(numberOfAvailableThreads);
         DataManager mockDataMan = createMockDataManager(usedTread);
         Set<Integer> toIndex = createMetadataToIndex();
@@ -81,17 +83,17 @@ public class BatchOpsMetadatReindexerTest {
     @Test
     public void asyncMonoThread() throws Exception {
         int numberOfAvailableThreads = 1;
-        final Set<Thread> usedTread = new HashSet();
+        final Set<Thread> usedTread = new HashSet<>();
         prepareEnvMocks(numberOfAvailableThreads);
         CountDownLatch latch = new CountDownLatch(1);
         DataManager mockDataMan = createBlockingMockDataManager(usedTread, latch);
         Set<Integer> toIndex = createMetadataToIndex();
 
         BatchOpsMetadataReindexer toTest = new BatchOpsMetadataReindexer(mockDataMan, toIndex);
-        toTest.wrapAsyncProcess(false);
-
         assertEquals(0, toTest.getProcessed());
         assertEquals(4, toTest.getToProcessCount());
+
+        toTest.wrapAsyncProcess(false);
 
         latch.countDown();
         Thread.sleep(500);
@@ -106,17 +108,17 @@ public class BatchOpsMetadatReindexerTest {
     @Test
     public void asyncMultiThread() throws Exception {
         int numberOfAvailableThreads = 4;
-        final Set<Thread> usedTread = new HashSet();
+        final Set<Thread> usedTread = new HashSet<>();
         prepareEnvMocks(numberOfAvailableThreads);
         CountDownLatch latch = new CountDownLatch(1);
         DataManager mockDataMan = createBlockingMockDataManager(usedTread, latch);
         Set<Integer> toIndex = createMetadataToIndex();
 
         BatchOpsMetadataReindexer toTest = new BatchOpsMetadataReindexer(mockDataMan, toIndex);
-        toTest.wrapAsyncProcess(false);
 
         assertEquals(0, toTest.getProcessed());
         assertEquals(4, toTest.getToProcessCount());
+        toTest.wrapAsyncProcess(false);
 
         latch.countDown();
         Thread.sleep(500);
@@ -130,7 +132,7 @@ public class BatchOpsMetadatReindexerTest {
     @Test
     public void asyncManyThreadButRunInCurrent() throws Exception {
         int numberOfAvailableThreads = 4;
-        final Set<Thread> usedTread = new HashSet();
+        final Set<Thread> usedTread = new HashSet<>();
         prepareEnvMocks(numberOfAvailableThreads);
         CountDownLatch latch = new CountDownLatch(1);
         DataManager mockDataMan = createBlockingMockDataManager(usedTread, latch);
@@ -172,7 +174,8 @@ public class BatchOpsMetadatReindexerTest {
 
         PowerMockito.mockStatic(ApplicationContextHolder.class);
         PowerMockito.when(ApplicationContextHolder.get()).thenReturn(mockAppContext);
-
+        EsSearchManager searchManager = Mockito.mock(EsSearchManager.class);
+        Mockito.when(mockAppContext.getBean(Mockito.eq((EsSearchManager.class)))).thenReturn(searchManager);
 
         PowerMockito.mockStatic(ThreadUtils.class);
         PowerMockito.when(ThreadUtils.getNumberOfThreads()).thenReturn(numberOfAvailableThreads);
@@ -187,7 +190,7 @@ public class BatchOpsMetadatReindexerTest {
                 usedTread.add(Thread.currentThread());
                 return null;
             }
-        }).when(mockDataMan).indexMetadata(Mockito.anyString(), Mockito.eq(true), Mockito.anyObject());
+        }).when(mockDataMan).indexMetadata(Mockito.anyString(), Mockito.anyBoolean());
         return mockDataMan;
     }
 
@@ -201,12 +204,12 @@ public class BatchOpsMetadatReindexerTest {
                 latch.await();
                 return null;
             }
-        }).when(mockDataMan).indexMetadata(Mockito.anyString(), Mockito.eq(true), Mockito.anyObject());
+        }).when(mockDataMan).indexMetadata(Mockito.anyString(), Mockito.anyBoolean());
         return mockDataMan;
     }
 
     private Set<Integer> createMetadataToIndex() {
-        Set<Integer> toIndex = new HashSet();
+        Set<Integer> toIndex = new HashSet<>();
         toIndex.add(1);
         toIndex.add(2);
         toIndex.add(3);
@@ -219,7 +222,7 @@ public class BatchOpsMetadatReindexerTest {
         ArgumentCaptor<Boolean> forceRefreshCaptor = ArgumentCaptor.forClass(Boolean.class);
         ArgumentCaptor<ISearchManager> isearchManagerCaptor = ArgumentCaptor.forClass(ISearchManager.class);
 
-        Mockito.verify(mockDataMan, Mockito.times(4)).indexMetadata(metadataIdCaptor.capture(), forceRefreshCaptor.capture(), isearchManagerCaptor.capture());
+        Mockito.verify(mockDataMan, Mockito.times(4)).indexMetadata(metadataIdCaptor.capture(), forceRefreshCaptor.capture());
         return metadataIdCaptor;
     }
 }

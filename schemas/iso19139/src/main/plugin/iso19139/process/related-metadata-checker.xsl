@@ -41,8 +41,8 @@
     <msg id="b" xml:lang="fre">). Si l'erreur persiste, corriger le lien manuellement ou exécuter
       cette action pour le supprimer.
     </msg>
-    <msg id="a" xml:lang="dut">niet gevonden (</msg>
-    <msg id="b" xml:lang="dut">). Herstel handmatig of draai deze taak om te verwijderen.</msg>
+    <msg id="a" xml:lang="dut"> is niet gevonden (</msg>
+    <msg id="b" xml:lang="dut">). Functie verwijdert de link.</msg>
   </xsl:variable>
 
   <xsl:template name="list-related-metadata-checker">
@@ -68,7 +68,7 @@
     <xsl:param name="uuid"/>
     <xsl:param name="type"/>
 
-    <xsl:variable name="status" select="java:getIndexField($baseUrl, '_uuid', $uuid, 'en')"/>
+    <xsl:variable name="status" select="java:getIndexField($baseUrl, 'uuid', $uuid, 'en')"/>
     <!--    <xsl:message>Check:<xsl:value-of select="."/>|<xsl:value-of select="$status"/></xsl:message>
     -->
     <xsl:if test="$status=''">

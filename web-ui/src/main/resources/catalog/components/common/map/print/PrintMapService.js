@@ -275,11 +275,16 @@
           var enc = self.encoders.
               layers['Layer'].call(this, layer);
           var url = layer.getSource().getUrls()[0];
-          //Remove the XYZ and extension parts of the URL
-          if(url.indexOf("{z}") > 0) {
-            url = url.substring(0, url.indexOf("{z}"));
-            //Remove last "/"
-            url = url.substring(0, url.lastIndexOf("/"));
+
+          // parse url template to determine the `url` and `path_format` parameters for mapfish-print
+          var pathFormat = '${z}/${x}/${y}.${extension}';
+          var templateStart = url.indexOf("/{z}");
+          if (templateStart !== -1) {
+            var urlTemplate = url.substring(templateStart, url.length);
+            if (urlTemplate.indexOf('/{z}/{y}/{x}') === 0) {
+              pathFormat = '${z}/${y}/${x}.${extension}';
+            }
+            url = url.substring(0, templateStart);
           }
 
           url = gnGlobalSettings.getNonProxifiedUrl(url);
@@ -295,7 +300,8 @@
             resolutions: layer.getSource().getTileGrid().getResolutions(),
             tileSize: [
               layer.getSource().getTileGrid().getTileSize(),
-              layer.getSource().getTileGrid().getTileSize()]
+              layer.getSource().getTileGrid().getTileSize()],
+            path_format: pathFormat
           });
           return enc;
         },
@@ -305,24 +311,6 @@
           angular.extend(enc, {
             type: 'OSM',
             baseURL: 'http://a.tile.openstreetmap.org/',
-            extension: 'png',
-            // Hack to return an extent for the base
-            // layer in case of undefined
-            maxExtent: layer.getExtent() ||
-                [-20037508.34, -20037508.34, 20037508.34, 20037508.34],
-            resolutions: layer.getSource().tileGrid.getResolutions(),
-            tileSize: [
-              layer.getSource().tileGrid.getTileSize(),
-              layer.getSource().tileGrid.getTileSize()]
-          });
-          return enc;
-        },
-        'MapQuest': function(layer, config) {
-          var enc = self.encoders.
-              layers['Layer'].call(this, layer);
-          angular.extend(enc, {
-            type: 'OSM',
-            baseURL: 'http://otile1-s.mqcdn.com/tiles/1.0.0/osm',
             extension: 'png',
             // Hack to return an extent for the base
             // layer in case of undefined
@@ -546,6 +534,26 @@
       }
 
       return literal;
+    };
+
+    /**
+     * Returns an array of unsupported layer types
+     * @param map
+     * @return {string[]}
+     */
+    this.getUnsupportedLayerTypes = function(map) {
+      return map.getLayers().getArray().reduce(function(prev, layer) {
+        var unsupported;
+        if (layer.getSource() instanceof ol.source.BingMaps) {
+          unsupported = 'Bing Maps';
+        } else if (layer.getSource() instanceof ol.source.ImageArcGISRest) {
+          unsupported = 'ArcGIS REST';
+        }
+        if (!!unsupported && prev.indexOf(unsupported) === -1) {
+          return prev.concat([unsupported]);
+        }
+        return prev;
+      }, []);
     };
   }]);
 })();

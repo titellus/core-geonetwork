@@ -94,7 +94,6 @@ public class EditLib {
 
     public EditLib(SchemaManager scm) {
         this.scm = scm;
-        htVersions.clear();
     }
 
     /**
@@ -656,8 +655,15 @@ public class EditLib {
                         propEl.addContent(child);
                     } else if (childHasSameTypeAsTarget) {
                         Element parent = propEl.getParentElement();
-                        int index = parent.indexOf(propEl);
-                        parent.addContent(index, child);
+                        if (parent == null) {
+                            LOGGER_ADD_ELEMENT.error(String.format(
+                                " > adding fragment from XPath in element %s which has no parent. This usually means that the element is not allowed in the XSD. Check this element in the metadata record.",
+                                propEl.getName()
+                                ));
+                        } else {
+                            int index = parent.indexOf(propEl);
+                            parent.addContent(index, child);
+                        }
                     } else {
                         // Add an element of same type in the target node
                         final Element newElement = addElement(metadataSchema, propEl, child.getQualifiedName());
@@ -903,6 +909,15 @@ public class EditLib {
             LOGGER_ADD_ELEMENT.warn("An illegal xpath was used to locate an element: {}", xpathProperty);
             return SelectResult.ERROR;
         }
+    }
+
+    /**
+     * Removes the version of the edit session for a metadata. Used when the edit session is finished.
+     *
+     * @param id
+     */
+    public void clearVersion(String id) {
+        htVersions.remove(id);
     }
 
     //--------------------------------------------------------------------------

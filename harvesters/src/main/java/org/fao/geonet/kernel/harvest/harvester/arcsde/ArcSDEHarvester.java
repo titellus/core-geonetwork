@@ -23,7 +23,6 @@
 package org.fao.geonet.kernel.harvest.harvester.arcsde;
 
 import com.google.common.collect.Sets;
-import jeeves.server.context.ServiceContext;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.fao.geonet.Logger;
@@ -33,41 +32,28 @@ import org.fao.geonet.domain.AbstractMetadata;
 import org.fao.geonet.domain.ISODate;
 import org.fao.geonet.domain.Metadata;
 import org.fao.geonet.domain.MetadataType;
-import org.fao.geonet.domain.Source;
-import org.fao.geonet.domain.SourceType;
-import org.fao.geonet.exceptions.BadInputEx;
 import org.fao.geonet.exceptions.NoSchemaMatchesException;
 import org.fao.geonet.kernel.UpdateDatestamp;
 import org.fao.geonet.kernel.harvest.BaseAligner;
 import org.fao.geonet.kernel.harvest.harvester.AbstractHarvester;
-import org.fao.geonet.kernel.harvest.harvester.AbstractParams;
 import org.fao.geonet.kernel.harvest.harvester.CategoryMapper;
 import org.fao.geonet.kernel.harvest.harvester.GroupMapper;
 import org.fao.geonet.kernel.harvest.harvester.HarvestResult;
 import org.fao.geonet.repository.MetadataRepository;
 import org.fao.geonet.repository.OperationAllowedRepository;
-import org.fao.geonet.repository.SourceRepository;
 import org.fao.geonet.repository.specification.MetadataSpecs;
-import org.fao.geonet.resources.Resources;
 import org.fao.geonet.schema.iso19139.ISO19139Namespaces;
-import org.fao.geonet.utils.BinaryFile;
 import org.fao.geonet.utils.Xml;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Harvester from ArcSDE. Requires the propietary ESRI libraries containing their API. Since those
@@ -76,60 +62,28 @@ import java.util.UUID;
  *
  * @author heikki doeleman
  */
-public class ArcSDEHarvester extends AbstractHarvester<HarvestResult> {
+public class ArcSDEHarvester extends AbstractHarvester<HarvestResult, ArcSDEParams> {
 
     private static final String ARC_TO_ISO19115_TRANSFORMER = "ArcCatalog8_to_ISO19115.xsl";
     private static final String ISO19115_TO_ISO19139_TRANSFORMER = "ISO19115-to-ISO19139.xsl";
 
-    private ArcSDEParams params;
-
     @Override
-    protected void storeNodeExtra(AbstractParams params, String path, String siteId, String optionsId) throws SQLException {
-        ArcSDEParams as = (ArcSDEParams) params;
-        super.setParams(as);
-        harvesterSettingsManager.add("id:" + siteId, "icon", as.icon);
-        harvesterSettingsManager.add("id:" + siteId, "server", as.server);
-        harvesterSettingsManager.add("id:" + siteId, "port", as.port);
-        harvesterSettingsManager.add("id:" + siteId, "username", as.getUsername());
-        harvesterSettingsManager.add("id:" + siteId, "password", as.getPassword());
-        harvesterSettingsManager.add("id:" + siteId, "database", as.database);
-        harvesterSettingsManager.add("id:" + siteId, "version", as.version);
-        harvesterSettingsManager.add("id:" + siteId, "connectionType", as.connectionType);
-        harvesterSettingsManager.add("id:" + siteId, "databaseType", as.databaseType);
+    protected void storeNodeExtra(ArcSDEParams params, String path, String siteId, String optionsId) throws SQLException {
+        setParams(params);
+        harvesterSettingsManager.add("id:" + siteId, "icon", params.icon);
+        harvesterSettingsManager.add("id:" + siteId, "server", params.server);
+        harvesterSettingsManager.add("id:" + siteId, "port", params.port);
+        harvesterSettingsManager.add("id:" + siteId, "username", params.getUsername());
+        harvesterSettingsManager.add("id:" + siteId, "password", params.getPassword());
+        harvesterSettingsManager.add("id:" + siteId, "database", params.database);
+        harvesterSettingsManager.add("id:" + siteId, "version", params.version);
+        harvesterSettingsManager.add("id:" + siteId, "connectionType", params.connectionType);
+        harvesterSettingsManager.add("id:" + siteId, "databaseType", params.databaseType);
     }
 
     @Override
-    protected String doAdd(Element node) throws BadInputEx, SQLException {
-    /*	try {
-            @SuppressWarnings("unused")
-			int test = GeoToolsDummyAPI.DUMMY_API_VERSION;
-			// if you get here, you're using the dummy API
-			System.out.println("ERROR: NO ARCSDE LIBRARIES INSTALLED");
-			System.out.println("Replace arcsde-dummy.jar with the real ArcSDE libraries from ESRI");
-			System.err.println("ERROR: NO ARCSDE LIBRARIES INSTALLED");
-			System.err.println("Replace arcsde-dummy.jar with the real ArcSDE libraries from ESRI");
-			return null;
-		}
-		catch(NoClassDefFoundError n) {
-	*/        // using the real ESRI ArcSDE libraries : continue
-        params = new ArcSDEParams(dataMan);
-        super.setParams(params);
-
-        //--- retrieve/initialize information
-        params.create(node);
-
-        //--- force the creation of a new uuid
-        params.setUuid(UUID.randomUUID().toString());
-
-        String id = harvesterSettingsManager.add("harvesting", "node", getType());
-        storeNode(params, "id:" + id);
-
-        Source source = new Source(params.getUuid(), params.getName(), params.getTranslations(), SourceType.harvester);
-        context.getBean(SourceRepository.class).save(source);
-        Resources.copyLogo(context, "images" + File.separator + "harvesting" + File.separator + params.icon, params.getUuid());
-
-        return id;
-        //	}
+    protected ArcSDEParams createParams() {
+        return new ArcSDEParams(dataMan);
     }
 
     @Override
@@ -296,7 +250,12 @@ public class ArcSDEHarvester extends AbstractHarvester<HarvestResult> {
                     } else {
 
                         try {
-                            params.getValidate().validate(dataMan, context, metadataElement);
+                            Integer groupIdVal = null;
+                            if (StringUtils.isNotEmpty(params.getOwnerIdGroup())) {
+                                groupIdVal = Integer.parseInt(params.getOwnerIdGroup());
+                            }
+
+                            params.getValidate().validate(dataMan, context, metadataElement, groupIdVal);
                         } catch (Exception e) {
                             log.error("Ignoring invalid metadata with uuid " + uuid);
                             result.doesNotValidate++;
@@ -305,6 +264,7 @@ public class ArcSDEHarvester extends AbstractHarvester<HarvestResult> {
 
                         BaseAligner aligner = new BaseAligner(cancelMonitor) {
                         };
+                        aligner.setParams(params);
                         //
                         // add / update the metadata from this harvesting result
                         //
@@ -338,7 +298,7 @@ public class ArcSDEHarvester extends AbstractHarvester<HarvestResult> {
         // not in this harvesting result
         //
         Set<Integer> idsResultHs = Sets.newHashSet(idsForHarvestingResult);
-        List<Integer> existingMetadata = context.getBean(MetadataRepository.class).findAllIdsBy((Specification<Metadata>) MetadataSpecs.hasHarvesterUuid(params.getUuid()));
+        List<Integer> existingMetadata = context.getBean(MetadataRepository.class).findIdsBy((Specification<Metadata>) MetadataSpecs.hasHarvesterUuid(params.getUuid()));
         for (Integer existingId : existingMetadata) {
 
             if (cancelMonitor.get()) {
@@ -385,7 +345,7 @@ public class ArcSDEHarvester extends AbstractHarvester<HarvestResult> {
 
         metadataManager.flush();
 
-        dataMan.indexMetadata(id, true, null);
+        dataMan.indexMetadata(id, true);
     }
 
     /**
@@ -429,92 +389,28 @@ public class ArcSDEHarvester extends AbstractHarvester<HarvestResult> {
 
         aligner.addCategories(metadata, params.getCategories(), localCateg, context, null, false);
 
-        metadata = metadataManager.insertMetadata(context, metadata, xml, true, false, false, UpdateDatestamp.NO, false, false);
+        metadata = metadataManager.insertMetadata(context, metadata, xml, false, false, UpdateDatestamp.NO, false, false);
 
         String id = String.valueOf(metadata.getId());
 
         aligner.addPrivileges(id, params.getPrivileges(), localGroups, context);
 
-        dataMan.indexMetadata(id, true, null);
+        dataMan.indexMetadata(id, true);
 
         return id;
     }
 
-    @Override
-    protected void doInit(Element entry, ServiceContext context) throws BadInputEx {
-        params = new ArcSDEParams(dataMan);
-        super.setParams(params);
-        params.create(entry);
-    }
-
-    @Override
-    protected void doUpdate(String id, Element node) throws BadInputEx, SQLException {
-        ArcSDEParams copy = params.copy();
-
-        //--- update variables
-        copy.update(node);
-
-        String path = "harvesting/id:" + id;
-
-        harvesterSettingsManager.removeChildren(path);
-
-        //--- update database
-        storeNode(copy, path);
-
-        //--- we update a copy first because if there is an exception ArcSDEParams
-        //--- could be half updated and so it could be in an inconsistent state
-
-        Source source = new Source(copy.getUuid(), copy.getName(), copy.getTranslations(), SourceType.harvester);
-        context.getBean(SourceRepository.class).save(source);
-        Resources.copyLogo(context, "images" + File.separator + "harvesting" + File.separator + params.icon, params.getUuid());
-
-        params = copy;
-        super.setParams(params);
-    }
-
-
-
     private void loadMetadataThumbnail(String thumbnail, String metadataId, String uuid) {
         log.info("  - Creating thumbnail for metadata uuid: " + uuid);
-
-        org.fao.geonet.services.thumbnail.Set s = new org.fao.geonet.services.thumbnail.Set();
 
         try {
             String filename = uuid + ".png";
             Path dir = context.getUploadDir();
 
             byte[] thumbnailImg =  Base64.decodeBase64(thumbnail);
-
-            try (OutputStream fo = Files.newOutputStream(dir.resolve(filename));
-                 InputStream in = new ByteArrayInputStream(thumbnailImg);) {
-                BinaryFile.copy(in, fo);
-            }
-
-
-            if (log.isDebugEnabled()) log.debug("  - File: " + filename);
-
-            Element par = new Element("request");
-            par.addContent(new Element("id").setText(metadataId));
-            par.addContent(new Element("version").setText("10"));
-            par.addContent(new Element("type").setText("large"));
-
-            Element fname = new Element("fname").setText(filename);
-            fname.setAttribute("content-type", "image/png");
-            fname.setAttribute("type", "file");
-            fname.setAttribute("size", "");
-
-            par.addContent(fname);
-            par.addContent(new Element("add").setText("Add"));
-            par.addContent(new Element("createSmall").setText("on"));
-            par.addContent(new Element("smallScalingFactor").setText("180"));
-            par.addContent(new Element("smallScalingDir").setText("width"));
-
-            // Call the services
-            s.execOnHarvest(par, context, dataMan);
-
-            metadataManager.flush();
-
-            result.thumbnails++;
+            // TODO use FileStore API
+//            metadataManager.flush();
+//            result.thumbnails++;
 
         } catch (Exception e) {
             log.warning("  - Failed to set thumbnail for metadata: " + e.getMessage());

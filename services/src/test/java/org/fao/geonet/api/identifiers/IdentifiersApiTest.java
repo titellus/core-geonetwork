@@ -39,6 +39,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.util.Optional;
+
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -79,7 +81,7 @@ public class IdentifiersApiTest  extends AbstractServiceIntegrationTest {
         this.mockMvc.perform(get("/srv/api/identifiers")
             .accept(MediaType.parseMediaType("application/json")))
             .andExpect(status().isOk())
-            .andExpect(content().contentType("application/json"))
+            .andExpect(content().contentType(API_JSON_EXPECTED_ENCODING))
             .andExpect(jsonPath("$", hasSize(identifierTemplatesCount.intValue())));
     }
 
@@ -92,7 +94,7 @@ public class IdentifiersApiTest  extends AbstractServiceIntegrationTest {
         this.mockMvc.perform(get("/srv/api/identifiers?userDefinedOnly=true")
             .accept(MediaType.parseMediaType("application/json")))
             .andExpect(status().isOk())
-            .andExpect(content().contentType("application/json"))
+            .andExpect(content().contentType(API_JSON_EXPECTED_ENCODING))
             .andExpect(jsonPath("$", hasSize(identifierTemplatesCount.intValue())));
     }
 
@@ -120,7 +122,7 @@ public class IdentifiersApiTest  extends AbstractServiceIntegrationTest {
 
         this.mockMvc.perform(put("/srv/api/identifiers")
             .content(json)
-            .contentType(MediaType.APPLICATION_JSON)
+            .contentType(API_JSON_EXPECTED_ENCODING)
             .session(this.mockHttpSession)
             .accept(MediaType.parseMediaType("application/json")))
             .andExpect(status().is(201));
@@ -149,7 +151,7 @@ public class IdentifiersApiTest  extends AbstractServiceIntegrationTest {
 
         this.mockMvc.perform(put("/srv/api/identifiers")
             .content(json)
-            .contentType(MediaType.APPLICATION_JSON)
+            .contentType(API_JSON_EXPECTED_ENCODING)
             .session(this.mockHttpSession)
             .accept(MediaType.parseMediaType("application/json")))
             .andExpect(status().is(400))
@@ -176,7 +178,7 @@ public class IdentifiersApiTest  extends AbstractServiceIntegrationTest {
 
         this.mockMvc.perform(put("/srv/api/identifiers/" + metadataIdentifierTemplateToUpdate.getId())
             .content(json)
-            .contentType(MediaType.APPLICATION_JSON)
+            .contentType(API_JSON_EXPECTED_ENCODING)
             .session(this.mockHttpSession)
             .accept(MediaType.parseMediaType("application/json")))
             .andExpect(status().is(204));
@@ -189,11 +191,11 @@ public class IdentifiersApiTest  extends AbstractServiceIntegrationTest {
 
     @Test
     public void updateNonExistingIdentifier() throws Exception {
-        MetadataIdentifierTemplate metadataIdentifierTemplateToUpdate =
-            metadataIdentifierTemplateRepo.findOne(222);
-        Assert.assertNull(metadataIdentifierTemplateToUpdate);
+        Optional<MetadataIdentifierTemplate> metadataIdentifierTemplateToUpdateOptional =
+            metadataIdentifierTemplateRepo.findById(222);
+        Assert.assertFalse(metadataIdentifierTemplateToUpdateOptional.isPresent());
 
-        metadataIdentifierTemplateToUpdate = new MetadataIdentifierTemplate();
+        MetadataIdentifierTemplate metadataIdentifierTemplateToUpdate = new MetadataIdentifierTemplate();
         metadataIdentifierTemplateToUpdate.setId(222);
         metadataIdentifierTemplateToUpdate.setName("non-exisiting-to-upfste");
         metadataIdentifierTemplateToUpdate.setTemplate("{AAAA}");
@@ -209,7 +211,7 @@ public class IdentifiersApiTest  extends AbstractServiceIntegrationTest {
 
         this.mockMvc.perform(put("/srv/api/identifiers/" + metadataIdentifierTemplateToUpdate.getId())
             .content(json)
-            .contentType(MediaType.APPLICATION_JSON)
+            .contentType(API_JSON_EXPECTED_ENCODING)
             .session(this.mockHttpSession)
             .accept(MediaType.parseMediaType("application/json")))
             .andExpect(status().is(404));
@@ -239,9 +241,9 @@ public class IdentifiersApiTest  extends AbstractServiceIntegrationTest {
     public void deleteNonExistingIdentifier() throws Exception {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
 
-        MetadataIdentifierTemplate identifierTemplateToDelete =
-            metadataIdentifierTemplateRepo.findOne(222);
-        Assert.assertNull(identifierTemplateToDelete);
+        Optional<MetadataIdentifierTemplate> identifierTemplateToDelete =
+            metadataIdentifierTemplateRepo.findById(222);
+        Assert.assertFalse(identifierTemplateToDelete.isPresent());
 
         this.mockHttpSession = loginAsAdmin();
 
@@ -249,7 +251,7 @@ public class IdentifiersApiTest  extends AbstractServiceIntegrationTest {
             .session(this.mockHttpSession)
             .accept(MediaType.parseMediaType("application/json")))
             .andExpect(status().is(404))
-            .andExpect(content().contentType("application/json"));
+            .andExpect(content().contentType(API_JSON_EXPECTED_ENCODING));
     }
 
     private void createTestData() {

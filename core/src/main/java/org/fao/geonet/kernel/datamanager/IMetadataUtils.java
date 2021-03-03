@@ -23,6 +23,7 @@
 
 package org.fao.geonet.kernel.datamanager;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,15 +65,6 @@ public interface IMetadataUtils {
      * @throws Exception
      */
     public void init(ServiceContext context, Boolean force) throws Exception;
-
-    /**
-     * Notify a metadata modification
-     *
-     * @param md
-     * @param metadataId
-     * @throws Exception
-     */
-    void notifyMetadataChange(Element md, String metadataId) throws Exception;
 
     /**
      * Return the uuid of the record with the defined id
@@ -118,6 +110,13 @@ public interface IMetadataUtils {
 
 
     String extractDefaultLanguage(String schema, Element md) throws Exception;
+
+    /**
+     * Extract Multilinugal titles from the metadata record using the schema XSL for title extraction)
+     */
+    LinkedHashMap<String, String> extractTitles(String schema, Element md) throws Exception;
+
+    LinkedHashMap<String, String> extractTitles(@Nonnull String id) throws Exception;
 
     /**
      * Extract the last editing date from the record
@@ -254,6 +253,11 @@ public interface IMetadataUtils {
     Element getMetadataNoInfo(ServiceContext srvContext, String id) throws Exception;
 
     /**
+     * remove the geonet:info element from the supplied metadata.
+     */
+    Element removeMetadataInfo(Element md) throws Exception;
+
+    /**
      * Retrieves a metadata element given it's ref.
      */
     Element getElementByRef(Element md, String ref);
@@ -268,50 +272,22 @@ public interface IMetadataUtils {
      */
     boolean existsMetadata(int id) throws Exception;
 
+    boolean isMetadataPublished(int metadataId) throws Exception;
+
+    boolean isMetadataApproved(int metadataId) throws Exception;
+
+    boolean isMetadataDraft(int metadataId) throws Exception;
+
     /**
      * Returns all the keywords in the system.
      */
     Element getKeywords() throws Exception;
 
     /**
-     * Returns the thumbnails associated to the record with id metadataId
-     *
-     * @param context
-     * @param metadataId
-     * @return
-     * @throws Exception
-     */
-    Element getThumbnails(ServiceContext context, String metadataId) throws Exception;
-
-    /**
-     * Add thumbnail to the record defined with the id
-     *
-     * @param context
-     * @param id
-     * @param small
-     * @param indexAfterChange
-     * @throws Exception
-     */
-    void setThumbnail(ServiceContext context, String id, boolean small, String file, boolean indexAfterChange) throws Exception;
-
-    /**
-     * Remove thumbnail from the record defined with the id
-     *
-     * @param context
-     * @param id
-     * @param small
-     * @param indexAfterChange
-     * @throws Exception
-     */
-    void unsetThumbnail(ServiceContext context, String id, boolean small, boolean indexAfterChange) throws Exception;
-
-    /**
      * Add data commons to the record defined with the id
      *
      * @param context
      * @param id
-     * @param small
-     * @param indexAfterChange
      * @throws Exception
      */
     void setDataCommons(ServiceContext context, String id, String licenseurl, String imageurl, String jurisdiction, String licensename,
@@ -322,8 +298,6 @@ public interface IMetadataUtils {
      *
      * @param context
      * @param id
-     * @param small
-     * @param indexAfterChange
      * @throws Exception
      */
     void setCreativeCommons(ServiceContext context, String id, String licenseurl, String imageurl, String jurisdiction, String licensename,
@@ -388,7 +362,7 @@ public interface IMetadataUtils {
      * Find the record with the UUID uuid
      *
      * @param firstMetadataId
-     * 
+     *
      * @param uuid
      * @return
      */
@@ -397,7 +371,7 @@ public interface IMetadataUtils {
 
     /**
      * Find all records with the UUID uuid
-     * 
+     *
      * @param uuid
      * @return
      */
@@ -439,7 +413,7 @@ public interface IMetadataUtils {
 
     /**
      * Find all the metadata with the identifiers
-     * 
+     *
      * @see org.springframework.data.repository.CrudRepository#findAll(java.lang.Iterable)
      * @param spec
      * @param order
@@ -545,4 +519,23 @@ public interface IMetadataUtils {
      * @return a map of metadataId -> SourceInfo
      */
     Map<Integer, MetadataSourceInfo> findAllSourceInfo(Specification<? extends AbstractMetadata> spec);
+
+    /**
+     * Copy the files from the original metadata to the destination metadata.
+     * Used when creating a draft version.
+     *
+     * @param original
+     * @param dest
+     */
+    void cloneFiles(AbstractMetadata original, AbstractMetadata dest);
+
+    /**
+     * Merge the files from the original metadata to the destination metadata.
+     * Used when merging creating a draft version to approved copy
+     * In this case the files that no longer exists in the draft will be removed from the dest
+     *
+     * @param original
+     * @param dest
+     */
+    void replaceFiles(AbstractMetadata original, AbstractMetadata dest);
 }

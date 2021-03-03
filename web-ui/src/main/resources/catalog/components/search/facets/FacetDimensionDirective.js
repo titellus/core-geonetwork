@@ -44,7 +44,8 @@
           // in this facetType set.
           facetList: '=',
           params: '=',
-          tabField: '='
+          tabField: '=',
+          pageSize: '='
         },
         link: function(scope, element, attrs) {
           scope.facetQuery = scope.params['facet.q'];
@@ -79,6 +80,19 @@
             }
             return facet['@label'];
           };
+
+          scope.getPageSize = function(facet) {
+            var defaultPageSizeWhenNotDefined = 5000;
+            if (!scope.facetConfig || !scope.facetConfig.config) {
+              return defaultPageSizeWhenNotDefined;
+            }
+            for (var i = 0; i < scope.facetConfig.config.length; i++) {
+              if (scope.facetConfig.config[i].key === facet['@name']) {
+                return scope.facetConfig.config[i].pageSize;
+              }
+            }
+            return defaultPageSizeWhenNotDefined;
+          }
 
           scope.tabs = null;
           scope.activeTab = null;
@@ -154,6 +168,7 @@
             }, true);
           }
 
+
           scope.isDisplayed = function(facet) {
             if (hasOverridenConfig) {
               // Check if the facet should be displayed
@@ -180,17 +195,14 @@
 
           // Load facet configuration to know which index field
           // correspond to which dimension.
-          gnFacetConfigService.loadConfig(scope.facetType).
-              then(function(data) {
-                scope.facetConfig = {
-                  config: data,
-                  map:  {}
-                };
+          scope.facetConfig = {
+            config: {},
+            map:  {}
+          };
 
-                angular.forEach(scope.facetConfig.config, function(key) {
-                  scope.facetConfig.map[key.label] = key.name;
-                });
-              });
+          angular.forEach(scope.facetConfig.config, function(key) {
+            scope.facetConfig.map[key.label] = key.name;
+          });
         }
       };
     }]);
@@ -209,7 +221,8 @@
           categoryKey: '=',
           path: '=',
           params: '=',
-          facetConfig: '='
+          facetConfig: '=',
+          pageSize: '='
         },
         compile: function(element) {
           // Use the compile function from the RecursionHelper,
@@ -219,9 +232,32 @@
                 var initialMaxItems = 25;
                 scope.initialMaxItems = initialMaxItems;
                 scope.maxItems = initialMaxItems;
-                scope.toggleAll = function() {
-                  scope.maxItems = (scope.maxItems == Infinity) ?
-                      initialMaxItems : Infinity;
+
+                scope.getMorePageSize = function() {
+                  if (!scope.category) {
+                    return 0;
+                  }
+                  return Math.min(scope.category.length - scope.maxItems, scope.pageSize);
+                };
+
+                scope.getLessPageSize = function() {
+                  return Math.min(scope.maxItems - initialMaxItems, scope.pageSize);
+                };
+
+                scope.addItems = function() {
+                  scope.maxItems = scope.maxItems + scope.getMorePageSize();
+                };
+
+                scope.removeItems = function() {
+                  scope.maxItems = scope.maxItems - scope.getLessPageSize();
+                };
+
+                scope.showAllItems = function() {
+                  scope.maxItems = scope.category.length;
+                };
+
+                scope.showInitialItems = function() {
+                  scope.maxItems = scope.initialMaxItems;
                 };
 
                 // scope.$watch('category', function (n, o) {

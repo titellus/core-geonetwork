@@ -23,26 +23,15 @@
 
 package org.fao.geonet.api.records;
 
-import static org.fao.geonet.api.ApiParams.API_CLASS_RECORD_OPS;
-import static org.fao.geonet.api.ApiParams.API_CLASS_RECORD_TAG;
-import static org.fao.geonet.api.ApiParams.API_PARAM_RECORD_UUID;
-import static org.fao.geonet.repository.specification.OperationAllowedSpecs.hasGroupId;
-import static org.fao.geonet.repository.specification.OperationAllowedSpecs.hasMetadataId;
-import static org.springframework.data.jpa.domain.Specifications.where;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.Vector;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-
+import com.google.common.base.Optional;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jeeves.server.UserSession;
+import jeeves.server.context.ServiceContext;
+import jeeves.services.ReadWriteController;
 import org.fao.geonet.ApplicationContextHolder;
-import org.fao.geonet.api.API;
 import org.fao.geonet.api.ApiParams;
 import org.fao.geonet.api.ApiUtils;
 import org.fao.geonet.api.exception.ResourceNotFoundException;
@@ -53,86 +42,56 @@ import org.fao.geonet.api.records.model.GroupPrivilege;
 import org.fao.geonet.api.records.model.SharingParameter;
 import org.fao.geonet.api.records.model.SharingResponse;
 import org.fao.geonet.api.tools.i18n.LanguageUtils;
-import org.fao.geonet.domain.AbstractMetadata;
-import org.fao.geonet.domain.Group;
-import org.fao.geonet.domain.MetadataStatus;
-import org.fao.geonet.domain.Operation;
-import org.fao.geonet.domain.OperationAllowed;
-import org.fao.geonet.domain.OperationAllowedId;
-import org.fao.geonet.domain.Profile;
-import org.fao.geonet.domain.ReservedGroup;
-import org.fao.geonet.domain.ReservedOperation;
-import org.fao.geonet.domain.StatusValue;
-import org.fao.geonet.domain.User;
-import org.fao.geonet.domain.UserGroup;
+import org.fao.geonet.domain.*;
 import org.fao.geonet.domain.utils.ObjectJSONUtils;
 import org.fao.geonet.events.history.RecordGroupOwnerChangeEvent;
 import org.fao.geonet.events.history.RecordOwnerChangeEvent;
 import org.fao.geonet.events.history.RecordPrivilegesChangeEvent;
 import org.fao.geonet.kernel.AccessManager;
 import org.fao.geonet.kernel.DataManager;
-import org.fao.geonet.kernel.datamanager.IMetadataManager;
-import org.fao.geonet.kernel.datamanager.IMetadataStatus;
-import org.fao.geonet.kernel.datamanager.IMetadataUtils;
-import org.fao.geonet.kernel.datamanager.IMetadataValidator;
+import org.fao.geonet.kernel.datamanager.*;
 import org.fao.geonet.kernel.setting.SettingManager;
 import org.fao.geonet.kernel.setting.Settings;
-import org.fao.geonet.repository.GroupRepository;
-import org.fao.geonet.repository.MetadataRepository;
-import org.fao.geonet.repository.MetadataValidationRepository;
-import org.fao.geonet.repository.OperationAllowedRepository;
-import org.fao.geonet.repository.OperationRepository;
-import org.fao.geonet.repository.UserGroupRepository;
-import org.fao.geonet.repository.UserRepository;
+import org.fao.geonet.repository.*;
 import org.fao.geonet.repository.specification.MetadataValidationSpecs;
-import org.fao.geonet.repository.specification.OperationAllowedSpecs;
 import org.fao.geonet.repository.specification.UserGroupSpecs;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.domain.Specifications;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
 
-import com.google.common.base.Optional;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import java.util.*;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import jeeves.server.UserSession;
-import jeeves.server.context.ServiceContext;
-import jeeves.services.ReadWriteController;
-import springfox.documentation.annotations.ApiIgnore;
+import static org.fao.geonet.api.ApiParams.*;
+import static org.fao.geonet.repository.specification.OperationAllowedSpecs.hasGroupId;
+import static org.fao.geonet.repository.specification.OperationAllowedSpecs.hasMetadataId;
+import static org.springframework.data.jpa.domain.Specification.where;
 
 @RequestMapping(value = {
-    "/{portal}/api/records",
-    "/{portal}/api/" + API.VERSION_0_1 +
-        "/records"
+    "/{portal}/api/records"
 })
-@Api(value = API_CLASS_RECORD_TAG,
-    tags = API_CLASS_RECORD_TAG,
+@Tag(name = API_CLASS_RECORD_TAG,
     description = API_CLASS_RECORD_OPS)
-@PreAuthorize("hasRole('Editor')")
+@PreAuthorize("hasAuthority('Editor')")
 @Controller("recordSharing")
 @ReadWriteController
 public class MetadataSharingApi {
 
     @Autowired
     LanguageUtils languageUtils;
-    
+
     @Autowired
     DataManager dataManager;
+
+    @Autowired
+    IMetadataIndexer metadataIndexer;
 
     @Autowired
     AccessManager accessManager;
@@ -169,28 +128,54 @@ public class MetadataSharingApi {
 
     @Autowired
     UserGroupRepository userGroupRepository;
-    
-    @ApiOperation(
-        value = "Set privileges for ALL group to publish the metadata for all users.",
-        nickname = "publish")
+
+    /**
+     * What does publish mean?
+     */
+    @Autowired
+    @Qualifier("publicationConfig")
+    private Map publicationConfig;
+
+    public static Vector<OperationAllowedId> retrievePrivileges(ServiceContext context, String id, Integer userId, Integer groupId) throws Exception {
+
+        OperationAllowedRepository opAllowRepo = context.getBean(OperationAllowedRepository.class);
+
+        int iMetadataId = Integer.parseInt(id);
+        Specification<OperationAllowed> spec =
+            where(hasMetadataId(iMetadataId));
+        if (groupId != null) {
+            spec = spec.and(hasGroupId(groupId));
+        }
+
+        List<OperationAllowed> operationsAllowed = opAllowRepo.findAllWithOwner(userId, Optional.of(spec));
+
+        Vector<OperationAllowedId> result = new Vector<OperationAllowedId>();
+        for (OperationAllowed operationAllowed : operationsAllowed) {
+            result.add(operationAllowed.getId());
+        }
+
+        return result;
+    }
+
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Set privileges for ALL group to publish the metadata for all users.")
     @RequestMapping(
         value = "/{metadataUuid}/publish",
         method = RequestMethod.PUT
     )
     @ApiResponses(value = {
-        @ApiResponse(code = 204, message = "Settings updated."),
-        @ApiResponse(code = 403, message = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_EDIT)
+        @ApiResponse(responseCode = "204", description = "Settings updated."),
+        @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_EDIT)
     })
-    @PreAuthorize("hasRole('Reviewer')")
+    @PreAuthorize("hasAuthority('Reviewer')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void publish(
-        @ApiParam(
-            value = API_PARAM_RECORD_UUID,
+        @Parameter(
+            description = API_PARAM_RECORD_UUID,
             required = true)
         @PathVariable
             String metadataUuid,
-        @ApiIgnore
-        @ApiParam(hidden = true)
+        @Parameter(hidden = true)
             HttpSession session,
         HttpServletRequest request
     )
@@ -198,27 +183,25 @@ public class MetadataSharingApi {
         shareMetadataWithAllGroup(metadataUuid, true, session, request);
     }
 
-    @ApiOperation(
-        value = "Unsets privileges for ALL group to publish the metadata for all users.",
-        nickname = "unpublish")
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Unsets privileges for ALL group to publish the metadata for all users.")
     @RequestMapping(
         value = "/{metadataUuid}/unpublish",
         method = RequestMethod.PUT
     )
     @ApiResponses(value = {
-        @ApiResponse(code = 204, message = "Settings updated."),
-        @ApiResponse(code = 403, message = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_EDIT)
+        @ApiResponse(responseCode = "204", description = "Settings updated."),
+        @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_EDIT)
     })
-    @PreAuthorize("hasRole('Reviewer')")
+    @PreAuthorize("hasAuthority('Reviewer')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void unpublish(
-        @ApiParam(
-            value = API_PARAM_RECORD_UUID,
+        @Parameter(
+            description = API_PARAM_RECORD_UUID,
             required = true)
         @PathVariable
             String metadataUuid,
-        @ApiIgnore
-        @ApiParam(hidden = true)
+        @Parameter(hidden = true)
             HttpSession session,
         HttpServletRequest request
     )
@@ -226,10 +209,9 @@ public class MetadataSharingApi {
         shareMetadataWithAllGroup(metadataUuid, false, session, request);
     }
 
-
-    @ApiOperation(
-        value = "Set record sharing",
-        notes = "Privileges are assigned by group. User needs to be able " +
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Set record sharing",
+        description = "Privileges are assigned by group. User needs to be able " +
             "to edit a record to set sharing settings. For reserved group " +
             "(ie. Internet, Intranet & Guest), user MUST be reviewer of one group. " +
             "For other group, if Only set privileges to user's groups is set " +
@@ -237,34 +219,32 @@ public class MetadataSharingApi {
             "Clear first allows to unset all operations first before setting the new ones." +
             "Clear option does not remove reserved groups operation if user is not an " +
             "administrator, a reviewer or the owner of the record.<br/>" +
-            "<a href='http://geonetwork-opensource.org/manuals/trunk/eng/users/user-guide/publishing/managing-privileges.html'>More info</a>",
-        nickname = "share")
+            "<a href='http://geonetwork-opensource.org/manuals/trunk/eng/users/user-guide/publishing/managing-privileges.html'>More info</a>")
     @RequestMapping(
         value = "/{metadataUuid}/sharing",
         method = RequestMethod.PUT
     )
     @ApiResponses(value = {
-        @ApiResponse(code = 204, message = "Settings updated."),
-        @ApiResponse(code = 403, message = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_EDIT)
+        @ApiResponse(responseCode = "204", description = "Settings updated."),
+        @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_EDIT)
     })
-    @PreAuthorize("hasRole('Editor')")
+    @PreAuthorize("hasAuthority('Editor')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void share(
-        @ApiParam(
-            value = API_PARAM_RECORD_UUID,
+        @Parameter(
+            description = API_PARAM_RECORD_UUID,
             required = true)
         @PathVariable
             String metadataUuid,
-        @ApiParam(
-            value = "Privileges",
+        @Parameter(
+            description = "Privileges",
             required = true
         )
         @RequestBody(
             required = true
         )
             SharingParameter sharing,
-        @ApiIgnore
-        @ApiParam(hidden = true)
+        @Parameter(hidden = true)
             HttpSession session,
         HttpServletRequest request
     )
@@ -279,10 +259,7 @@ public class MetadataSharingApi {
         //--- and are not sent to the server. So we cannot remove them
         UserSession us = ApiUtils.getUserSession(session);
         boolean isAdmin = Profile.Administrator == us.getProfile();
-        boolean isReviewer = Profile.Reviewer == us.getProfile();
-        if (us.getUserIdAsInt() == metadata.getSourceInfo().getOwner() &&
-            !isAdmin &&
-            !isReviewer) {
+        if (!isAdmin && !accessManager.hasReviewPermission(context, Integer.toString(metadata.getId()))) {
             skip = true;
         }
 
@@ -297,111 +274,102 @@ public class MetadataSharingApi {
         }
 
         List<GroupOperations> privileges = sharing.getPrivileges();
-        setOperations(sharing, dataManager, context, appContext, metadata, operationMap, privileges,
-            ApiUtils.getUserSession(session).getUserIdAsInt(), null, request);
-        dataManager.indexMetadata(String.valueOf(metadata.getId()), true, null);
+        setOperations(sharing, dataManager, context, appContext, metadata, operationMap, privileges, ApiUtils.getUserSession(session).getUserIdAsInt(), null, request);
+        metadataIndexer.indexMetadataPrivileges(metadata.getUuid(), metadata.getId());
     }
 
-    @ApiOperation(
-        value = "Publish one or more records",
-        notes = "See record sharing for more details.",
-        nickname = "publishRecords")
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Publish one or more records",
+        description = "See record sharing for more details.")
     @RequestMapping(value = "/publish",
         method = RequestMethod.PUT
     )
     @ApiResponses(value = {
-        @ApiResponse(code = 201, message = "Report about updated privileges."),
-        @ApiResponse(code = 403, message = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_EDITOR)
+        @ApiResponse(responseCode = "201", description = "Report about updated privileges."),
+        @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_EDITOR)
     })
-    @PreAuthorize("hasRole('Editor')")
+    @PreAuthorize("hasAuthority('Editor')")
     @ResponseStatus(HttpStatus.CREATED)
     public
     @ResponseBody
     MetadataProcessingReport publish(
-        @ApiParam(value = ApiParams.API_PARAM_RECORD_UUIDS_OR_SELECTION,
+        @Parameter(description = ApiParams.API_PARAM_RECORD_UUIDS_OR_SELECTION,
             required = false)
         @RequestParam(required = false) String[] uuids,
-        @ApiParam(value = ApiParams.API_PARAM_BUCKET_NAME,
+        @Parameter(description = ApiParams.API_PARAM_BUCKET_NAME,
             required = false)
         @RequestParam(required = false) String bucket,
-        @ApiIgnore
-        @ApiParam(hidden = true)
+        @Parameter(hidden = true)
             HttpSession session,
         HttpServletRequest request
     )
         throws Exception {
 
-        SharingParameter sharing = buildSharingForAllGroup(true);
+        SharingParameter sharing = buildSharingForPublicationConfig(true);
         return shareSelection(uuids, bucket, sharing, session, request);
     }
 
-
-    @ApiOperation(
-        value = "Un-publish one or more records",
-        notes = "See record sharing for more details.",
-        nickname = "publishRecords")
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Un-publish one or more records",
+        description = "See record sharing for more details.")
     @RequestMapping(value = "/unpublish",
         method = RequestMethod.PUT
     )
     @ApiResponses(value = {
-        @ApiResponse(code = 201, message = "Report about updated privileges."),
-        @ApiResponse(code = 403, message = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_EDITOR)
+        @ApiResponse(responseCode = "201", description = "Report about updated privileges."),
+        @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_EDITOR)
     })
-    @PreAuthorize("hasRole('Editor')")
+    @PreAuthorize("hasAuthority('Editor')")
     @ResponseStatus(HttpStatus.CREATED)
     public
     @ResponseBody
     MetadataProcessingReport unpublish(
-        @ApiParam(value = ApiParams.API_PARAM_RECORD_UUIDS_OR_SELECTION,
+        @Parameter(description = ApiParams.API_PARAM_RECORD_UUIDS_OR_SELECTION,
             required = false)
         @RequestParam(required = false) String[] uuids,
-        @ApiParam(value = ApiParams.API_PARAM_BUCKET_NAME,
+        @Parameter(description = ApiParams.API_PARAM_BUCKET_NAME,
             required = false)
         @RequestParam(required = false) String bucket,
-        @ApiIgnore
-        @ApiParam(hidden = true)
+        @Parameter(hidden = true)
             HttpSession session,
         HttpServletRequest request
     )
         throws Exception {
 
-        SharingParameter sharing = buildSharingForAllGroup(false);
+        SharingParameter sharing = buildSharingForPublicationConfig(false);
         return shareSelection(uuids, bucket, sharing, session, request);
     }
 
-
-    @ApiOperation(
-        value = "Set sharing settings for one or more records",
-        notes = "See record sharing for more details.",
-        nickname = "shareRecords")
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Set sharing settings for one or more records",
+        description = "See record sharing for more details.")
     @RequestMapping(value = "/sharing",
         method = RequestMethod.PUT
     )
     @ApiResponses(value = {
-        @ApiResponse(code = 201, message = "Report about updated privileges."),
-        @ApiResponse(code = 403, message = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_EDITOR)
+        @ApiResponse(responseCode = "201", description = "Report about updated privileges."),
+        @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_EDITOR)
     })
-    @PreAuthorize("hasRole('Editor')")
+    @PreAuthorize("hasAuthority('Editor')")
     @ResponseStatus(HttpStatus.CREATED)
     public
     @ResponseBody
     MetadataProcessingReport share(
-        @ApiParam(value = ApiParams.API_PARAM_RECORD_UUIDS_OR_SELECTION,
+        @Parameter(description = ApiParams.API_PARAM_RECORD_UUIDS_OR_SELECTION,
             required = false)
         @RequestParam(required = false) String[] uuids,
-        @ApiParam(value = ApiParams.API_PARAM_BUCKET_NAME,
+        @Parameter(description = ApiParams.API_PARAM_BUCKET_NAME,
             required = false)
         @RequestParam(required = false) String bucket,
-        @ApiParam(
-            value = "Privileges",
+        @Parameter(
+            description = "Privileges",
             required = true
         )
         @RequestBody(
             required = true
         )
             SharingParameter sharing,
-        @ApiIgnore
-        @ApiParam(hidden = true)
+        @Parameter(hidden = true)
             HttpSession session,
         HttpServletRequest request
     )
@@ -447,7 +415,7 @@ public class MetadataSharingApi {
                                 // If building a report of the sharing, annotate the error and continue
                                 // processing the other group privileges, otherwise throw the exception
                                 if (report != null) {
-                                    report.addMetadataError(metadata.getId(), ex.getMessage());
+                                    report.addMetadataError(metadata, ex.getMessage());
                                     break;
                                 } else {
                                     throw ex;
@@ -466,37 +434,34 @@ public class MetadataSharingApi {
                 }
             }
 
-            if(sharingChanges) {
+            if (sharingChanges) {
                 new RecordPrivilegesChangeEvent(metadata.getId(), userId, ObjectJSONUtils.convertObjectInJsonObject(sharingBefore.getPrivileges(), RecordPrivilegesChangeEvent.FIELD), ObjectJSONUtils.convertObjectInJsonObject(privileges, RecordPrivilegesChangeEvent.FIELD)).publish(appContext);
             }
         }
     }
 
-    @ApiOperation(
-        value = "Get record sharing settings",
-        notes = "Return current sharing options for a record.",
-        nickname = "getRecordSharingSettings")
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Get record sharing settings",
+        description = "Return current sharing options for a record.")
     @RequestMapping(
         value = "/{metadataUuid}/sharing",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     @ApiResponses(value = {
-        @ApiResponse(code = 200, message = "The record sharing settings."),
-        @ApiResponse(code = 403, message = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_VIEW)
+        @ApiResponse(responseCode = "200", description = "The record sharing settings."),
+        @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_VIEW)
     })
-    @PreAuthorize("hasRole('Editor')")
+    @PreAuthorize("hasAuthority('Editor')")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public
-    SharingResponse getRecordSharingSettings(
-        @ApiParam(
-            value = API_PARAM_RECORD_UUID,
+    public SharingResponse getRecordSharingSettings(
+        @Parameter(
+            description = API_PARAM_RECORD_UUID,
             required = true)
         @PathVariable
             String metadataUuid,
-        @ApiIgnore
-        @ApiParam(hidden = true)
+        @Parameter(hidden = true)
             HttpSession session,
         HttpServletRequest request
     )
@@ -535,7 +500,7 @@ public class MetadataSharingApi {
                 // TODO: Collecting all those info is probably a bit slow when having lots of groups
                 final Specification<UserGroup> hasGroupId = UserGroupSpecs.hasGroupId(g.getId());
                 final Specification<UserGroup> hasUserId = UserGroupSpecs.hasUserId(userSession.getUserIdAsInt());
-                final Specifications<UserGroup> hasUserIdAndGroupId = where(hasGroupId).and(hasUserId);
+                final Specification<UserGroup> hasUserIdAndGroupId = where(hasGroupId).and(hasUserId);
                 List<UserGroup> userGroupEntities = userGroupRepository.findAll(hasUserIdAndGroupId);
                 List<Profile> userGroupProfile = new ArrayList<>();
                 for (UserGroup ug : userGroupEntities) {
@@ -545,9 +510,9 @@ public class MetadataSharingApi {
 
 
                 //--- get all operations that this group can do on given metadata
-                Specifications<OperationAllowed> hasGroupIdAndMetadataId =
-                    where(OperationAllowedSpecs.hasGroupId(g.getId()))
-                        .and(OperationAllowedSpecs.hasMetadataId(metadata.getId()));
+                Specification<OperationAllowed> hasGroupIdAndMetadataId =
+                    where(hasGroupId(g.getId()))
+                        .and(hasMetadataId(metadata.getId()));
                 List<OperationAllowed> operationAllowedForGroup =
                     operationAllowedRepository.findAll(hasGroupIdAndMetadataId);
 
@@ -571,30 +536,28 @@ public class MetadataSharingApi {
         return sharingResponse;
     }
 
-
-    @ApiOperation(
-        value = "Set record group",
-        notes = "A record is related to one group.",
-        nickname = "setRecordGroup")
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Set record group",
+        description = "A record is related to one group.")
     @RequestMapping(
         value = "/{metadataUuid}/group",
         method = RequestMethod.PUT
     )
     @ApiResponses(value = {
-        @ApiResponse(code = 204, message = "Record group updated."),
-        @ApiResponse(code = 403, message = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_EDIT)
+        @ApiResponse(responseCode = "204", description = "Record group updated."),
+        @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_EDIT)
     })
-    @PreAuthorize("hasRole('Editor')")
+    @PreAuthorize("hasAuthority('Editor')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ResponseBody
     public void setRecordGroup(
-        @ApiParam(
-            value = API_PARAM_RECORD_UUID,
+        @Parameter(
+            description = API_PARAM_RECORD_UUID,
             required = true)
         @PathVariable
             String metadataUuid,
-        @ApiParam(
-            value = "Group identifier",
+        @Parameter(
+            description = "Group identifier",
             required = true
         )
         @RequestBody(
@@ -608,7 +571,7 @@ public class MetadataSharingApi {
         ApplicationContext appContext = ApplicationContextHolder.get();
         ServiceContext context = ApiUtils.createServiceContext(request);
 
-        Group group = groupRepository.findOne(groupIdentifier);
+        Group group = groupRepository.findById(groupIdentifier).get();
         if (group == null) {
             throw new ResourceNotFoundException(String.format(
                 "Group with identifier '%s' not found.", groupIdentifier
@@ -617,22 +580,20 @@ public class MetadataSharingApi {
 
         Integer previousGroup = metadata.getSourceInfo().getGroupOwner();
         Group oldGroup = null;
-        if(previousGroup != null) {
-            oldGroup = groupRepository.findOne(previousGroup);
+        if (previousGroup != null) {
+            oldGroup = groupRepository.findById(previousGroup).get();
         }
 
         metadata.getSourceInfo().setGroupOwner(groupIdentifier);
         metadataManager.save(metadata);
-        dataManager.indexMetadata(String.valueOf(metadata.getId()), true, null);
+        dataManager.indexMetadata(String.valueOf(metadata.getId()), true);
 
-        new RecordGroupOwnerChangeEvent(metadata.getId(), ApiUtils.getUserSession(request.getSession()).getUserIdAsInt(), ObjectJSONUtils.convertObjectInJsonObject(oldGroup, RecordGroupOwnerChangeEvent.FIELD),ObjectJSONUtils.convertObjectInJsonObject(group, RecordGroupOwnerChangeEvent.FIELD)).publish(appContext);
+        new RecordGroupOwnerChangeEvent(metadata.getId(), ApiUtils.getUserSession(request.getSession()).getUserIdAsInt(), ObjectJSONUtils.convertObjectInJsonObject(oldGroup, RecordGroupOwnerChangeEvent.FIELD), ObjectJSONUtils.convertObjectInJsonObject(group, RecordGroupOwnerChangeEvent.FIELD)).publish(appContext);
     }
 
-
-    @ApiOperation(
-        value = "Get record sharing settings",
-        notes = "",
-        nickname = "getSharingSettings")
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Get record sharing settings",
+        description = "")
     @RequestMapping(
         value = "/sharing",
         method = RequestMethod.GET,
@@ -640,17 +601,15 @@ public class MetadataSharingApi {
     )
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses(value = {
-        @ApiResponse(code = 200, message =
+        @ApiResponse(responseCode = "200", description =
             "Return a default array of group and operations " +
-            "that can be used to set record sharing properties."),
-        @ApiResponse(code = 403, message = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_EDIT)
+                "that can be used to set record sharing properties."),
+        @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_EDIT)
     })
-    @PreAuthorize("hasRole('Editor')")
+    @PreAuthorize("hasAuthority('Editor')")
     @ResponseBody
-    public
-    SharingResponse getSharingSettings(
-        @ApiIgnore
-        @ApiParam(hidden = true)
+    public SharingResponse getSharingSettings(
+        @Parameter(hidden = true)
             HttpSession session,
         HttpServletRequest request
     )
@@ -689,55 +648,52 @@ public class MetadataSharingApi {
         return sharingResponse;
     }
 
-
-    @ApiOperation(
-        value = "Set group and owner for one or more records",
-        notes = "",
-        nickname = "setGroupAndOwner")
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Set group and owner for one or more records",
+        description = "")
     @RequestMapping(value = "/ownership",
         method = RequestMethod.PUT
     )
     @ResponseStatus(HttpStatus.CREATED)
     @ApiResponses(value = {
-        @ApiResponse(code = 201, message = "Records group and owner updated"),
-        @ApiResponse(code = 403, message = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_EDIT)
+        @ApiResponse(responseCode = "201", description = "Records group and owner updated"),
+        @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_EDIT)
     })
-    @PreAuthorize("hasRole('Editor')")
+    @PreAuthorize("hasAuthority('Editor')")
     public
     @ResponseBody
     MetadataProcessingReport setGroupAndOwner(
-        @ApiParam(value = ApiParams.API_PARAM_RECORD_UUIDS_OR_SELECTION,
+        @Parameter(description = ApiParams.API_PARAM_RECORD_UUIDS_OR_SELECTION,
             required = false)
         @RequestParam(required = false)
             String[] uuids,
-        @ApiParam(
-            value = "Group identifier",
+        @Parameter(
+            description = "Group identifier",
             required = true
         )
         @RequestParam(
             required = true
         )
             Integer groupIdentifier,
-        @ApiParam(
-            value = ApiParams.API_PARAM_BUCKET_NAME,
+        @Parameter(
+            description = ApiParams.API_PARAM_BUCKET_NAME,
             required = false)
         @RequestParam(
             required = false
         )
-        String bucket,
-        @ApiParam(
-            value = "User identifier",
+            String bucket,
+        @Parameter(
+            description = "User identifier",
             required = true
         )
         @RequestParam(
             required = true
         )
             Integer userIdentifier,
-       @ApiParam(value = "Use approved version or not", example = "true") 
-        @RequestParam(required = false, defaultValue = "false") 
-        Boolean approved,
-        @ApiIgnore
-        @ApiParam(hidden = true)
+        @Parameter(description = "Use approved version or not", example = "true")
+        @RequestParam(required = false, defaultValue = "false")
+            Boolean approved,
+        @Parameter(hidden = true)
             HttpSession session,
         HttpServletRequest request
     )
@@ -769,51 +725,47 @@ public class MetadataSharingApi {
         return report;
     }
 
-
-
-    @ApiOperation(
-        value = "Set record group and owner",
-        notes = "",
-        nickname = "setRecordOwnership")
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Set record group and owner",
+        description = "")
     @RequestMapping(
         value = "/{metadataUuid}/ownership",
         method = RequestMethod.PUT
     )
     @ResponseStatus(HttpStatus.CREATED)
     @ApiResponses(value = {
-        @ApiResponse(code = 201, message = "Record group and owner updated"),
-        @ApiResponse(code = 403, message = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_EDIT)
+        @ApiResponse(responseCode = "201", description = "Record group and owner updated"),
+        @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_CAN_EDIT)
     })
-    @PreAuthorize("hasRole('Editor')")
+    @PreAuthorize("hasAuthority('Editor')")
     public
     @ResponseBody
     MetadataProcessingReport setRecordOwnership(
-        @ApiParam(
-            value = API_PARAM_RECORD_UUID,
+        @Parameter(
+            description = API_PARAM_RECORD_UUID,
             required = true)
         @PathVariable
             String metadataUuid,
-        @ApiParam(
-            value = "Group identifier",
+        @Parameter(
+            description = "Group identifier",
             required = true
         )
         @RequestParam(
             required = true
         )
             Integer groupIdentifier,
-        @ApiParam(
-            value = "User identifier",
+        @Parameter(
+            description = "User identifier",
             required = true
         )
         @RequestParam(
             required = true
         )
             Integer userIdentifier,
-        @ApiParam(value = "Use approved version or not", example = "true") 
-        @RequestParam(required = false, defaultValue = "true") 
-        	Boolean approved,
-        @ApiIgnore
-        @ApiParam(hidden = true)
+        @Parameter(description = "Use approved version or not", example = "true")
+        @RequestParam(required = false, defaultValue = "true")
+            Boolean approved,
+        @Parameter(hidden = true)
             HttpSession session,
         HttpServletRequest request
     )
@@ -832,7 +784,7 @@ public class MetadataSharingApi {
                 report, dataManager, accessManager, metadataRepository,
                 serviceContext, listOfUpdatedRecords, metadataUuid, session, approved);
             dataManager.flush();
-            dataManager.indexMetadata(String.valueOf(metadata.getId()), true, null);
+            dataManager.indexMetadata(String.valueOf(metadata.getId()), true);
 
         } catch (Exception exception) {
             report.addError(exception);
@@ -842,8 +794,6 @@ public class MetadataSharingApi {
         return report;
     }
 
-
-
     private void updateOwnership(Integer groupIdentifier,
                                  Integer userIdentifier,
                                  MetadataProcessingReport report,
@@ -851,7 +801,7 @@ public class MetadataSharingApi {
                                  AccessManager accessMan,
                                  MetadataRepository metadataRepository,
                                  ServiceContext serviceContext,
-                                 List<String> listOfUpdatedRecords, String uuid, 
+                                 List<String> listOfUpdatedRecords, String uuid,
                                  HttpSession session, Boolean approved) throws Exception {
         AbstractMetadata metadata = metadataUtils.findOneByUuid(uuid);
         if (metadata == null) {
@@ -876,7 +826,7 @@ public class MetadataSharingApi {
                     String.valueOf(metadata.getId()),
                     String.valueOf(groupIdentifier),
                     false);
-                report.addMetadataInfos(metadata.getId(), String.format(
+                report.addMetadataInfos(metadata, String.format(
                     "No privileges for user '%s' on metadata '%s', so setting default privileges",
                     sourceUsr, metadata.getUuid()
                 ));
@@ -894,22 +844,22 @@ public class MetadataSharingApi {
                         priv.getOperationId());
                 }
             }
-            
+
             Long metadataId = Long.parseLong(ApiUtils.getInternalId(uuid, approved));
             ApplicationContext context = ApplicationContextHolder.get();
-            if(!Objects.equals(groupIdentifier, sourceGrp)) {
-              Group newGroup = groupRepository.findOne(groupIdentifier);
-              Group oldGroup = sourceGrp == null ? null : groupRepository.findOne(sourceGrp);
-              new RecordGroupOwnerChangeEvent(metadataId,
-                  ApiUtils.getUserSession(session).getUserIdAsInt(),
-                  sourceGrp == null ? null : ObjectJSONUtils.convertObjectInJsonObject(oldGroup, RecordGroupOwnerChangeEvent.FIELD),
-                  ObjectJSONUtils.convertObjectInJsonObject(newGroup, RecordGroupOwnerChangeEvent.FIELD)).publish(context);
+            if (!Objects.equals(groupIdentifier, sourceGrp)) {
+                Group newGroup = groupRepository.findById(groupIdentifier).get();
+                Group oldGroup = sourceGrp == null ? null : groupRepository.findById(sourceGrp).get();
+                new RecordGroupOwnerChangeEvent(metadataId,
+                    ApiUtils.getUserSession(session).getUserIdAsInt(),
+                    sourceGrp == null ? null : ObjectJSONUtils.convertObjectInJsonObject(oldGroup, RecordGroupOwnerChangeEvent.FIELD),
+                    ObjectJSONUtils.convertObjectInJsonObject(newGroup, RecordGroupOwnerChangeEvent.FIELD)).publish(context);
             }
-            if(!Objects.equals(userIdentifier, sourceUsr)) {
-              User newOwner = userRepository.findOne(userIdentifier);
-              User oldOwner = userRepository.findOne(sourceUsr);
-              new RecordOwnerChangeEvent(metadataId, ApiUtils.getUserSession(session).getUserIdAsInt(), ObjectJSONUtils.convertObjectInJsonObject(oldOwner, RecordOwnerChangeEvent.FIELD), ObjectJSONUtils.convertObjectInJsonObject(newOwner, RecordOwnerChangeEvent.FIELD)).publish(context);
-            }            
+            if (!Objects.equals(userIdentifier, sourceUsr)) {
+                User newOwner = userRepository.findById(userIdentifier).get();
+                User oldOwner = userRepository.findById(sourceUsr).get();
+                new RecordOwnerChangeEvent(metadataId, ApiUtils.getUserSession(session).getUserIdAsInt(), ObjectJSONUtils.convertObjectInJsonObject(oldOwner, RecordOwnerChangeEvent.FIELD), ObjectJSONUtils.convertObjectInJsonObject(newOwner, RecordOwnerChangeEvent.FIELD)).publish(context);
+            }
             // -- set the new owner into the metadata record
             dataManager.updateMetadataOwner(metadata.getId(),
                 String.valueOf(userIdentifier),
@@ -919,30 +869,6 @@ public class MetadataSharingApi {
             listOfUpdatedRecords.add(metadata.getId() + "");
         }
     }
-
-
-
-    public static Vector<OperationAllowedId> retrievePrivileges(ServiceContext context, String id, Integer userId, Integer groupId) throws Exception {
-
-        OperationAllowedRepository opAllowRepo = context.getBean(OperationAllowedRepository.class);
-
-        int iMetadataId = Integer.parseInt(id);
-        Specifications<OperationAllowed> spec =
-            where(hasMetadataId(iMetadataId));
-        if (groupId != null) {
-            spec = spec.and(hasGroupId(groupId));
-        }
-
-        List<OperationAllowed> operationsAllowed = opAllowRepo.findAllWithOwner(userId, Optional.of((Specification<OperationAllowed>) spec));
-
-        Vector<OperationAllowedId> result = new Vector<OperationAllowedId>();
-        for (OperationAllowed operationAllowed : operationsAllowed) {
-            result.add(operationAllowed.getId());
-        }
-
-        return result;
-    }
-
 
     /**
      * For privileges to {@link ReservedGroup#all} group, check if it's allowed or not to publish invalid metadata.
@@ -965,7 +891,7 @@ public class MetadataSharingApi {
 
             if (!hasValidation) {
                 validator.doValidate(metadata, context.getLanguage());
-                dm.indexMetadata(metadata.getId() + "", true, null);
+                dm.indexMetadata(metadata.getId() + "", true);
             }
 
             boolean isInvalid =
@@ -979,7 +905,7 @@ public class MetadataSharingApi {
         if (!allowPublishNonApprovedMd) {
             MetadataStatus metadataStatus = metadataStatusRepository.getStatus(metadata.getId());
             if (metadataStatus != null) {
-                String statusId = metadataStatus.getId().getStatusId() + "";
+                String statusId = metadataStatus.getStatusValue().getId() + "";
                 boolean isApproved = statusId.equals(StatusValue.Status.APPROVED);
 
                 if (!isApproved) {
@@ -992,16 +918,16 @@ public class MetadataSharingApi {
 
 
     /**
-     * Shares a metadata with the {@link ReservedGroup#all} group to publish/unpublish it.
+     * Shares a metadata based on the publicationConfig to publish/unpublish it.
      *
-     * @param metadataUuid  Metadata uuid.
-     * @param publish       Flag to publish/unpublish the metadata.
+     * @param metadataUuid Metadata uuid.
+     * @param publish      Flag to publish/unpublish the metadata.
      * @param request
      * @param session
      * @throws Exception
      */
     private void shareMetadataWithAllGroup(String metadataUuid, boolean publish,
-                                   HttpSession session, HttpServletRequest request) throws Exception {
+                                           HttpSession session, HttpServletRequest request) throws Exception {
         AbstractMetadata metadata = ApiUtils.canEditRecord(metadataUuid, request);
         ApplicationContext appContext = ApplicationContextHolder.get();
         ServiceContext context = ApiUtils.createServiceContext(request);
@@ -1011,11 +937,13 @@ public class MetadataSharingApi {
         //--- and are not sent to the server. So we cannot remove them
         UserSession us = ApiUtils.getUserSession(session);
         boolean isAdmin = Profile.Administrator == us.getProfile();
-        boolean isReviewer = Profile.Reviewer == us.getProfile();
-        if (us.getUserIdAsInt() == metadata.getSourceInfo().getOwner() &&
-            !isAdmin &&
-            !isReviewer) {
-            throw new Exception("User not allowed to publish the metadata " + metadataUuid);
+        boolean isMdGroupReviewer = accessManager.getReviewerGroups(us).contains(metadata.getSourceInfo().getGroupOwner());
+        boolean isReviewOperationAllowedOnMdForUser = accessManager.hasReviewPermission(context, Integer.toString(metadata.getId()));
+        boolean isPublishForbiden = !isMdGroupReviewer && !isAdmin && !isReviewOperationAllowedOnMdForUser;
+        if (isPublishForbiden) {
+
+            throw new Exception(String.format("User not allowed to publish the metadata %s. You need to be administrator, or reviewer of the metadata group or reviewer with edit privilege on the metadata.",
+                    metadataUuid));
 
         }
 
@@ -1028,28 +956,28 @@ public class MetadataSharingApi {
             operationMap.put(o.getName(), o.getId());
         }
 
-        SharingParameter sharing = buildSharingForAllGroup(publish);
+        SharingParameter sharing = buildSharingForPublicationConfig(publish);
 
         List<GroupOperations> privileges = sharing.getPrivileges();
         setOperations(sharing, dataManager, context, appContext, metadata, operationMap, privileges,
             ApiUtils.getUserSession(session).getUserIdAsInt(), null, request);
-        dataManager.indexMetadata(String.valueOf(metadata.getId()), true, null);
+        dataManager.indexMetadata(String.valueOf(metadata.getId()), true);
     }
 
 
     /**
      * Shares a metadata selection with a list of groups, returning a report with the results.
      *
-     * @param uuids     Metadata list of uuids to share.
+     * @param uuids   Metadata list of uuids to share.
      * @param bucket
-     * @param sharing   Sharing privileges.
+     * @param sharing Sharing privileges.
      * @param session
      * @param request
-     * @return          Report with the results.
+     * @return Report with the results.
      * @throws Exception
      */
     private MetadataProcessingReport shareSelection(String[] uuids, String bucket, SharingParameter sharing,
-        HttpSession session, HttpServletRequest request) throws Exception {
+                                                    HttpSession session, HttpServletRequest request) throws Exception {
 
         MetadataProcessingReport report = new SimpleMetadataProcessingReport();
 
@@ -1064,7 +992,6 @@ public class MetadataSharingApi {
 
             UserSession us = ApiUtils.getUserSession(session);
             boolean isAdmin = Profile.Administrator == us.getProfile();
-            boolean isReviewer = Profile.Reviewer == us.getProfile();
 
             ServiceContext context = ApiUtils.createServiceContext(request);
 
@@ -1078,9 +1005,7 @@ public class MetadataSharingApi {
                     report.addNotEditableMetadataId(metadata.getId());
                 } else {
                     boolean skip = false;
-                    if (us.getUserIdAsInt() == metadata.getSourceInfo().getOwner() &&
-                        !isAdmin &&
-                        !isReviewer) {
+                    if (!isAdmin && accessMan.hasReviewPermission(context, Integer.toString(metadata.getId()))) {
                         skip = true;
                     }
 
@@ -1120,29 +1045,39 @@ public class MetadataSharingApi {
      * Creates a ref {@link SharingParameter} object with privileges to publih/un-publish
      * metadata in {@link ReservedGroup#all} group.
      *
-     * @param publish   Flag to add/remove sharing privileges.
+     * @param publish Flag to add/remove sharing privileges.
      * @return
      */
-    private SharingParameter buildSharingForAllGroup(boolean publish) {
+    private SharingParameter buildSharingForPublicationConfig(boolean publish) {
         SharingParameter sharing = new SharingParameter();
         sharing.setClear(false);
 
         List<GroupOperations> privilegesList = new ArrayList<>();
-        GroupOperations privAllGroup = new GroupOperations();
-        privAllGroup.setGroup(ReservedGroup.all.getId());
 
-        Map<String, Boolean> operations = new HashMap<>();
-        operations.put(ReservedOperation.view.name(), publish);
-        operations.put(ReservedOperation.download.name(), publish);
-        operations.put(ReservedOperation.dynamic.name(), publish);
+        final Iterator iterator = publicationConfig.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Object[]> e = (Map.Entry<String, Object[]>) iterator.next();
+            GroupOperations privAllGroup = new GroupOperations();
+            privAllGroup.setGroup(Integer.parseInt(e.getKey()));
 
+            Map<String, Boolean> operations = new HashMap<>();
+            for (Object operation : e.getValue()) {
+                operations.put((String) operation, publish);
+            }
 
-        privAllGroup.setOperations(operations);
-        privilegesList.add(privAllGroup);
+            privAllGroup.setOperations(operations);
+            privilegesList.add(privAllGroup);
+        }
 
         sharing.setPrivileges(privilegesList);
-
         return sharing;
     }
 
+    public Map getPublicationConfig() {
+        return publicationConfig;
+    }
+
+    public void setPublicationConfig(Map publicationConfig) {
+        this.publicationConfig = publicationConfig;
+    }
 }

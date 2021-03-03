@@ -8,6 +8,8 @@
                 exclude-result-prefixes="#all">
 
   <xsl:template name="header">
+    <xsl:variable name="lang"
+                  select="/root/gui/language"/>
     <div class="navbar navbar-default gn-top-bar" role="navigation">
       <div class="container">
         <div class="navbar-header">
@@ -29,7 +31,7 @@
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav" id="topbar-left">
             <li>
-              <a href="{/root/gui/nodeUrl}{$lang}/catalog.search#/home">
+              <a href="{/root/gui/nodeUrl}">
                 <img class="gn-logo"
                      alt="{$i18n/siteLogo}"
                      src="{/root/gui/url}/images/logos/{$env//system/site/siteId}.png"></img>
@@ -37,7 +39,7 @@
               </a>
             </li>
             <li>
-              <a title="{$t/search}" href="{/root/gui/nodeUrl}search" onclick="location.href=('{/root/gui/nodeUrl}{$lang}/catalog.search#/search');return false;">
+              <a title="{$t/search}" href="{/root/gui/nodeUrl}{$lang}/catalog.search" onclick="location.href=('{/root/gui/nodeUrl}{$lang}/catalog.search#/search');return false;">
                 <i class="fa fa-fw fa-search hidden-sm">&#160;</i>
                 <span><xsl:value-of select="$t/search"/></span>
               </a>

@@ -221,9 +221,13 @@ class Harvester implements IHarvester<HarvestResult> {
     }
 
     /**
-     * Does CSW GetRecordsRequest.
+     * Does CSW GetRecordsRequest
+     * @param server
+     * @param s
+     * @param uuids
      * @param aligner
-     * @param errors2
+     * @param harvesterErrors
+     * @throws Exception
      */
     private void searchAndAlign(CswServer server, Search s, Set<String> uuids,
         Aligner aligner, List<HarvestError> harvesterErrors) throws Exception {
@@ -264,7 +268,7 @@ class Harvester implements IHarvester<HarvestResult> {
 
 
         while (true) {
-            if(this.cancelMonitor.get()) {
+            if (this.cancelMonitor.get()) {
               log.error("Harvester stopped in the middle of running!");
               //Returning whatever, we have to move on and finish!
               return;
@@ -324,7 +328,7 @@ class Harvester implements IHarvester<HarvestResult> {
             int matchedCount = getSearchResultAttribute(results, ATTRIB_SEARCHRESULT_MATCHED);
             int returnedCount = getSearchResultAttribute(results, ATTRIB_SEARCHRESULT_RETURNED);
 
-            // nextRecord *is* required by CSW specifications, but some servers (e.g. terra catalog) are not returning this attribute
+            // nextRecord *is* required by CSW Specification, but some servers (e.g. terra catalog) are not returning this attribute
             // See https://github.com/geonetwork/core-geonetwork/issues/1429
             Integer nextRecord = getOptionalSearchResultAttribute(results, ATTRIB_SEARCHRESULT_NEXT);
 
@@ -375,14 +379,19 @@ class Harvester implements IHarvester<HarvestResult> {
                 break;
             }
 
+            // Some misbehaving CSW return nextRecord = 1 when start is over numberOfRecordsMatched
+            // Break the loop if nextRecord is smaller than start.
+            if (nextRecord != null && nextRecord < start) {
+                log.warning(String.format("Forcing harvest end since nextRecord < start (nextRecord = %d, start = %d)", nextRecord, start));
+                break;
+            }
+
             // Start position of next record.
             // Note that some servers may return less records than requested (it's ok for CSW protocol)
             start += returnedCount;
         }
 
         log.debug("Records added to result list : " + uuids.size());
-
-        return;
     }
 
     private void setUpRequest(GetRecordsRequest request, CswOperation oper, CswServer server, Search s, URL url,

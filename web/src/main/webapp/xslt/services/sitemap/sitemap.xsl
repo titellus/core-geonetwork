@@ -57,7 +57,7 @@
     <sitemapindex
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/siteindex.xsd">
+      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 https://www.sitemaps.org/schemas/sitemap/0.9/siteindex.xsd">
 
       <xsl:call-template name="displayIndexDocs">
         <xsl:with-param name="pStart" select="1"/>
@@ -75,17 +75,13 @@
       <xsl:choose>
         <xsl:when test="$pStart = $pEnd">
           <sitemap xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-            <xsl:variable name="formatParam">
-              <xsl:if test="string($format)"><xsl:value-of select="$format"/>/
-              </xsl:if>
-            </xsl:variable>
+            <xsl:variable name="formatParam"
+                          select="if (string($format)) then concat('format=', $format, '&amp;') else ''"/>
             <loc>
-              <xsl:value-of select="util:getSiteUrl()"/><xsl:value-of select="/root/gui/url"/>/sitemap/<xsl:value-of
-                select="$formatParam"/><xsl:value-of select="$pStart"/>/<xsl:value-of
-                select="/root/gui/language"/>
+              <xsl:value-of select="concat($nodeUrl, 'api/sitemap?', $formatParam, 'doc=', $pStart)"/>
             </loc>
             <lastmod>
-              <xsl:value-of select="$changeDate"/>
+              <xsl:value-of select="substring($changeDate,1,10)"/>
             </lastmod>
           </sitemap>
         </xsl:when>
@@ -108,10 +104,10 @@
 
   <xsl:template name="xml">
     <urlset
-      xmlns:geo="http://www.google.com/geo/schemas/sitemap/1.0"
+      xmlns:dct="http://purl.org/dc/terms/"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 https://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
       <xsl:for-each select="metadata/record">
         <xsl:variable name="uuid" select="uuid"/>
         <xsl:variable name="schemaid" select="schemaid"/>
@@ -120,23 +116,25 @@
         <url>
           <loc>
             <xsl:choose>
-              <xsl:when test="$format='xml'">               	
+              <xsl:when test="$format='xml'">
                 <xsl:value-of select="concat($nodeUrl, 'api/records/', $uuid, '/formatters/xml')"/>
               </xsl:when>
 
               <xsl:otherwise>
-                <xsl:value-of select="concat($nodeUrl, 'api/records/', $uuid)"/>
+                <xsl:value-of select="concat($nodeUrl, 'api/records/', $uuid, '?language=all')"/>
               </xsl:otherwise>
             </xsl:choose>
           </loc>
           <lastmod>
-            <xsl:value-of select="$changedate"/>
+            <xsl:value-of select="substring($changedate,1,10)"/>
           </lastmod>
-          <geo:geo>
-            <geo:format>
+          
+          <!--
+          <dct:format>
               <xsl:value-of select="$schemaid"/>
-            </geo:format>
-          </geo:geo>
+          </dct:format>
+          -->
+
         </url>
       </xsl:for-each>
     </urlset>

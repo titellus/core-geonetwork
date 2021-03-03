@@ -29,6 +29,28 @@
       []);
 
 
+  module.controller('GnCSWSearchServiceRecordController', [
+    '$scope', 'gnGlobalSettings',
+    function($scope, gnGlobalSettings) {
+      $scope.searchObj = {
+        internal: true,
+        any: '',
+        defaultParams: {
+          any: '',
+          from: 1,
+          to: 50,
+          type: 'service',
+          sortBy: 'resourceTitleObject.default.keyword',
+          sortOrder: 'asc'
+        }
+      };
+      $scope.searchObj.params = angular.extend({},
+        $scope.searchObj.defaultParams);
+      $scope.updateParams = function() {
+        $scope.searchObj.params.any = $scope.searchObj.any;
+      };
+    }]);
+
   /**
    * GnCSWSettingsController provides management interface
    * for CSW settings.
@@ -37,17 +59,11 @@
   module.controller('GnCSWSettingsController', [
     '$scope', '$http', '$rootScope', '$translate', 'gnUtilityService',
     function($scope, $http, $rootScope, $translate, gnUtilityService) {
-      var cswSettings = ['system/csw/contactId'];
-      var cswBooleanSettings = [
-        'system/csw/enable',
-        'system/csw/enabledWhenIndexing',
-        'system/csw/metadataPublic',
-        'system/csw/transactionUpdateCreateXPath'];
-
       /**
        * CSW properties
        */
       $scope.cswSettings = {};
+      $scope.cswServiceRecord = null;
 
       /**
        * CSW element set name (an array of xpath).
@@ -74,54 +90,43 @@
        */
       $scope.cswFields = {};
 
+
       /**
          * Load catalog settings and extract CSW settings
          */
       function loadSettings() {
-        $http.get('admin.config.list?_content_type=json&asTree=false')
+        $http.get('../api/site/settings?set=CSW')
             .success(function(data) {
-              for (var i = 0; i < data.length; i++) {
-                var setting = data[i];
-                if (cswBooleanSettings.indexOf(setting['@name']) !== -1) {
-                  var value = setting['#text'].toLowerCase();
-                  $scope.cswSettings[setting['@name']] =
-                      (value == 'true' || value == 'on');
-                } else if (cswSettings.indexOf(setting['@name']) !== -1) {
-                  $scope.cswSettings[setting['@name']] = setting['#text'];
+              $scope.cswSettings = data;
+              loadServiceRecords();
+            }).error(function(data) {
+              // TODO
+            });
+      }
+
+      function loadServiceRecords() {
+        var id = $scope.cswSettings['system/csw/capabilityRecordUuid'];
+        if (angular.isDefined(id) && id != -1){
+          $http.post('../api/search/records/_search', {"query": {
+              "term": {
+                "uuid": {
+                  "value": "\"" + id + "\""
                 }
               }
-            }).error(function(data) {
-              // TODO
-            });
+            }, "from": 0, "size": 1}, {cache: true})
+            .then(function(r) {
+              if (r.data.hits.hits > 0) {
+                $scope.cswServiceRecord = new Metadata(r.data.hits.hits[0]);
+              }
+          });
+        }
       }
+      $scope.$watchCollection('cswSettings', function(n, o){
+        if (n != o) {
+          loadServiceRecords();
+        }
+      });
 
-      function loadUsers() {
-        $http.get('../api/users').
-            success(function(data) {
-              $scope.users = data;
-              loadSettings();
-            }).error(function(data) {
-              // TODO
-            });
-      }
-
-
-      function loadCSWConfig() {
-        $http.get('admin.config.csw?_content_type=json&').
-            success(function(data) {
-              $scope.cswConfig = data;
-              angular.forEach($scope.cswConfig.capabilitiesInfoFields,
-                  function(value, key) {
-                    $scope.cswLanguages[$scope.cswConfig.
-                        capabilitiesInfoFields[key].langId] = true;
-                    $scope.cswFields[$scope.cswConfig.
-                        capabilitiesInfoFields[key].fieldName] = true;
-                  });
-              loadSettings();
-            }).error(function(data) {
-              // TODO
-            });
-      }
 
       function loadCSWElementSetName() {
         $http.get('admin.config.csw.customelementset?_content_type=json&')
@@ -158,23 +163,11 @@
        * broadcast success or failure status.
        */
       $scope.saveSettings = function(formId) {
-        saveSettings(formId, 'admin.config.save');
-      };
-      /**
-       * Save the form containing all capabilities properties. When saved,
-       * broadcast success or failure status.
-       */
-      $scope.saveProperties = function(formId) {
-        saveSettings(formId, 'admin.config.csw.save');
-      };
-      var saveSettings = function(formId, service) {
-
-        $http({
-          method: 'POST',
-          url: service,
-          data: gnUtilityService.serialize(formId),
-          headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-        })
+        $http.post('../api/site/settings',
+          gnUtilityService.serialize(formId), {
+            headers: {'Content-Type':
+                'application/x-www-form-urlencoded'}
+          })
             .success(function(data) {
               $rootScope.$broadcast('StatusUpdated', {
                 msg: $translate.instant('settingsUpdated'),
@@ -233,8 +226,7 @@
         return result;
       };
 
-      loadUsers();  // Which then load settings
-      loadCSWConfig();
+      loadSettings();
       loadCSWElementSetName();
 
     }]);

@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang.StringUtils;
 import org.fao.geonet.GeonetContext;
 import org.fao.geonet.Logger;
 import org.fao.geonet.constants.Geonet;
@@ -328,14 +329,14 @@ class Harvester extends BaseAligner<WebDavParams> implements IHarvester<HarvestR
         } catch (NumberFormatException e) {
         }
 
-        metadata = metadataManager.insertMetadata(context, metadata, md, true, false, false, UpdateDatestamp.NO, false, false);
+        metadata = metadataManager.insertMetadata(context, metadata, md, false, false, UpdateDatestamp.NO, false, false);
         String id = String.valueOf(metadata.getId());
 
         addPrivileges(id, params.getPrivileges(), localGroups, context);
 
         metadataManager.flush();
 
-        dataMan.indexMetadata(id, true, null);
+        dataMan.indexMetadata(id, true);
         result.addedMetadata++;
     }
 
@@ -350,7 +351,12 @@ class Harvester extends BaseAligner<WebDavParams> implements IHarvester<HarvestR
             dataMan.autodetectSchema(md);
 
             try {
-                params.getValidate().validate(dataMan, context, md);
+                Integer groupIdVal = null;
+                if (StringUtils.isNotEmpty(params.getOwnerIdGroup())) {
+                    groupIdVal = Integer.parseInt(params.getOwnerIdGroup());
+                }
+
+                params.getValidate().validate(dataMan, context, md, groupIdVal);
                 return (Element) md.detach();
             } catch (Exception e) {
                 log.info("Skipping metadata that does not validate. Path is : " + rf.getPath());
@@ -498,7 +504,7 @@ class Harvester extends BaseAligner<WebDavParams> implements IHarvester<HarvestR
 
             dataMan.flush();
 
-            dataMan.indexMetadata(record.id, true, null);
+            dataMan.indexMetadata(record.id, true);
         }
     }
 

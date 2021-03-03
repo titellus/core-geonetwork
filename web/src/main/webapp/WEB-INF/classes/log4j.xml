@@ -18,7 +18,7 @@
   </appender>
   <appender name="fileAppender" class="org.apache.log4j.RollingFileAppender">
     <param name="Threshold" value="ALL"/>
-    <param name="File" value="logs/geonetwork.log"/>
+    <param name="File" value="${log_dir}logs/geonetwork.log"/>
     <layout class="org.apache.log4j.PatternLayout">
       <param name="ConversionPattern" value="%d{ISO8601} %-5p [%c] - %m%n"/>
     </layout>
@@ -30,11 +30,17 @@
     <appender-ref ref="consoleAppender"/>
     <appender-ref ref="fileAppender"/>
   </logger>
+  <logger name="geonetwork.resources">
+    <level value="ERROR"/>
+  </logger>
   <logger name="geonetwork.search">
     <level value="ERROR"/>
   </logger>
-  <logger name="geonetwork.databasemigration">
+  <logger name="geonetwork.domain">
     <level value="ERROR"/>
+  </logger>
+  <logger name="geonetwork.databasemigration">
+    <level value="INFO"/>
   </logger>
   <logger name="geonetwork.database">
     <level value="ERROR"/>
@@ -89,6 +95,11 @@
     <appender-ref ref="consoleAppender"/>
     <appender-ref ref="fileAppender"/>
   </logger>
+  <logger name="geonetwork.atom" additivity="false">
+    <level value="INFO"/>
+    <appender-ref ref="consoleAppender"/>
+    <appender-ref ref="fileAppender"/>
+  </logger>
   <logger name="geonetwork.lucene">
     <level value="ERROR"/>
   </logger>
@@ -126,6 +137,9 @@
     <level value="ERROR"/>
   </logger>
   <logger name="geonetwork.backup">
+    <level value="ERROR"/>
+  </logger>
+  <logger name="geonetwork.security">
     <level value="ERROR"/>
   </logger>
 

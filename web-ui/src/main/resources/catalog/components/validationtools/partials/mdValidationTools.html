@@ -30,6 +30,10 @@
       <li class="dropdown-header">
         <span class="visible-lg"
               data-translate="">validate-inspire</span></li>
+      <li class="dropdown-header">
+        <span data-translate="">lastInspireValidationStatus</span>
+        <gn-md-type-inspire-validation-widget metadata="md"></gn-md-type-inspire-validation-widget>
+      </li>
       <li role="presentation" data-ng-show="!isDownloadingRecord"
           data-ng-repeat="(key,value) in testsuites">
         <a
@@ -40,7 +44,12 @@
             class="fa fa-chevron-right"/>&nbsp;
 
           <span>{{key}}</span>
-      </a>
+        </a>
+        <!--
+        Validation using main CSW entry point.
+        <a class="btn btn-link pull-right" data-gn-click-and-spin="validateInspire(key, 'srv')">using csw</a>
+        Validation using "inspire" portal CSW entry point (which may post process outputs).
+        <a class="btn btn-link pull-right" data-gn-click-and-spin="validateInspire(key, 'inspire')">using INSPIRE endpoint</a>-->
       </li>
 
       <li role="presentation" data-ng-show="isDownloadingRecord">
@@ -55,11 +64,11 @@
       </a>
       </li>
       <li role="presentation" data-ng-show="isDownloadedRecord">
-        <a
-          role="menuitem" tabindex="-1" target="_blank" href="{{reportURL}}"
-          title="{{'validate-inspire-help' | translate}}">
+        <a role="menuitem"
+           tabindex="-1" target="_blank" href="{{reportURL}}"
+           title="{{'validate-inspire-help' | translate}}">
           <i
-            class="fa gn-icon-maps"/>&nbsp;
+            class="fa fa-fw fa-file fa-inspire"/>&nbsp;
           <span class="visible-lg"
                 data-translate="">reportLink</span> - {{reportStatus}}
       </a>

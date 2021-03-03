@@ -69,7 +69,9 @@ goog.require('gn_login_service');
       },
       'mods': {
         'global': {
-          'humanizeDates': true
+          'humanizeDates': true,
+          'dateFormat': 'DD-MM-YYYY HH:mm',
+          'timezone': 'Browser' // Default to browser timezone
         },
         'footer':{
           'enabled': true,
@@ -95,53 +97,384 @@ goog.require('gn_login_service');
             'slo': 'sk'
           },
           'isLogoInHeader': false,
-          'logoInHeaderPosition': 'left'
+          'logoInHeaderPosition': 'left',
+          'fluidHeaderLayout': true,
+          'showGNName': true,
+          'isHeaderFixed': false
+        },
+        'cookieWarning': {
+          'enabled': true,
+          'cookieWarningMoreInfoLink': '',
+          'cookieWarningRejectLink': ''
         },
         'home': {
           'enabled': true,
           'appUrl': '../../{{node}}/{{lang}}/catalog.search#/home',
+          'showSocialBarInFooter': true,
+          'fluidLayout': true,
+          'facetConfig': {
+            'inspireThemeUri': {
+              'terms': {
+                'field': 'inspireThemeUri',
+                'size': 34
+                // "order" : { "_key" : "asc" }
+              }
+            },
+            'cl_topic.key': {
+              'terms': {
+                'field': 'cl_topic.key',
+                'size': 20
+              }
+            },
+            'cl_hierarchyLevel.key': {
+              'terms': {
+                'field': 'cl_hierarchyLevel.key',
+                'size': 10
+              }
+            }
+          },
           'fluidLayout': true
         },
         'search': {
           'enabled': true,
           'appUrl': '../../{{node}}/{{lang}}/catalog.search#/search',
-          'hitsperpageValues': [10, 50, 100],
+          'hitsperpageValues': [30, 60, 120],
           'paginationInfo': {
-            'hitsPerPage': 20
+            'hitsPerPage': 30
           },
-          'facetsSummaryType': 'details',
-          'defaultSearchString': '',
-          'facetTabField': '',
-          'facetConfig': [
+          // Full text on all fields
+          // 'queryBase': '${any}',
+          // Full text but more boost on title match
+          'queryBase': 'any:(${any}) resourceTitleObject.default:(${any})^2',
+          'exactMatchToggle': true,
+          // Score query may depend on where we are in the app?
+          'scoreConfig': {
+            // Score experiments:
+            // a)Score down old records
             // {
-            // key: 'createDateYear',
-            // labels: {
-            //   eng: 'Published',
-            //   fre: 'Publication'
-            // }}
-          ],
-          'filters': {},
+            //   "gauss": {
+            //     "dateStamp": {
+            //       "scale":  "200d"
+            //     }
+            //   }
+            // }
+            // b)Promote grids!
+            // "boost": "5",
+            // "functions": [
+            //   {
+            //     "filter": { "match": { "cl_spatialRepresentationType.key": "vector" } },
+            //     "random_score": {},
+            //     "weight": 23
+            //   },
+            //   {
+            //     "filter": { "match": { "cl_spatialRepresentationType.key": "grid" } },
+            //     "weight": 42
+            //   }
+            // ],
+            // "max_boost": 42,
+            // "score_mode": "max",
+            // "boost_mode": "multiply",
+            // "min_score" : 42
+            // "script_score" : {
+            //   "script" : {
+            //     "source": "_score"
+            //     // "source": "Math.log(2 + doc['rating'].value)"
+            //   }
+            // }
+            "boost": "5",
+            "functions": [
+              // Boost down member of a series
+              {
+                "filter": { "exists": { "field": "parentUuid" } },
+                "weight": 0.3
+              },
+              // Boost down obsolete records
+              {
+                "filter": { "match": { "cl_status.key": "obsolete" } },
+                "weight": 0.3
+              },
+              // {
+              //   "filter": { "match": { "cl_resourceScope": "service" } },
+              //   "weight": 0.8
+              // },
+              // Start boosting down records more than 3 months old
+              {
+                "gauss": {
+                  "dateStamp": {
+                    "scale":  "365d",
+                    "offset": "90d",
+                    "decay": 0.5
+                  }
+                }
+              }
+            ],
+            "score_mode": "multiply"
+          },
+          'autocompleteConfig': {
+            'query': {
+              'bool': {
+                'must': [{
+                  'multi_match': {
+                    "query": "",
+                    "type": "bool_prefix",
+                    "fields": [
+                      "resourceTitleObject.*",
+                      "resourceAbstractObject.*",
+                      "tag",
+                      "resourceIdentifier"
+                      // "anytext",
+                      // "anytext._2gram",
+                      // "anytext._3gram"
+                    ]
+                  }
+                }]
+              }
+            },
+            '_source': ['resourceTitleObject'],
+            // Fuzzy autocomplete
+            // {
+            //   query: {
+            //     // match_phrase_prefix: match
+            //     "multi_match" : {
+            //       "query" : query,
+            //         // "type":       "phrase_prefix",
+            //         "fields" : [ field + "^3", "tag" ]
+            //     }
+            //   },
+            //   _source: [field]
+            // }
+            "from": 0,
+            "size": 20
+          },
+          'moreLikeThisConfig': {
+            "more_like_this" : {
+              "fields" : ["resourceTitleObject.default", "resourceAbstractObject.default", "tag.raw"],
+              "like" : null,
+              "min_term_freq" : 1,
+              "max_query_terms" : 12
+            }
+          },
+          // TODOES
+          'facetTabField': '',
+          'facetConfig': {
+            'cl_hierarchyLevel.key': {
+              'terms': {
+                'field': 'cl_hierarchyLevel.key'
+              },
+              'aggs': {
+                'format': {
+                  'terms': {
+                    'field': 'format'
+                  }
+                }
+              }
+            },
+            // Use .default for not multilingual catalogue with one language only UI.
+            // 'cl_spatialRepresentationType.default': {
+            //   'terms': {
+            //     'field': 'cl_spatialRepresentationType.default',
+            //     'size': 10
+            //   }
+            // },
+            // Use .key for codelist for multilingual catalogue.
+            // The codelist translation needs to be loaded in the client app. See GnSearchModule.js
+            'cl_spatialRepresentationType.key': {
+              'terms': {
+                'field': 'cl_spatialRepresentationType.key',
+                'size': 10
+              }
+            },
+            'availableInServices': {
+              'filters': {
+                //"other_bucket_key": "others",
+                // But does not support to click on it
+                'filters': {
+                  'availableInViewService': {
+                    'query_string': {
+                      'query': '+linkProtocol:/OGC:WMS.*/'
+                    }
+                  },
+                  'availableInDownloadService': {
+                    'query_string': {
+                      'query': '+linkProtocol:/OGC:WFS.*/'
+                    }
+                  }
+                }
+              }
+            },
+            // GEMET configuration for non multilingual catalog
+            'th_gemet_tree.default': {
+              'terms': {
+                'field': 'th_gemet_tree.default',
+                'size': 100,
+                "order" : { "_key" : "asc" },
+                "include": "[^\^]+^?[^\^]+"
+                // Limit to 2 levels
+              }
+            },
+            // GEMET configuration for multilingual catalog
+            // The key is translated on client side by loading
+            // required concepts
+            // 'th_gemet_tree.key': {
+            //   'terms': {
+            //     'field': 'th_gemet_tree.key',
+            //     'size': 100,
+            //     "order" : { "_key" : "asc" },
+            //     "include": "[^\^]+^?[^\^]+"
+            //     // Limit to 2 levels
+            //   }
+            // },
+            // (Experimental) A tree field which contains a URI
+            // eg. http://www.ifremer.fr/thesaurus/sextant/theme#52
+            // but with a translation which contains a hierarchy with a custom separator
+            // /Regulation and Management/Technical and Management Zonations/Sensitive Zones
+            // 'th_sextant-theme_tree.key': {
+            //   'terms': {
+            //     'field': 'th_sextant-theme_tree.key',
+            //     'size': 100,
+            //     "order" : { "_key" : "asc" }
+            //   },
+            //   'meta': {
+            //     'translateOnLoad': true,
+            //     'treeKeySeparator': '/'
+            //   }
+            // },
+            'th_httpinspireeceuropaeumetadatacodelistPriorityDatasetPriorityDataset_tree.default': {
+              'terms': {
+                'field': 'th_httpinspireeceuropaeumetadatacodelistPriorityDatasetPriorityDataset_tree.default',
+                'size': 100,
+                "order" : { "_key" : "asc" }
+              }
+            },
+            'tag.default': {
+              'terms': {
+                'field': 'tag.default',
+                'include': '.*',
+                'size': 10
+              },
+              'meta': {
+                'caseInsensitiveInclude': true
+              }
+            },
+            'th_regions_tree.default': {
+              'terms': {
+                'field': 'th_regions_tree.default',
+                'size': 100,
+                "order" : { "_key" : "asc" }
+                //"include": "EEA.*"
+              }
+            },
+            // "resolutionScaleDenominator": {
+            //   "terms": {
+            //     "field": "resolutionScaleDenominator",
+            //     "size": 20,
+            //     "order": {
+            //       "_key": "asc"
+            //     }
+            //   }
+            // },
+            "resolutionScaleDenominator": {
+              "histogram": {
+                "field": "resolutionScaleDenominator",
+                "interval": 10000,
+                "keyed" : true,
+                'min_doc_count': 1
+              },
+              'meta': {
+                'collapsed': true
+              }
+            },
+            // "serviceType": {
+            //   'collapsed': true,
+            //   "terms": {
+            //     "field": "serviceType",
+            //     "size": 10
+            //   }
+            // },
+            "creationYearForResource": {
+              "histogram": {
+                "field": "creationYearForResource",
+                "interval": 5,
+                "keyed" : true,
+                'min_doc_count': 1
+              },
+              'meta': {
+                'collapsed': true
+              }
+            },
+            // "creationYearForResource": {
+            //   "terms": {
+            //     "field": "creationYearForResource",
+            //     "size": 10,
+            //     "order": {
+            //       "_key": "desc"
+            //     }
+            //   }
+            // },
+            'OrgForResource': {
+              'terms': {
+                'field': 'OrgForResource',
+                'include': '.*',
+                'size': 15
+              },
+              'meta': {
+                // Always display filter even no more elements
+                // This can be used when all facet values are loaded
+                // with a large size and you want to provide filtering.
+                // 'displayFilter': true,
+                'caseInsensitiveInclude': true
+              }
+            },
+            'cl_maintenanceAndUpdateFrequency.key': {
+              'terms': {
+                'field': 'cl_maintenanceAndUpdateFrequency.key',
+                'size': 10
+              },
+              "meta": {
+                "collapsed": true
+              }
+            },
+            'cl_status.key': {
+              'terms': {
+                'field': 'cl_status.key',
+                'size': 10
+              }
+            },
+            'dateStamp' : {
+              'auto_date_histogram' : {
+                'field' : 'dateStamp',
+                'buckets': 50
+              },
+              "meta": {
+                'userHasRole': 'isReviewerOrMore',
+                'collapsed': true
+              }
+            }
+          },
+          'filters': null,
+          // 'filters': [{
+          //     "query_string": {
+          //       "query": "-resourceType:service"
+          //     }
+          //   }],
           'sortbyValues': [{
             'sortBy': 'relevance',
             'sortOrder': ''
           }, {
-            'sortBy': 'changeDate',
-            'sortOrder': ''
+            'sortBy': 'dateStamp',
+            'sortOrder': 'desc'
           }, {
-            'sortBy': 'title',
-            'sortOrder': 'reverse'
+            'sortBy': 'createDate',
+            'sortOrder': 'desc'
+          }, {
+            'sortBy': 'resourceTitleObject.default.keyword',
+            'sortOrder': ''
           }, {
             'sortBy': 'rating',
-            'sortOrder': ''
+            'sortOrder': 'desc'
           }, {
             'sortBy': 'popularity',
-            'sortOrder': ''
-          }, {
-            'sortBy': 'denominatorDesc',
-            'sortOrder': ''
-          }, {
-            'sortBy': 'denominatorAsc',
-            'sortOrder': 'reverse'
+            'sortOrder': 'desc'
           }],
           'sortBy': 'relevance',
           'resultViewTpls': [{
@@ -167,22 +500,37 @@ goog.require('gn_login_service');
             }],
             defaultUrl: ''
           },
+          'downloadFormatter': [{
+            'label': 'exportMEF',
+            'url': '/formatters/zip?withRelated=false',
+            'class': 'fa-file-zip-o'
+          }, {
+            'label': 'exportPDF',
+            'url' : '/formatters/xsl-view?output=pdf&language=${lang}',
+            'class': 'fa-file-pdf-o'
+          }, {
+            'label': 'exportXML',
+            // 'url' : '/formatters/xml?attachment=false',
+            'url' : '/formatters/xml',
+            'class': 'fa-file-code-o'
+          }],
           'grid': {
             'related': ['parent', 'children', 'services', 'datasets']
           },
           'linkTypes': {
             'links': ['LINK', 'kml'],
             'downloads': ['DOWNLOAD'],
-            'layers': ['OGC'],
+            'layers': ['OGC', 'ESRI:REST'],
             'maps': ['ows']
           },
-          'isFilterTagsDisplayedInSearch': false,
+          'isFilterTagsDisplayedInSearch': true,
           'usersearches': {
             'enabled': false,
+            'includePortals': true,
             'displayFeaturedSearchesPanel': false
           },
           'savedSelection': {
-            'enabled': true
+            'enabled': false
           }
         },
         'map': {
@@ -190,12 +538,13 @@ goog.require('gn_login_service');
           'appUrl': '../../{{node}}/{{lang}}/catalog.search#/map',
           'externalViewer': {
             'enabled': false,
+            'enabledViewAction': false,
             'baseUrl': 'http://www.example.com/viewer',
-            'urlTemplate': 'http://www.example.com/viewer?url=${service.url}&type=${service.type}&layer=${service.name}',
+            'urlTemplate': 'http://www.example.com/viewer?url=${service.url}&type=${service.type}&layer=${service.title}&lang=${iso2lang}&title=${md.defaultTitle}',
             'openNewWindow': false,
             'valuesSeparator': ','
           },
-          'is3DModeAllowed': true,
+          'is3DModeAllowed': false,
           'isSaveMapInCatalogAllowed': true,
           'isExportMapAsImageEnabled': false,
           'storage': 'sessionStorage',
@@ -206,7 +555,7 @@ goog.require('gn_login_service');
           },
           'projection': 'EPSG:3857',
           'projectionList': [{
-            'code': 'EPSG:4326',
+            'code': 'urn:ogc:def:crs:EPSG:6.6:4326',
             'label': 'WGS84 (EPSG:4326)'
           }, {
             'code': 'EPSG:3857',
@@ -246,7 +595,8 @@ goog.require('gn_login_service');
             'context': '',
             'extent': [0, 0, 0, 0],
             'layers': [{'type': 'osm'}]
-          }
+          },
+          'autoFitOnLayer': false
         },
         'geocoder': {
             'enabled': true,
@@ -260,11 +610,87 @@ goog.require('gn_login_service');
           'enabled': true,
           'appUrl': '../../{{node}}/{{lang}}/catalog.edit',
           'isUserRecordsOnly': false,
+          'minUserProfileToCreateTemplate': '',
           'isFilterTagsDisplayed': false,
           'fluidEditorLayout': true,
           'createPageTpl':
               '../../catalog/templates/editor/new-metadata-horizontal.html',
-          'editorIndentType': ''
+          'editorIndentType': '',
+          'allowRemoteRecordLink': true,
+          'facetConfig': {
+            'resourceType': {
+              'terms': {
+                'field': 'resourceType',
+                'size': 20
+              }
+            },
+            'cl_status.key': {
+              'terms': {
+                'field': 'cl_status.key',
+                'size': 15
+              }
+            },
+            'sourceCatalogue': {
+              'terms': {
+                'field': 'sourceCatalogue',
+                'size': 15
+              }
+            },
+            'isValid': {
+              'terms': {
+                'field': 'isValid',
+                'size': 10
+              }
+            },
+            'isValidInspire': {
+              'terms': {
+                'field': 'isValidInspire',
+                'size': 10
+              }
+            },
+            'groupOwner': {
+              'terms': {
+                'field': 'groupOwner',
+                'size': 10
+              }
+            },
+            'recordOwner': {
+              'terms': {
+                'field': 'recordOwner',
+                'size': 10
+              }
+            },
+            'groupPublished': {
+              'terms': {
+                'field': 'groupPublished',
+                'size': 10
+              }
+            },
+            'documentStandard': {
+              'terms': {
+                'field': 'documentStandard',
+                'size': 10
+              }
+            },
+            'isHarvested': {
+              'terms': {
+                'field': 'isHarvested',
+                'size': 2
+              }
+            },
+            'isTemplate': {
+              'terms': {
+                'field': 'isTemplate',
+                'size': 5
+              }
+            },
+            'isPublishedToAll': {
+              'terms': {
+                'field': 'isPublishedToAll',
+                'size': 2
+              }
+            }
+          }
         },
         'admin': {
           'enabled': true,
@@ -291,7 +717,7 @@ goog.require('gn_login_service');
       requireProxy: [],
       gnCfg: angular.copy(defaultConfig),
       gnUrl: '',
-      docUrl: 'http://geonetwork-opensource.org/manuals/3.6.x/',
+      docUrl: 'https://geonetwork-opensource.org/manuals/3.8.x/',
       //docUrl: '../../doc/',
       modelOptions: {
         updateOn: 'default blur',
@@ -301,7 +727,8 @@ goog.require('gn_login_service');
         }
       },
       current: null,
-      shibbolethEnabled: false,
+      isDisableLoginForm: false,
+      isShowLoginAsLink: false,
       init: function(config, gnUrl, gnViewerSettings, gnSearchSettings) {
         // start from the default config to make sure every field is present
         // and override with config arg if required
@@ -316,6 +743,10 @@ goog.require('gn_login_service');
               }
             }
           }, config).mods.header.languages;
+
+          this.gnCfg.mods.search.scoreConfig = config.mods.search.scoreConfig;
+          this.gnCfg.mods.search.facetConfig = config.mods.search.facetConfig;
+          this.gnCfg.mods.home.facetConfig = config.mods.home.facetConfig;
         }
 
         this.gnUrl = gnUrl || '../';
@@ -338,6 +769,10 @@ goog.require('gn_login_service');
         var copy = angular.copy(defaultConfig);
         copy.mods.header.languages = {};
         copy.mods.search.grid.related = [];
+        copy.mods.home.facetConfig = {};
+        copy.mods.search.facetConfig = {};
+        copy.mods.search.scoreConfig = {};
+        copy.mods.map["map-editor"].layers = [];
         return copy;
       },
       getProxyUrl: function() {
@@ -461,6 +896,10 @@ goog.require('gn_login_service');
       $scope.socialMediaLink = $location.absUrl();
       $scope.getPermalink = gnUtilityService.getPermalink;
       $scope.fluidEditorLayout = gnGlobalSettings.gnCfg.mods.editor.fluidEditorLayout;
+      $scope.fluidHeaderLayout = gnGlobalSettings.gnCfg.mods.header.fluidHeaderLayout;
+      $scope.showGNName = gnGlobalSettings.gnCfg.mods.header.showGNName;
+      $scope.isHeaderFixed = gnGlobalSettings.gnCfg.mods.header.isHeaderFixed;
+      $scope.isLogoInHeader = gnGlobalSettings.gnCfg.mods.header.isLogoInHeader;
 
       // If gnLangs current already set by config, do not use URL
       $scope.langs = gnGlobalSettings.gnCfg.mods.header.languages;
@@ -510,7 +949,14 @@ goog.require('gn_login_service');
       gnGlobalSettings.nodeId = $scope.nodeId;
       gnConfig.env = gnConfig.env ||  {};
       gnConfig.env.node = $scope.nodeId;
+      gnConfig.env.defaultNode = defaultNode;
       gnConfig.env.baseURL = detectBaseURL(gnGlobalSettings.gnCfg.baseURLDetector);
+
+      $scope.signoutUrl = gnGlobalSettings.gnCfg.mods.signout.appUrl
+        + '?redirectUrl='
+        + window.location.href.slice(
+            0,
+            window.location.href.indexOf(gnConfig.env.node) + gnConfig.env.node.length);
 
       // Lang names to be displayed in language selector
       $scope.langLabels = {'eng': 'English', 'dut': 'Nederlands',
@@ -525,7 +971,8 @@ goog.require('gn_login_service');
       $scope.logoPath = gnGlobalSettings.gnUrl + '../images/harvesting/';
       $scope.isMapViewerEnabled = gnGlobalSettings.isMapViewerEnabled;
       $scope.isDebug = window.location.search.indexOf('debug') !== -1;
-      $scope.shibbolethEnabled = gnGlobalSettings.shibbolethEnabled;
+      $scope.isDisableLoginForm = gnGlobalSettings.isDisableLoginForm;
+      $scope.isShowLoginAsLink = gnGlobalSettings.isShowLoginAsLink;
       $scope.isExternalViewerEnabled = gnExternalViewer.isEnabled();
       $scope.externalViewerUrl = gnExternalViewer.getBaseUrl();
 
@@ -549,7 +996,7 @@ goog.require('gn_login_service');
       });
       //If no csrf, ask for one:
       if (!$rootScope.csrf) {
-        $http.post('info?type=me');
+        $http.get('../api/me');
       }
       //Comment the upper lines if you want to remove csrf support
 
@@ -583,6 +1030,7 @@ goog.require('gn_login_service');
           angular.forEach(gnConfig['map.proj4js'], function(item) {
             proj4.defs(item.code, item.value);
           });
+          ol.proj.proj4.register(proj4);
         }
       });
 
@@ -635,13 +1083,12 @@ goog.require('gn_login_service');
               error(function(data, status, headers, config) {
                 $rootScope.$broadcast('StatusUpdated',
                    {
+                     id: 'catalogueStatus',
                      title: $translate.instant('somethingWrong'),
                      msg: $translate.instant('msgNoCatalogInfo'),
                      type: 'danger'});
               });
         });
-
-
 
         // Utility functions for user
         var userFn = {
@@ -651,27 +1098,30 @@ goog.require('gn_login_service');
           isConnected: function() {
             return !this.isAnonymous();
           },
+          canCreateTemplate: function() {
+            var profile = gnGlobalSettings.gnCfg.mods.editor.minUserProfileToCreateTemplate
+              || '',
+              fnName = (profile !== '' ?
+                ('is' + profile[0].toUpperCase() + profile.substring(1) + 'OrMore') :
+                '');
+            return angular.isFunction(this[fnName]) ? this[fnName]() : this.isConnected();
+          },
+          // The md provide the information about
+          // if the current user can edit records or not
+          // based on record operation allowed. See edit property.
           canEditRecord: function(md) {
             if (!md || this.isAnonymous()) {
               return false;
             }
 
-            // The md provide the information about
-            // if the current user can edit records or not.
-            var editable = angular.isDefined(md) &&
-                angular.isDefined(md['geonet:info']) &&
-                angular.isDefined(md['geonet:info'].edit) &&
-                md['geonet:info'].edit == 'true';
-
-
             // A second filter is for harvested record
             // if the catalogue admin defined that those
             // records could be harvested.
-            if (md.isHarvested === 'y') {
+            if (JSON.parse(md.isHarvested) == true) {
               return gnConfig['system.harvester.enableEditing'] === true &&
-                  editable;
+                md.edit;
             }
-            return editable;
+            return md.edit;
           }
         };
         // Build is<ProfileName> and is<ProfileName>OrMore functions
@@ -730,15 +1180,44 @@ goog.require('gn_login_service');
 
         // Retrieve main search information
         var searchInfo = userLogin.then(function(value) {
-          var url = 'qi?_content_type=json&summaryOnly=true';
-          angular.forEach(gnGlobalSettings.gnCfg.mods.search.filters,
-              function(v, k) {
-                url += '&' + k + '=' + v;
+          // Check index status.
+          $http.get('../api/site/index/status').then(function(r) {
+            gnConfig['indexStatus'] = r.data;
+
+            if (r.data.state.id.match(/^(green|yellow)$/) == null) {
+              $rootScope.$broadcast('StatusUpdated', {
+                id: 'indexStatus',
+                title: r.data.state.title,
+                error: {
+                  message: r.data.message
+                },
+                // type: r.data.state.icon,
+                type: 'danger'
               });
-          return gnSearchManagerService.search(url).
-              then(function(data) {
-                $scope.searchInfo = data;
+            } else {
+              return $http.post('../api/search/records/_search',
+                {size: 0,
+                    track_total_hits: true,
+                    query: {query_string: {query: "+isTemplate:n"}},
+                    aggs: gnGlobalSettings.gnCfg.mods.home.facetConfig}).
+              then(function(r) {
+                $scope.searchInfo = r.data;
+                var keys = Object.keys(gnGlobalSettings.gnCfg.mods.home.facetConfig);
+                    selectedFacet = keys[0];
+                for (var i = 0; i < keys.length; i ++) {
+                  if ($scope.searchInfo.aggregations[keys[i]].buckets.length > 0) {
+                    selectedFacet = keys[i];
+                    break;
+                  }
+                }
+                $scope.homeFacet = {
+                  list: keys,
+                  key: selectedFacet,
+                  lastKey: keys[keys.length - 1]
+                };
               });
+            }
+          });
         });
       };
       $scope.userAdminMenu = gnAdminMenu.UserAdmin;
@@ -765,14 +1244,28 @@ goog.require('gn_login_service');
 
 
       $scope.healthCheck = {};
-      function healthCheckStatus(data) {
+      // Flag to show the health index error panel
+      // By default hidden, only to be displayed if the
+      // health check for the index returns an error.
+      $scope.showHealthIndexError = false;
+
+      function healthCheckStatus(r) {
+        var data = r.data, isCritical = r.config.url.indexOf('critical') !== -1;
         angular.forEach(data, function(o) {
           $scope.healthCheck[o.name] = (o.status === 'OK');
         });
+
+        if(isCritical) {
+          $scope.showHealthIndexError =
+            (!$scope.healthCheck) ||
+            ($scope.healthCheck
+              && $scope.healthCheck.IndexHealthCheck == false);
+        }
       };
+      $http.get('../../criticalhealthcheck')
+        .then(healthCheckStatus, healthCheckStatus);
       $http.get('../../warninghealthcheck')
-        .success(healthCheckStatus)
-        .error(healthCheckStatus);
+        .then(healthCheckStatus, healthCheckStatus);
 
       $scope.signin = gnLoginService.signin;
       $scope.signout = gnLoginService.signout;

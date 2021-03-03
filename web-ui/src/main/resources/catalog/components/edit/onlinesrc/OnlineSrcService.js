@@ -248,31 +248,11 @@
             src.lUrl = src.url[lang] ||
               src.url[mdLanguage] ||
               src.url[Object.keys(src.url)[0]];
-
-              // //Is it a draft?
-              // if(src.lUrl.indexOf("/api/records/") >= 0
-              //     &&  src.lUrl.indexOf("/api/records/")< src.lUrl.indexOf("/attachments/")) {
-              //   if(src.lUrl.indexOf("?") > 0) {
-              //     src.lUrl  += "&approved=false";
-              //   } else {
-              //     src.lUrl  += "?approved=false";
-              //   }
-              // }
           });
           angular.forEach(data.thumbnails, function(img) {
             img.lUrl = img.url[lang] ||
               img.url[mdLanguage] ||
               img.url[Object.keys(img.url)[0]];
-
-              // //Is it a draft?
-              // if(img.lUrl.indexOf("/api/records/") >= 0
-              //     &&  img.lUrl.indexOf("/api/records/")< img.lUrl.indexOf("/attachments/")) {
-              //   if(img.lUrl.indexOf("?") > 0) {
-              //     img.lUrl  += "&approved=false";
-              //   } else {
-              //     img.lUrl  += "?approved=false";
-              //   }
-              // }
           });
           if (data.siblings) {
             for (var i = 0; i < data.siblings.length; i++) {
@@ -366,11 +346,15 @@
             process: mode + '-add'
           };
           if (mode == 'fcats') {
-            params.uuidref = md.getUuid();
+            params.uuidref = md.uuid;
           }
           else {
-            params[mode + 'Uuid'] = md.getUuid();
+            params[mode + 'Uuid'] = md.uuid;
           }
+          params[mode + 'Url'] = md.remoteUrl || '';
+          params[mode + 'Title'] = md.title // Remote
+            || md.resourceTitle // not multilingual eg. 19110
+            || md.resourceTitleObject.default;
           return runProcess(this, params).then(function() {
             closePopup(popupid);
           });
@@ -411,6 +395,27 @@
 
         /**
          * @ngdoc method
+         * @name gnOnlinesrc#getIconByProtocol
+         * @methodOf gn_onlinesrc.service:gnOnlinesrc
+         *
+         * @description
+         * Get display icon depending of the protocol
+         * of the online resource.
+         * To display onlinesrc list
+         *
+         * @param {string} protocol name
+         * @return {string} icon class
+         */
+        getApprovedUrl: function(url) {
+          if(gnCurrentEdit.metadata.draft
+             && url.match(".*/api/records/(.*)/attachments/.*") != null) {
+             url += (url.indexOf("?") > 0)?"&":"?" + "approved=" + (gnCurrentEdit.metadata.draft != 'y');
+          }
+          return url
+        },
+
+        /**
+         * @ngdoc method
          * @name gnOnlinesrc#linkToService
          * @methodOf gn_onlinesrc.service:gnOnlinesrc
          *
@@ -428,10 +433,11 @@
             var qParams = setParams('dataset-add', params);
             if (addOnlineSrcInDataset) {
               return runProcess(scope, {
-                scopedName: qParams.name || '',
+                scopedName: qParams.remote ? '' : (qParams.name || ''),
                 uuidref: qParams.uuidSrv,
                 uuid: qParams.uuidDS,
                 url: qParams.url,
+                title: qParams.name,
                 source: qParams.identifier || '',
                 protocol: qParams.protocol,
                 process: qParams.process
@@ -447,23 +453,30 @@
 
           // Add link to the dataset in the service
           var qParams = setParams('service-add', params);
-          return gnBatchProcessing.runProcessMd({
-            scopedName: qParams.name || '',
-            uuidref: qParams.uuidDS,
-            uuid: qParams.uuidSrv,
-            source: qParams.identifier || '',
-            process: qParams.process
-          }, true).then(addDatasetToServiceFn, function(error) {
-            // Current user may not be able to edit
-            // the targeted dataset. Notify user in this case
-            // that only the service will be updated.
-            $rootScope.$broadcast('StatusUpdated', {
-              title: $translate.instant('linkToServiceError'),
-              msg: $translate.instant('cantAddLinkToDataset'),
-              timeout: 0,
-              type: 'danger'});
+          if (qParams.remote) {
+            // We can't update a remote record.
+            // Only make link in current dataset.
             addDatasetToServiceFn();
-          });
+          } else {
+            return gnBatchProcessing.runProcessMd({
+              scopedName: qParams.remote ? '' : (qParams.name || ''),
+              uuidref: qParams.uuidDS,
+              title: qParams.datasetTitle,
+              uuid: qParams.uuidSrv,
+              source: qParams.identifier || '',
+              process: qParams.process
+            }, true).then(addDatasetToServiceFn, function(error) {
+              // Current user may not be able to edit
+              // the targeted dataset. Notify user in this case
+              // that only the service will be updated.
+              $rootScope.$broadcast('StatusUpdated', {
+                title: $translate.instant('linkToServiceError'),
+                msg: $translate.instant('cantAddLinkToDataset'),
+                timeout: 0,
+                type: 'danger'});
+              addDatasetToServiceFn();
+            });
+          }
         },
 
         /**
@@ -492,9 +505,12 @@
               // See #setLayersParams
               // In this case, dataset-add.xsl MUST not add coupledResource
               // So setting it to empty
-              scopedName: params.name === qParams.name ? '' : qParams.name,
+              scopedName: params.remote ? '' :
+                (params.name === qParams.name ? '' : qParams.name),
               uuidref: qParams.uuidDS,
               uuid: qParams.uuidSrv,
+              url: qParams.remote ? qParams.url : '',
+              title: qParams.remote ? qParams.name : '',
               source: qParams.identifier || '',
               process: qParams.process
             }).then(function() {
@@ -502,7 +518,9 @@
             });
           };
 
-          if (addOnlineSrcToDataset) {
+          // We can't update a remote record.
+          // Only make link in current dataset.
+          if (!params.remote && addOnlineSrcToDataset) {
             var qParams = setParams('onlinesrc-add', params);
             return gnBatchProcessing.runProcessMd({
               name: qParams.name,

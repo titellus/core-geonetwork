@@ -46,7 +46,6 @@ import org.fao.geonet.kernel.DataManager;
 import org.fao.geonet.kernel.datamanager.IMetadataManager;
 import org.fao.geonet.kernel.datamanager.IMetadataStatus;
 import org.fao.geonet.kernel.datamanager.IMetadataUtils;
-import org.fao.geonet.kernel.datamanager.draft.DraftMetadataManager;
 import org.fao.geonet.kernel.setting.SettingManager;
 import org.fao.geonet.kernel.setting.Settings;
 import org.fao.geonet.repository.MetadataRepository;
@@ -60,13 +59,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -141,8 +134,9 @@ public class DefaultStatusActions implements StatusActions {
             Log.trace(Geonet.DATA_MANAGER, "DefaultStatusActions.onEdit(" + id + ", " + minorEdit + ") with status "
                     + dm.getCurrentStatus(id));
         }
-        if (!minorEdit && dm.getCurrentStatus(id).equals(StatusValue.Status.APPROVED)
-                && (context.getBean(IMetadataManager.class) instanceof DraftMetadataManager)) {
+        if (!minorEdit && dm.getCurrentStatus(id).equals(StatusValue.Status.APPROVED)) {
+        //if (!minorEdit && dm.getCurrentStatus(id).equals(StatusValue.Status.APPROVED)
+            //        && (context.getBean(IMetadataManager.class) instanceof DraftMetadataManager)) {
             ResourceBundle messages = ResourceBundle.getBundle("org.fao.geonet.api.Messages",
                     new Locale(this.language));
             String changeMessage = String.format(messages.getString("status_email_text"), replyToDescr, replyTo, id);
@@ -164,14 +158,14 @@ public class DefaultStatusActions implements StatusActions {
 
         // -- process the metadata records to set status
         for (MetadataStatus status : listOfStatus) {
-            MetadataStatus currentStatus = dm.getStatus(status.getId().getMetadataId());
+            MetadataStatus currentStatus = dm.getStatus(status.getMetadataId());
             String currentStatusId = (currentStatus != null)?
-                String.valueOf(currentStatus.getId().getStatusId()):"";
+                String.valueOf(currentStatus.getStatusValue().getId()):"";
 
 
-            String statusId = status.getId().getStatusId() + "";
+            String statusId = status.getStatusValue().getId() + "";
             Set<Integer> listOfId = new HashSet<>(1);
-            listOfId.add(status.getId().getMetadataId());
+            listOfId.add(status.getMetadataId());
 
 
             // --- For the workflow, if the status is already set to value
@@ -180,8 +174,8 @@ public class DefaultStatusActions implements StatusActions {
                (statusId).equals(currentStatusId)) {
                 if (context.isDebugEnabled())
                     context.debug(String.format("Metadata %s already has status %s ",
-                        status.getId().getMetadataId(), status.getId().getStatusId()));
-                unchanged.add(status.getId().getMetadataId());
+                        status.getMetadataId(), status.getStatusValue().getId()));
+                unchanged.add(status.getMetadataId());
                 continue;
             }
 
@@ -194,7 +188,7 @@ public class DefaultStatusActions implements StatusActions {
             } catch (Exception e) {
                 context.warning(String.format(
                     "Failed to send notification on status change for metadata %s with status %s. Error is: %s",
-                    status.getId().getMetadataId(), status.getId().getStatusId(), e.getMessage()));
+                    status.getMetadataId(), status.getStatusValue().getId(), e.getMessage()));
             }
 
             //Throw events
@@ -205,7 +199,7 @@ public class DefaultStatusActions implements StatusActions {
                     context.getApplicationContext().publishEvent(new MetadataStatusChanged(
                         metadataUtils.findOne(Integer.valueOf(mid)),
                         status.getStatusValue(), status.getChangeMessage(),
-                        status.getId().getUserId()));
+                        status.getUserId()));
                 }
             }
 
@@ -226,17 +220,17 @@ public class DefaultStatusActions implements StatusActions {
      * @throws Exception
      */
     private void applyRulesForStatusChange(MetadataStatus status) throws Exception {
-        String statusId = status.getId().getStatusId() + "";
+        String statusId = status.getStatusValue().getId() + "";
         if (statusId.equals(StatusValue.Status.APPROVED)) {
             // setAllOperations(mid); - this is a short cut that could be enabled
             AccessManager accessManager = context.getBean(AccessManager.class);
-            if (!accessManager.canReview(context, String.valueOf(status.getId().getMetadataId()))) {
+            if (!accessManager.canReview(context, String.valueOf(status.getMetadataId()))) {
                 throw new SecurityException(String.format(
                     "You can't edit record with ID %s",
-                    String.valueOf(status.getId().getMetadataId())));
+                    String.valueOf(status.getMetadataId())));
             }
         } else if (statusId.equals(StatusValue.Status.DRAFT)) {
-            unsetAllOperations(status.getId().getMetadataId());
+            unsetAllOperations(status.getMetadataId());
         }
     }
 
@@ -252,7 +246,7 @@ public class DefaultStatusActions implements StatusActions {
     private void notify(List<User> userToNotify, MetadataStatus status) throws Exception {
         ResourceBundle messages = ResourceBundle.getBundle("org.fao.geonet.api.Messages", new Locale(this.language));
 
-        String translatedStatusName = getTranslatedStatusName(status.getId().getStatusId());
+        String translatedStatusName = getTranslatedStatusName(status.getStatusValue().getId());
         // TODO: Refactor to allow custom messages based on the type of status
         String subjectTemplate = "";
         try {
@@ -267,7 +261,7 @@ public class DefaultStatusActions implements StatusActions {
         );
 
         Set<Integer> listOfId = new HashSet<>(1);
-        listOfId.add(status.getId().getMetadataId());
+        listOfId.add(status.getMetadataId());
 
         String textTemplate = "";
         try {
@@ -277,14 +271,14 @@ public class DefaultStatusActions implements StatusActions {
         }
 
         UserRepository userRepository = context.getBean(UserRepository.class);
-        User owner = userRepository.findOne(status.getOwner());
+        User owner = userRepository.findById(status.getOwner()).get();
 
         String message = MessageFormat.format(textTemplate, replyToDescr, // Author of the change
-                status.getChangeMessage(), translatedStatusName, status.getId().getChangeDate(), status.getDueDate(),
+                status.getChangeMessage(), translatedStatusName, status.getChangeDate(), status.getDueDate(),
                 status.getCloseDate(), owner == null ? "" : owner.getName() + " " + owner.getSurname(), siteUrl);
 
         IMetadataUtils metadataRepository = ApplicationContextHolder.get().getBean(IMetadataUtils.class);
-        AbstractMetadata metadata = metadataRepository.findOne(status.getId().getMetadataId());
+        AbstractMetadata metadata = metadataRepository.findOne(status.getMetadataId());
 
         subject = compileMessageWithIndexFields(subject, metadata.getUuid(), this.language);
         message = compileMessageWithIndexFields(message, metadata.getUuid(), this.language);
@@ -310,25 +304,30 @@ public class DefaultStatusActions implements StatusActions {
         // Currently the code could notify a mix of reviewers
         // if records are not in the same groups. To be improved.
         Set<Integer> listOfId = new HashSet<>(1);
-        listOfId.add(status.getId().getMetadataId());
+        listOfId.add(status.getMetadataId());
 
         if (notificationLevel != null) {
             if (notificationLevel == StatusValueNotificationLevel.statusUserOwner) {
-                User owner = userRepository.findOne(status.getOwner());
-                users.add(owner);
+                Optional<User> owner = userRepository.findById(status.getOwner());
+
+                if (owner.isPresent()) {
+                    users.add(owner.get());
+                }
             } else if (notificationLevel == StatusValueNotificationLevel.recordProfileReviewer) {
                 List<Pair<Integer, User>> results = userRepository.findAllByGroupOwnerNameAndProfile(listOfId,
                         Profile.Reviewer, SortUtils.createSort(User_.name));
                 for (Pair<Integer, User> p : results) {
                     users.add(p.two());
                 }
-                ;
             } else if (notificationLevel == StatusValueNotificationLevel.recordUserAuthor) {
-                Iterable<Metadata> records = this.context.getBean(MetadataRepository.class).findAll(listOfId);
+                Iterable<Metadata> records = this.context.getBean(MetadataRepository.class).findAllById(listOfId);
                 for (Metadata r : records) {
-                    users.add(userRepository.findOne(r.getSourceInfo().getOwner()));
+                    Optional<User> owner = userRepository.findById(r.getSourceInfo().getOwner());
+
+                    if (owner.isPresent()) {
+                        users.add(owner.get());
+                    }
                 }
-                ;
             } else if (notificationLevel.name().startsWith("catalogueProfile")) {
                 String profileId = notificationLevel.name().replace("catalogueProfile", "");
                 Profile profile = Profile.findProfileIgnoreCase(profileId);

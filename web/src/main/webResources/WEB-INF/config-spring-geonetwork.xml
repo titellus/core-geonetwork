@@ -23,15 +23,13 @@
   -->
 
 <beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
-       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:util="http://www.springframework.org/schema/util" xmlns:aop="http://www.springframework.org/schema/aop"
        default-lazy-init="true"
        xmlns="http://www.springframework.org/schema/beans"
        xmlns:context="http://www.springframework.org/schema/context"
-       xsi:schemaLocation="
-        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
         http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
-        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
-">
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
   <context:annotation-config/>
 
   <context:property-placeholder location="${app.properties}"
@@ -48,16 +46,24 @@
 
   <import resource="config-spring-env.xml"/>
   <import resource="config-security/config-security.xml"/>
-  <import resource="config-summary.xml"/>
   <import resource="classpath:JZkitApplicationContext.xml"/>
 
   <import resource="config-db/initial_data.xml"/>
   <import resource="config-print/config-spring-print.xml"/>
+  <import resource="config-etf-validator.xml"/>
 
   <!-- For database configuration look in the config-node configuration files (config-node/srv.xml) -->
 
   <!-- Import the versioning configuration (subversion etc...) -->
   <import resource="config-versioning.xml"/>
+
+  <bean id="nodeInfo"
+        class="org.fao.geonet.NodeInfo"
+        scope="request">
+    <aop:scoped-proxy/>
+    <property name="id" value="srv"/>
+    <property name="defaultNode" value="true"/>
+  </bean>
 
   <bean name="statusActionFactory"
         class="org.fao.geonet.kernel.metadata.StatusActionsFactory">
@@ -68,9 +74,6 @@
   <bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
     <property name="applicationContextSchedulerContextKey" value="applicationContext"/>
   </bean>
-
-  <bean id="luceneDirectoryFactory" class="org.fao.geonet.kernel.search.index.FSDirectoryFactory"
-        lazy-init="true"/>
 
   <bean id="httpRequestFactor" class="org.fao.geonet.utils.GeonetHttpRequestFactory">
     <property name="numberOfConcurrentRequests" value="30"/>
@@ -152,11 +155,11 @@
   </bean>
 
   <util:set id="regionGetMapExpandFactors" set-class="java.util.TreeSet">
-    <bean class="org.fao.geonet.services.region.ExpandFactor"
+    <bean class="org.fao.geonet.api.records.extent.ExpandFactor"
           p:proportion=".0005" p:factor="2"/>
-    <bean class="org.fao.geonet.services.region.ExpandFactor"
+    <bean class="org.fao.geonet.api.records.extent.ExpandFactor"
           p:proportion=".01" p:factor=".5"/>
-    <bean class="org.fao.geonet.services.region.ExpandFactor"
+    <bean class="org.fao.geonet.api.records.extent.ExpandFactor"
           p:proportion=".015" p:factor=".2"/>
   </util:set>
 
@@ -165,70 +168,16 @@
            value="\${map.bbox.background.service}"/>
   </util:map>
 
-
-  <bean id="slashSplitClassifier"
-        class="org.fao.geonet.kernel.search.classifier.Split" lazy-init="true">
-    <constructor-arg name="regex" value="\s*?/\s*?"/>
-  </bean>
+  <bean class="org.fao.geonet.kernel.datamanager.draft.DraftMetadataIndexer"/>
+  <bean class="org.fao.geonet.kernel.datamanager.draft.DraftMetadataManager"/>
+  <bean class="org.fao.geonet.kernel.datamanager.draft.DraftMetadataUtils"/>
 
 
-  <bean id="iwrmThemeKeywordClassifierEng"
-        class="org.fao.geonet.kernel.search.classifier.TermLabel" lazy-init="true">
-    <constructor-arg name="finder" ref="ThesaurusManager"/>
-    <constructor-arg name="conceptScheme" value="http://oieau.org/iwrm/themes"/>
-    <constructor-arg name="langCode" value="eng"/>
-  </bean>
-  <bean id="iwrmThemeKeywordClassifierSpa"
-        class="org.fao.geonet.kernel.search.classifier.TermLabel" lazy-init="true">
-    <constructor-arg name="finder" ref="ThesaurusManager"/>
-    <constructor-arg name="conceptScheme" value="http://oieau.org/iwrm/themes"/>
-    <constructor-arg name="langCode" value="spa"/>
-  </bean>
-  <bean id="iwrmThemeKeywordClassifierFre"
-        class="org.fao.geonet.kernel.search.classifier.TermLabel" lazy-init="true">
-    <constructor-arg name="finder" ref="ThesaurusManager"/>
-    <constructor-arg name="conceptScheme" value="http://oieau.org/iwrm/themes"/>
-    <constructor-arg name="langCode" value="fre"/>
-  </bean>
-
-  <bean id="regionKeywordClassifierEng"
-        class="org.fao.geonet.kernel.search.classifier.TermLabel" lazy-init="true">
-    <constructor-arg name="finder" ref="ThesaurusManager"/>
-    <constructor-arg name="conceptScheme" value="http://oieau.org/iwrm/country-basin"/>
-    <constructor-arg name="langCode" value="eng"/>
-  </bean>
-  <bean id="regionKeywordClassifierSpa"
-        class="org.fao.geonet.kernel.search.classifier.TermLabel" lazy-init="true">
-    <constructor-arg name="finder" ref="ThesaurusManager"/>
-    <constructor-arg name="conceptScheme" value="http://oieau.org/iwrm/country-basin"/>
-    <constructor-arg name="langCode" value="spa"/>
-  </bean>
-  <bean id="regionKeywordClassifierFre"
-        class="org.fao.geonet.kernel.search.classifier.TermLabel" lazy-init="true">
-    <constructor-arg name="finder" ref="ThesaurusManager"/>
-    <constructor-arg name="conceptScheme" value="http://oieau.org/iwrm/country-basin"/>
-    <constructor-arg name="langCode" value="fre"/>
-  </bean>
-
-  <!--
-  Example configuration for hierarchical facet based on
-  the GeoNetwork region thesaurus or GEMET.
-
-  Do not forget to add facet configuration on config-summary.xml
-
-  <bean id="gemetKeywordClassifier"
-        class="org.fao.geonet.kernel.search.classifier.TermLabel" lazy-init="true">
-    <constructor-arg name="finder" ref="ThesaurusManager"/>
-    <constructor-arg name="conceptScheme" value="http://geonetwork-opensource.org/gemet"/>
-    <constructor-arg name="langCode" value="eng"/>
-  </bean>
-  -->
-
-
-   <!-- Comment to get non-draft metadata -->
-    <bean primary="true" class="org.fao.geonet.kernel.datamanager.draft.DraftMetadataIndexer"/>
-    <bean primary="true" class="org.fao.geonet.kernel.datamanager.draft.DraftMetadataManager"/>
-    <bean primary="true" class="org.fao.geonet.kernel.datamanager.draft.DraftMetadataUtils"/>
-
-
+  <!-- In order to get non-draft metadata  uncomment the definitions below,
+    or make them available in an external override file -->
+<!--
+    <bean primary="true" class="org.fao.geonet.kernel.datamanager.base.BaseMetadataIndexer"/>
+    <bean primary="true" class="org.fao.geonet.kernel.datamanager.base.BaseMetadataManager"/>
+    <bean primary="true" class="org.fao.geonet.kernel.datamanager.base.BaseMetadataUtils"/>
+-->
 </beans>

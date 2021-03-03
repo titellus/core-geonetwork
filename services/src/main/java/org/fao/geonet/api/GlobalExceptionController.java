@@ -24,6 +24,8 @@
 package org.fao.geonet.api;
 
 import com.google.common.collect.Sets;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.fao.geonet.api.exception.*;
 import org.fao.geonet.doi.client.DoiClientException;
 import org.fao.geonet.exceptions.ServiceNotAllowedEx;
@@ -35,6 +37,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.UnsatisfiedServletRequestParameterException;
@@ -49,18 +52,19 @@ import org.springframework.web.multipart.MultipartException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.FileNotFoundException;
-import java.util.Collections;
-import java.util.List;
-import java.util.MissingResourceException;
-import java.util.Set;
+import java.util.*;
+
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
+ *
  */
 @ControllerAdvice
 public class GlobalExceptionController {
 
     @ResponseBody
     @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ApiResponse(content = {@Content(mediaType = APPLICATION_JSON_VALUE)})
     @ExceptionHandler({
         NotAllowedException.class
     })
@@ -74,6 +78,7 @@ public class GlobalExceptionController {
 
     @ResponseBody
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ApiResponse(content = {@Content(mediaType = APPLICATION_JSON_VALUE)})
     @ExceptionHandler({
         ServiceNotAllowedEx.class
     })
@@ -83,8 +88,10 @@ public class GlobalExceptionController {
 
     @ResponseBody
     @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ApiResponse(content = {@Content(mediaType = APPLICATION_JSON_VALUE)})
     @ExceptionHandler({
-        SecurityException.class
+        SecurityException.class,
+        AccessDeniedException.class
     })
     public Object securityHandler(final Exception exception) {
         return new ApiError("forbidden", exception.getClass().getSimpleName(), exception.getMessage());
@@ -92,6 +99,7 @@ public class GlobalExceptionController {
 
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ApiResponse(content = {@Content(mediaType = APPLICATION_JSON_VALUE)})
     @ExceptionHandler({
         MaxUploadSizeExceededException.class
     })
@@ -101,6 +109,7 @@ public class GlobalExceptionController {
 
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ApiResponse(content = {@Content(mediaType = APPLICATION_JSON_VALUE)})
     @ExceptionHandler({
         HttpMessageNotReadableException.class,
         Exception.class,
@@ -112,6 +121,7 @@ public class GlobalExceptionController {
 
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ApiResponse(content = {@Content(mediaType = APPLICATION_JSON_VALUE)})
     @ExceptionHandler({
         FeatureNotEnabledException.class
     })
@@ -120,10 +130,9 @@ public class GlobalExceptionController {
     }
 
 
-
-
     @ResponseBody
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ApiResponse(content = {@Content(mediaType = APPLICATION_JSON_VALUE)})
     @ExceptionHandler({
         WebApplicationException.class
     })
@@ -133,6 +142,7 @@ public class GlobalExceptionController {
 
     @ResponseBody
     @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ApiResponse(content = {@Content(mediaType = APPLICATION_JSON_VALUE)})
     @ExceptionHandler({
         FileNotFoundException.class,
         GeoPublisherException.class,
@@ -143,20 +153,20 @@ public class GlobalExceptionController {
 
     @ResponseBody
     @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ApiResponse(content = {@Content(mediaType = APPLICATION_JSON_VALUE)})
     @ExceptionHandler({
         UserNotFoundEx.class,
         ResourceNotFoundException.class})
     public ApiError resourceNotFoundHandler(final HttpServletRequest request, final Exception exception) {
 
-            if (contentTypeNeedsBody(request)) {
-                return new ApiError("resource_not_found", exception.getClass().getSimpleName(), exception.getMessage());
-            } else {
-                return null;
-            }
+        if (contentTypeNeedsBody(request)) {
+            return new ApiError("resource_not_found", exception.getClass().getSimpleName(), exception.getMessage());
+        } else {
+            return null;
+        }
     }
 
     /**
-     *
      * @param request the HTTP request object.
      * @return true if the content type is allowed to have a body when returning an error to the client, false if the
      * response should contain an empty body.
@@ -169,7 +179,31 @@ public class GlobalExceptionController {
             MediaType.APPLICATION_XHTML_XML,
             MediaType.APPLICATION_JSON
         );
-        needsBody = !Collections.disjoint(allowedContentTypes, requestMediaTypes);
+
+        // If requested "text/html" with as preferred option on top of
+        // the allowed content types, should contain empty body.
+        int posHtmlMediaType = requestMediaTypes.indexOf(MediaType.TEXT_HTML);
+        boolean requestedHtmlMediaType = false;
+
+        if (posHtmlMediaType == 0) {
+            requestedHtmlMediaType = true;
+        } else if (posHtmlMediaType > -1) {
+            // Intersect allowed mediatypes + text/html with requested
+            // media types to check if text/html has precedence.
+            List<MediaType> allowedContentTypesAndHtml =
+                Arrays.asList( MediaType.APPLICATION_XML,
+                    MediaType.APPLICATION_XHTML_XML,
+                    MediaType.APPLICATION_JSON,
+                    MediaType.TEXT_HTML);
+
+            List<MediaType> requestMediaTypes2 = new ArrayList<>(requestMediaTypes);
+
+            requestMediaTypes2.retainAll(allowedContentTypesAndHtml);
+            requestedHtmlMediaType = (requestMediaTypes2.indexOf(MediaType.TEXT_HTML) == 0);
+        }
+
+        needsBody = !Collections.disjoint(allowedContentTypes, requestMediaTypes) &&
+            !requestedHtmlMediaType;
         return needsBody;
     }
 
@@ -183,14 +217,14 @@ public class GlobalExceptionController {
             List<MediaType> mediaTypes = MediaType.parseMediaTypes(header);
             MediaType.sortBySpecificityAndQuality(mediaTypes);
             return mediaTypes;
-        }
-        catch (InvalidMediaTypeException ex) {
+        } catch (InvalidMediaTypeException ex) {
             return Collections.emptyList();
         }
     }
 
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ApiResponse(content = {@Content(mediaType = APPLICATION_JSON_VALUE)})
     @ExceptionHandler({
         ResourceAlreadyExistException.class})
     public ApiError resourceAlreadyExistHandler(final Exception exception) {
@@ -199,6 +233,7 @@ public class GlobalExceptionController {
 
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ApiResponse(content = {@Content(mediaType = APPLICATION_JSON_VALUE)})
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ApiError missingParameterHandler(final Exception exception) {
         return new ApiError("required_parameter_missing", exception.getClass().getSimpleName(), exception.getMessage());
@@ -206,10 +241,11 @@ public class GlobalExceptionController {
 
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ApiResponse(content = {@Content(mediaType = APPLICATION_JSON_VALUE)})
     @ExceptionHandler({
         UnsatisfiedServletRequestParameterException.class,
         IllegalArgumentException.class,
-        XSDValidationErrorEx.class  ,
+        XSDValidationErrorEx.class,
         JSONException.class,
         MultipartException.class,
         DoiClientException.class
@@ -221,6 +257,7 @@ public class GlobalExceptionController {
 
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ApiResponse(content = {@Content(mediaType = APPLICATION_JSON_VALUE)})
     @ExceptionHandler({
         MissingResourceException.class
     })

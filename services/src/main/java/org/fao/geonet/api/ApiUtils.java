@@ -23,25 +23,11 @@
 
 package org.fao.geonet.api;
 
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
-import java.util.Set;
-
-import javax.imageio.ImageIO;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-
+import com.google.common.collect.Sets;
+import jeeves.constants.Jeeves;
+import jeeves.server.UserSession;
+import jeeves.server.context.ServiceContext;
+import jeeves.server.dispatchers.ServiceManager;
 import org.fao.geonet.ApplicationContextHolder;
 import org.fao.geonet.api.exception.ResourceNotFoundException;
 import org.fao.geonet.api.tools.i18n.LanguageUtils;
@@ -49,7 +35,6 @@ import org.fao.geonet.constants.Geonet;
 import org.fao.geonet.domain.AbstractMetadata;
 import org.fao.geonet.domain.ReservedOperation;
 import org.fao.geonet.kernel.AccessManager;
-import org.fao.geonet.kernel.DataManager;
 import org.fao.geonet.kernel.SelectionManager;
 import org.fao.geonet.kernel.datamanager.IMetadataUtils;
 import org.fao.geonet.kernel.setting.SettingManager;
@@ -64,12 +49,25 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.util.StringUtils;
 
-import com.google.common.collect.Sets;
+import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
+import java.util.Set;
 
-import jeeves.constants.Jeeves;
-import jeeves.server.UserSession;
-import jeeves.server.context.ServiceContext;
-import jeeves.server.dispatchers.ServiceManager;
 
 /**
  * API utilities mainly to deal with parameters.
@@ -116,10 +114,10 @@ public class ApiUtils {
         IMetadataUtils metadataUtils = ApplicationContextHolder.get().getBean(IMetadataUtils.class);
         String id = String.valueOf(metadataUtils.findOneByUuid(uuidOrInternalId).getId());
 
-        if(StringUtils.isEmpty(id)) {
+        if (StringUtils.isEmpty(id)) {
             //It wasn't a UUID
             id = String.valueOf(metadataUtils.findOne(uuidOrInternalId).getId());
-        } else if(approved) {
+        } else if (approved) {
             //It was a UUID, check if draft or approved version
             id = String.valueOf(ApplicationContextHolder.get().getBean(MetadataRepository.class)
                 .findOneByUuid(uuidOrInternalId).getId());
@@ -131,6 +129,26 @@ public class ApiUtils {
                 uuidOrInternalId));
         }
         return id;
+    }
+
+    //fixes the uri fragment portion (that the part after the "#")
+    // so it is properly encoded
+    //http://www.thesaurus.gc.ca/concept/#Offshore area        -->   http://www.thesaurus.gc.ca/concept/#Offshore%20area
+    //http://www.thesaurus.gc.ca/concept/#AIDS (disease)       -->   http://www.thesaurus.gc.ca/concept/#AIDS%20%28disease%29
+    //http://www.thesaurus.gc.ca/concept/#Alzheimer's disease  -->   http://www.thesaurus.gc.ca/concept/#Alzheimer%27s%20disease
+    //
+    //Includes some special case handling for spaces and ":"
+    //
+    //TODO: there could be other special handling for special cases in the future
+    public static String fixURIFragment(String uri) throws UnsupportedEncodingException {
+        String[] parts = uri.split("#");
+        if (parts.length >1) {
+            parts[parts.length - 1] = parts[parts.length - 1].replace("+", " ");
+            parts[parts.length - 1] = URLEncoder.encode(parts[parts.length - 1], "UTF-8");
+            parts[parts.length - 1] = parts[parts.length - 1].replace("+", "%20");
+            parts[parts.length - 1] = parts[parts.length - 1].replace("%3A", ":");
+        }
+        return String.join("#",parts);
     }
 
 
@@ -154,11 +172,14 @@ public class ApiUtils {
             Log.trace(Geonet.DATA_MANAGER, uuidOrInternalId + " not recognized as UUID. Trying ID.");
             metadata = metadataRepository.findOne(uuidOrInternalId);
             if (metadata != null) {
-                Log.trace(Geonet.DATA_MANAGER, "ApiUtils.getRecord(" + uuidOrInternalId + ") -> " + metadata);
+                if (Log.isTraceEnabled(Geonet.DATA_MANAGER)) {
+                    Log.trace(Geonet.DATA_MANAGER, "ApiUtils.getRecord(" + uuidOrInternalId + ") -> " + metadata);
+                }
                 return metadata;
             }
+        } catch (NumberFormatException e) {
+        } catch (InvalidDataAccessApiUsageException e) {
         }
-        catch (InvalidDataAccessApiUsageException e) {}
 
         Log.trace(Geonet.DATA_MANAGER, "Record identified by " + uuidOrInternalId + " not found.");
         throw new ResourceNotFoundException(String.format("Record with UUID '%s' not found in this catalog", uuidOrInternalId));
@@ -193,7 +214,9 @@ public class ApiUtils {
 
     static public ServiceContext createServiceContext(HttpServletRequest request, String iso3langCode) {
         ServiceManager serviceManager = ApplicationContextHolder.get().getBean(ServiceManager.class);
-        return serviceManager.createServiceContext("Api", iso3langCode, request);
+        ServiceContext serviceContext = serviceManager.createServiceContext("Api", iso3langCode, request);
+        serviceContext.setAsThreadLocal();
+        return serviceContext;
     }
 
     public static long sizeOfDirectory(Path lDir) throws IOException {

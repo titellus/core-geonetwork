@@ -128,23 +128,16 @@ public final class Xml {
     public static final Namespace xsiNS = Namespace.getNamespace("xsi", XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI);
     public static final NioPathAwareEntityResolver PATH_RESOLVER = new NioPathAwareEntityResolver();
 
-    public static String stripNonValidXMLCharacters(String in) {
-        StringBuffer out = new StringBuffer();
-        char current;
 
-        if (in == null || ("".equals(in))) return "";
-        for (int i = 0; i < in.length(); i++) {
-            current = in.charAt(i);
-            if ((current == 0x9) ||
-                (current == 0xA) ||
-                (current == 0xD) ||
-                ((current >= 0x20) && (current <= 0xD7FF)) ||
-                ((current >= 0xE000) && (current <= 0xFFFD)) ||
-                ((current >= 0x10000) && (current <= 0x10FFFF)))
-                out.append(current);
-        }
-        return out.toString();
-    }
+    // http://www.w3.org/TR/REC-xml/#charsets
+    public static final String XML10_ILLEGAL_CHAR_PATTERN = "[^"
+        + "\u0009\r\n"
+        + "\u0020-\uD7FF"
+        + "\uE000-\uFFFD"
+        + "\ud800\udc00-\udbff\udfff"
+        + "]";
+
+    //--------------------------------------------------------------------------
 
     /**
      *

@@ -76,6 +76,7 @@ https://github.com/NatLibFi/Skosmos/wiki/REST-API
 https://in-situ.theia-land.fr/skosmos/rest/v1/theia_ozcar_thesaurus/
 
 ```shell script
+curl https://in-situ.theia-land.fr/fuseki/theia_vocabulary/query -X POST --data 'query=%0APREFIX+skos%3A+%3Chttp%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23%3E%0A%0A%0A%0ACONSTRUCT+%7B+%3Fs+%3Fp+%3Fo+%7D+WHERE+%7B+GRAPH+%3Chttps%3A%2F%2Fw3id.org%2Fozcar-theia%2F%3E+%7B+%3Fs+%3Fp+%3Fo+%7D+%7D' -H 'Accept: application/rdf+xml'
 ```
 
 ## Agrovoc
@@ -97,7 +98,66 @@ Format provided is CSV.
  
 # Templates
 
-Questions: Une fiche exemple ?
+**Des métadonnées pour quoi faire ?**
+
+Objectifs: Définir les informations à renseigner pour répondre aux besoins de recherche, de tableaux de bords, de conformité vis à vis d'un standard/directives/normes/bonnes pratiques ... 
+
+
+* Trouver des données - savoir qu'elles existent ? des services ? des cartes ?
+  * Si oui, quels types de données ?
+    * Données géo (et non géo - tabulaire ?)
+  * Quel type de données géo ? eg. vecteur/raster
+  * Des données dans quelles langues ?
+ 
+ 
+* Les télécharger ? 
+  * Si oui, quels formats ?
+  * quels serveur de données ?
+  * des services ? 
+  * quelles projections ?
+  * Accessible en interne/externe ?
+  * eg. https://sdi.eea.europa.eu/catalogue/srv/eng/catalog.search#/metadata/b07cd829-47da-416c-83f5-9dc952191bfc
+ 
+ 
+* Les classer comment ? par thèmes - thésaurus, par organisations, par contraintes d'accès, par fréquence de mise à jour, par date, par échelle, par capteurs ...
+  * Quels sont les thésaurus obligatoire ?
+  * eg. https://sextant.ifremer.fr/Donnees/Catalogue#/metadata/56062a3c-0234-48f3-b273-2db3bef7a17e 
+  * eg. https://sextant.ifremer.fr/Donnees/Catalogue et un portail thématique https://www.odatis-ocean.fr/donnees-et-services/acces-aux-donnees/catalogue-complet#/search
+  * eg. recherche temporelle https://galliwasp.eea.europa.eu/catalogue/srv/eng/catalog.search#/search
+  
+
+* Les décrire dans plusieurs langues ? ie. métadonnées multilingues
+  * Si oui lesquelles ?
+  
+  
+* Décrire les tables attributaires / modèles de données ?
+  * eg. https://geocatalogue.apur.org/catalogue/srv/fre/catalog.search#/metadata/f2186409-8454-4fd5-8754-3f54ba3edd3f  
+
+ 
+* Décrire la qualité des données ?
+  * Généalogie,
+  * données source   
+  * voire même indicateurs eg. https://sextant.ifremer.fr/Donnees/Catalogue#/metadata/f8f7f98e-d31e-4a64-bf0c-f6db5cce3551
+
+
+* Lier des données entre elles ?
+  * Quel types de relation eg. série, données sources, service diffusant, ...
+  * eg. https://sdi.eea.europa.eu/catalogue/srv/eng/catalog.search#/metadata/a3747af8-7581-430e-8d7f-9fbc5843545f (encodage manuel vs analyse de similarité), https://sextant.ifremer.fr/Donnees/Catalogue#/metadata/60ad1de2-c3e1-4d33-9468-c7f28d200305  
+
+
+* Être conforme ? ISO ? INSPIRE ?
+  * Valider avec https://inspire.ec.europa.eu/validator/
+  * Eg. http://metawal.wallonie.be/geonetwork/srv/eng/catalog.search#/search?isTemplate=n&resourceTemporalDateRange=%7B%22range%22:%7B%22resourceTemporalDateRange%22:%7B%22gte%22:null,%22lte%22:null,%22relation%22:%22intersects%22%7D%7D%7D&sortBy=relevance&any=q(%2Btag:inspire)&from=1&to=30
+  * Documentation https://geonetwork-opensource.org/manuals/4.0.x/en/user-guide/describing-information/inspire-editing.html
+
+
+* Interagir avec des outils ?
+  * Si oui, lesquels ? 
+
+  
+* Besoin d'identifier avec DOI & Citation ? 
+  * eg. https://sextant.ifremer.fr/Donnees/Catalogue#/metadata/56062a3c-0234-48f3-b273-2db3bef7a17e
+
 
 
 # Thematic portals

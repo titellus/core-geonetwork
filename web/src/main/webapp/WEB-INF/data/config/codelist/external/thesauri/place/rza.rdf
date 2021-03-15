@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:dcterms="http://purl.org/dc/terms/"
+         xmlns:foaf="http://xmlns.com/foaf/0.1/"
+         xmlns:gml="http://www.opengis.net/gml#"
+         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+>
+  <skos:ConceptScheme rdf:about="https://meta.data-za.org/registry/rza-list">
+    <dc:title>Zones ateliers</dc:title>
+    <dc:description></dc:description>
+    <dc:creator>
+      <foaf:Organization>
+        <foaf:name>RZA</foaf:name>
+      </foaf:Organization>
+    </dc:creator>
+    <dc:rights>GPL v2</dc:rights>
+    <dcterms:issued>Mon Mar 21 09:00:00 CEST 2016</dcterms:issued>
+    <dcterms:modified>2021-03-15 09:00:00</dcterms:modified>
+    <skos:hasTopConcept rdf:resource="https://meta.data-za.org/registry/rza"/>
+  </skos:ConceptScheme>
+
+  <skos:Concept rdf:about="https://meta.data-za.org/registry/rza">
+    <skos:prefLabel xml:lang="en">RZA</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">RZA</skos:prefLabel>
+    <skos:prefLabel xml:lang="de">RZA</skos:prefLabel>
+    <skos:inScheme rdf:resource="https://meta.data-za.org/registry/rza-list"/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-5.452026226232646 -70.99276972397512</gml:lowerCorner>
+        <gml:upperCorner>149.7716284212044 50.03151115263818</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+
+  <skos:Concept rdf:about="https://meta.data-za.org/registry/rza/ZATA">
+    <skos:prefLabel xml:lang="fr">ZATA - Antarctique et Subantarctique</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">ZATA - Antarctique et Subantarctique</skos:prefLabel>
+    <skos:broader rdf:resource="https://meta.data-za.org/registry/rza"/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>142.3030000012892 -70.99276972397512</gml:lowerCorner>
+        <gml:upperCorner>149.7716284212044 -63.52413995691068</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+
+  <skos:Concept rdf:about="https://meta.data-za.org/registry/rza/ZAEU">
+    <skos:prefLabel xml:lang="fr">ZAEU - Environnementale Urbaine</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">ZAEU - Environnementale Urbaine</skos:prefLabel>
+
+    <skos:broader rdf:resource="https://meta.data-za.org/registry/rza"/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>7.585718547903266 48.43406428572716</gml:lowerCorner>
+        <gml:upperCorner>7.896251286901877 48.70195068818226</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+
+  <skos:Concept rdf:about="https://meta.data-za.org/registry/rza/ZAL">
+    <skos:prefLabel xml:lang="fr">ZAL - Loire</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">ZAL - Loire</skos:prefLabel>
+
+    <skos:broader rdf:resource="https://meta.data-za.org/registry/rza"/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-2.4030283780123205 44.55190420212018</gml:lowerCorner>
+        <gml:upperCorner>4.661114625299228 48.75356036366558</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+
+
+  <skos:Concept rdf:about="https://meta.data-za.org/registry/rza/ZAAr">
+    <skos:prefLabel xml:lang="fr">ZAAr - Armorique</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">ZAAr - Armorique</skos:prefLabel>
+
+    <skos:broader rdf:resource="https://meta.data-za.org/registry/rza"/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-2.287544027439352 47.631334620592355</gml:lowerCorner>
+        <gml:upperCorner>-1.0182132308661895 48.7081164784633</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+
+  <skos:Concept rdf:about="https://meta.data-za.org/registry/rza/ZABR">
+    <skos:prefLabel xml:lang="fr">ZABR - Bassin du Rhône</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">ZABR - Bassin du Rhône</skos:prefLabel>
+
+    <skos:broader rdf:resource="https://meta.data-za.org/registry/rza"/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>3.603477641197082 43.83753518954818</gml:lowerCorner>
+        <gml:upperCorner>7.185885256773774 45.804186602911614</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+
+
+  <skos:Concept rdf:about="https://meta.data-za.org/registry/rza/ZABrI">
+    <skos:prefLabel xml:lang="fr">ZABrI - Brest Iroise</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">ZABrI - Brest Iroise</skos:prefLabel>
+
+    <skos:broader rdf:resource="https://meta.data-za.org/registry/rza"/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-5.452026226232646 47.984024252729355</gml:lowerCorner>
+        <gml:upperCorner>-3.305594369362191 48.542434073825476</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+
+
+  <skos:Concept rdf:about="https://meta.data-za.org/registry/rza/ZAAJ">
+    <skos:prefLabel xml:lang="fr">ZAAJ - Arc Jurassien</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">ZAAJ - Arc Jurassien</skos:prefLabel>
+
+    <skos:broader rdf:resource="https://meta.data-za.org/registry/rza"/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>5.2779785975960305 45.4347413789574</gml:lowerCorner>
+        <gml:upperCorner>7.062213616921582 47.63588410255958</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+
+  <skos:Concept rdf:about="https://meta.data-za.org/registry/rza/ZAA">
+    <skos:prefLabel xml:lang="fr">ZAA - Alpes</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">ZAA - Alpes</skos:prefLabel>
+
+    <skos:broader rdf:resource="https://meta.data-za.org/registry/rza"/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>4.884596351287232 43.47949793394542</gml:lowerCorner>
+        <gml:upperCorner>7.715503807992392 46.407871411122365</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+
+
+  <skos:Concept rdf:about="https://meta.data-za.org/registry/rza/ZAHV">
+    <skos:prefLabel xml:lang="fr">ZAHV - Hwange</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">ZAHV - Hwange</skos:prefLabel>
+
+    <skos:broader rdf:resource="https://meta.data-za.org/registry/rza"/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>23.24341179090424 -21.28312174279605</gml:lowerCorner>
+        <gml:upperCorner>29.07626198205811 -15.71627146647511</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+
+  <skos:Concept rdf:about="https://meta.data-za.org/registry/rza/ZAPYGAR">
+    <skos:prefLabel xml:lang="fr">ZAPYGAR - Pyrénées-Garonne</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">ZAPYGAR - Pyrénées-Garonne</skos:prefLabel>
+
+    <skos:broader rdf:resource="https://meta.data-za.org/registry/rza"/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-0.08413114681136194 42.51466987798251</gml:lowerCorner>
+        <gml:upperCorner>3.874034500057803 44.86919711387115</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+
+  <skos:Concept rdf:about="https://meta.data-za.org/registry/rza/ZATU">
+    <skos:prefLabel xml:lang="fr">ZATU - Territoires Uranifères</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">ZATU - Territoires Uranifères</skos:prefLabel>
+
+    <skos:broader rdf:resource="https://meta.data-za.org/registry/rza"/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>2.3880154149614823 45.28705130093901</gml:lowerCorner>
+        <gml:upperCorner>3.9856340236404404 46.25629307286527</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+
+  <skos:Concept rdf:about="https://meta.data-za.org/registry/rza/ZAPVS">
+    <skos:prefLabel xml:lang="fr">ZAPVS - Plaine et Val de Sèvre</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">ZAPVS - Plaine et Val de Sèvre</skos:prefLabel>
+
+    <skos:broader rdf:resource="https://meta.data-za.org/registry/rza"/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>-0.6161854949370142 46.094168195086645</gml:lowerCorner>
+        <gml:upperCorner>-0.22615671634606277 46.323433647497076</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+
+  <skos:Concept rdf:about="https://meta.data-za.org/registry/rza/ZAM">
+    <skos:prefLabel xml:lang="fr">ZAM - Moselle</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">ZAM - Moselle</skos:prefLabel>
+
+    <skos:broader rdf:resource="https://meta.data-za.org/registry/rza"/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>5.420878462157796 47.813082034515666</gml:lowerCorner>
+        <gml:upperCorner>7.557888035786789 49.5145633497494</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+
+  <skos:Concept rdf:about="https://meta.data-za.org/registry/rza/ZAS">
+    <skos:prefLabel xml:lang="fr">ZAS - Seine</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">ZAS - Seine</skos:prefLabel>
+
+    <skos:broader rdf:resource="https://meta.data-za.org/registry/rza"/>
+    <gml:BoundedBy>
+      <gml:Envelope gml:srsName="http://www.opengis.net/gml/srs/epsg.xml#epsg:4326">
+        <gml:lowerCorner>0.11827381198453964 46.952574975043696</gml:lowerCorner>
+        <gml:upperCorner>5.603741370872064 50.03151115263818</gml:upperCorner>
+      </gml:Envelope>
+    </gml:BoundedBy>
+  </skos:Concept>
+</rdf:RDF>

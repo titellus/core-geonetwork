@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/"
+         xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+  <skos:ConceptScheme rdf:about="https://registry.meta.data-za.org/use-limitation">
+    <dc:title>Conditions d'utilisation et d'accès</dc:title>
+    <dc:description>Conditions d'utilisation et d'accès</dc:description>
+    <dc:creator>
+      <foaf:Organization>
+        <foaf:name></foaf:name>
+      </foaf:Organization>
+    </dc:creator>
+    <dcterms:issued>2019-09-24</dcterms:issued>
+    <dcterms:modified>2019-09-24</dcterms:modified>
+  </skos:ConceptScheme>
+  <skos:Concept rdf:about="https://www.etalab.gouv.fr/licence-ouverte-open-licence">
+    <skos:prefLabel xml:lang="en">Open licence</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Licence Ouverte</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://registry.meta.data-za.org/use-limitation/license">
+    <skos:prefLabel xml:lang="en">Subject to license</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Sous licence</skos:prefLabel>
+    <skos:prefLabel xml:lang="de">Lizenzpflichtig</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://registry.meta.data-za.org/use-limitation/fee">
+    <skos:prefLabel xml:lang="en">Subject to a fee</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Service payant</skos:prefLabel>
+    <skos:prefLabel xml:lang="de">Kostenpflichtig</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://registry.meta.data-za.org/use-limitation/internal-use-only">
+    <skos:prefLabel xml:lang="en">For internal use only</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Statut interne</skos:prefLabel>
+    <skos:prefLabel xml:lang="de">Nur für interne Nutzung</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://inspire.ec.europa.eu/metadata-codelist/ConditionsApplyingToAccessAndUse/conditionsUnknown">
+    <skos:prefLabel xml:lang="en">Conditions to access and use unknown</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Conditions to access and use unknown</skos:prefLabel>
+    <skos:prefLabel xml:lang="de">Conditions to access and use unknown</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://inspire.ec.europa.eu/metadata-codelist/ConditionsApplyingToAccessAndUse/noConditionsApply">
+    <skos:prefLabel xml:lang="en">No conditions to access and use</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">No conditions to access and use</skos:prefLabel>
+    <skos:prefLabel xml:lang="de">No conditions to access and use</skos:prefLabel>
+  </skos:Concept>
+</rdf:RDF>

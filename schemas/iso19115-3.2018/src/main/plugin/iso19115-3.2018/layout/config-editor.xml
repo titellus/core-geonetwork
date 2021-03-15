@@ -53,7 +53,12 @@
     <for name="mdq:measureDescription" use="textarea"/>
     <for name="mri:purpose" use="textarea"/>
     <for name="mrd:orderingInstructions" use="textarea"/>
-    <for name="mco:otherConstraints" use="textarea"/>
+    <!--    <for name="mco:otherConstraints" use="textarea"/>-->
+    <for name="mco:otherConstraints" use="data-gn-keyword-picker">
+      <directiveAttributes data-thesaurus-key="external.theme.access_use_conditions"
+                           data-thesaurus-concept-id-attribute="xlinkCOLONhref"/>
+    </for>
+
     <for name="mri:statement" use="textarea"/>
     <for name="mri:supplementalInformation" use="textarea"/>
     <for name="gmd:specificUsage" use="textarea"/>
@@ -358,6 +363,7 @@
       <name>srv:name</name>
       <name>srv:operationName</name>
       <name>srv:serviceTypeVersion</name>
+      <name ancestor="mrd:MD_Format">cit:title</name>
     </exclude>
   </multilingualFields>
 
@@ -435,7 +441,7 @@
       <flatModeExceptions>
         <for name="mri:descriptiveKeywords"/>
         <for name="mri:pointOfContact"/>
-        <for name="mrd:distributor"/>
+<!--        <for name="mrd:distributor"/>-->
         <for name="mdb:contact"/>
         <for name="mcc:processor"/>
         <for name="cit:party"/>

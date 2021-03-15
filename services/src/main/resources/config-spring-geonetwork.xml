@@ -84,6 +84,12 @@
     <property name="thesaurusName" value="external.place.regions"/>
   </bean>
 
+  <bean id="RZADAO" class="org.fao.geonet.api.regions.ThesaurusBasedRegionsDAO">
+    <constructor-arg ref="languages"/>
+    <property name="cacheAllRegionsInMemory" value="false"/>
+    <property name="thesaurusName" value="external.place.rza"/>
+  </bean>
+
   <bean id="MetadataRegionsDAO" class="org.fao.geonet.api.regions.MetadataRegionDAO">
     <property name="cacheAllRegionsInMemory" value="false"/>
   </bean>

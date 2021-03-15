@@ -1557,7 +1557,7 @@
   </codelist>
 
   <codelist name="mcc:MD_ScopeCode">
-    <entry>
+    <!--<entry>
       <code>attribute</code>
       <label>Attribut</label>
       <description>Les informations appliquées aux caractéristiques de
@@ -1584,7 +1584,7 @@
       <description>Les informations appliquées aux caractéristiques d’une
         collection de session
       </description>
-    </entry>
+    </entry>-->
     <entry>
       <code>dataset</code>
       <label>Jeu de données</label>
@@ -1606,7 +1606,7 @@
         données non géographiques
       </description>
     </entry>
-    <entry>
+    <!--<entry>
       <code>dimensionGroup</code>
       <label>Dimension d'un groupe</label>
       <description>Les informations appliquées à un groupe</description>
@@ -1639,7 +1639,7 @@
       <label>Logiciel</label>
       <description>Informations appliquées à programme ou à une routine
       </description>
-    </entry>
+    </entry>-->
     <entry>
       <code>service</code>
       <label>Service</label>
@@ -1656,7 +1656,7 @@
         d’un objet existant ou hypothétique
       </description>
     </entry>
-    <entry>
+   <!-- <entry>
       <code>tile</code>
       <label>Tuile</label>
       <description>Les informations s’appliquent à une mosaïque, un sousensemble
@@ -1672,7 +1672,7 @@
       <code>initiative</code>
       <label>Initiative</label>
       <description>Les informations s’appliquent à une initiativee</description>
-    </entry>
+    </entry>-->
     <entry>
       <code>sample</code>
       <label>Echantillon</label>
@@ -1683,7 +1683,7 @@
       <label>Document</label>
       <description>Les informations s’appliquent à un document</description>
     </entry>
-    <entry>
+    <!--<entry>
       <code>repository</code>
       <label>Dépôt de données</label>
       <description>Les informations s’appliquent à un dépôt de données
@@ -1707,7 +1707,7 @@
       <label>Ensemble</label>
       <description>Les informations s’appliquent à un ensemble non structuré
       </description>
-    </entry>
+    </entry>-->
     <entry>
       <code>coverage</code>
       <label>Couverture</label>

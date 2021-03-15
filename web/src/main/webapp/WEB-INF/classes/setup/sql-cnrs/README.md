@@ -106,16 +106,18 @@ Objectifs: Définir les informations à renseigner pour répondre aux besoins de
 * Trouver des données - savoir qu'elles existent ? des services ? des cartes ?
   * Si oui, quels types de données ?
     * Données géo (et non géo - tabulaire ?)
-  * Quel type de données géo ? eg. vecteur/raster
-  * Des données dans quelles langues ?
- 
+    * Services WCS/WFS/WMS - avec liens 
+    * Cartes PDF - Cartothèque
+    * Série
+  * Quel type de données géo ? eg. vecteur/raste
+  * Des données dans quelles langues ? Francais, Anglais (langue principale) - Vidéo ?
  
 * Les télécharger ? 
-  * Si oui, quels formats ?
-  * quels serveur de données ?
+  * Si oui, quels formats ? 
+  * quels serveur de données ? WMS/WFS - Vidéo ?
   * des services ? 
-  * quelles projections ?
-  * Accessible en interne/externe ?
+  * quelles projections ? Peut être toujours la même ? Libre ...
+  * Accessible en interne/externe ? Lien web principalement, DOI 
   * eg. https://sdi.eea.europa.eu/catalogue/srv/eng/catalog.search#/metadata/b07cd829-47da-416c-83f5-9dc952191bfc
  
  
@@ -136,8 +138,10 @@ Objectifs: Définir les informations à renseigner pour répondre aux besoins de
  
 * Décrire la qualité des données ?
   * Généalogie,
-  * données source   
+  * Données source   
+  * PNDB - Bien renseigné ?
   * voire même indicateurs eg. https://sextant.ifremer.fr/Donnees/Catalogue#/metadata/f8f7f98e-d31e-4a64-bf0c-f6db5cce3551
+  * Contraintes d'accès ? Opendata
 
 
 * Lier des données entre elles ?
@@ -153,12 +157,17 @@ Objectifs: Définir les informations à renseigner pour répondre aux besoins de
 
 * Interagir avec des outils ?
   * Si oui, lesquels ? 
+  * Geoflow, Visualiseur capteur, OGC WMS & carto
+    * GeoFlow - Librairie R - CSV > métadonnées
 
   
 * Besoin d'identifier avec DOI & Citation ? 
   * eg. https://sextant.ifremer.fr/Donnees/Catalogue#/metadata/56062a3c-0234-48f3-b273-2db3bef7a17e
+  * Identifiant des données ?
 
 
+* Relations entres les fiches
+  * Données
 
 # Thematic portals
 

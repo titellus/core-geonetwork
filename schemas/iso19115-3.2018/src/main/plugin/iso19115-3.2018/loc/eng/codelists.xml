@@ -1544,7 +1544,7 @@
   </codelist>
 
   <codelist name="mcc:MD_ScopeCode">
-    <entry>
+    <!--<entry>
       <code>attribute</code>
       <label>Attribute</label>
       <description>Information applies to the attribute class</description>
@@ -1565,7 +1565,7 @@
       <code>collectionSession</code>
       <label>Collection session</label>
       <description>Information applies to the collection session</description>
-    </entry>
+    </entry>-->
     <entry>
       <code>dataset</code>
       <label>Dataset</label>
@@ -1581,7 +1581,7 @@
       <label>Non geographic dataset</label>
       <description>Information applies to non-geographic data</description>
     </entry>
-    <entry>
+    <!--<entry>
       <code>dimensionGroup</code>
       <label>Dimension group</label>
       <description>Information applies to a dimension group</description>
@@ -1611,7 +1611,7 @@
       <label>Software</label>
       <description>Information applies to a computer program or routine
       </description>
-    </entry>
+    </entry>-->
     <entry>
       <code>service</code>
       <label>Service</label>
@@ -1627,7 +1627,7 @@
         hypothetical object
       </description>
     </entry>
-    <entry>
+    <!--<entry>
       <code>tile</code>
       <label>Tile</label>
       <description>Information applies to a tile, a spatial subset of geographic
@@ -1643,7 +1643,7 @@
       <code>initiative</code>
       <label>Initiative</label>
       <description>Information applies to an initiative</description>
-    </entry>
+    </entry>-->
     <entry>
       <code>sample</code>
       <label>Sample</label>
@@ -1654,7 +1654,7 @@
       <label>Document</label>
       <description>Information applies to a document</description>
     </entry>
-    <entry>
+    <!--<entry>
       <code>repository</code>
       <label>Repository</label>
       <description>Information applies to a repository</description>
@@ -1674,7 +1674,7 @@
       <code>collection</code>
       <label>Collection</label>
       <description>Information applies to an unstructured set</description>
-    </entry>
+    </entry>-->
     <entry>
       <code>coverage</code>
       <label>Coverage</label>

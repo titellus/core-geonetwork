@@ -462,6 +462,7 @@ goog.require('gn_login_service');
             //     field: "resourceTemporalDateRange",
             //     buckets: 2021 - 1970,
             //     dateFormat: 'YYYY',
+            //     dateSelectMode: 'years',
             //     vegaDateFormat: '%Y',
             //     from: 1970,
             //     to: 2021,

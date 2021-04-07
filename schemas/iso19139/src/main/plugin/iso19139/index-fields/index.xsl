@@ -143,7 +143,6 @@
     <doc>
 
       <xsl:copy-of select="gn-fn-index:add-field('docType', 'metadata')"/>
-      <xsl:copy-of select="gn-fn-index:add-field('documentStandard', 'iso19139')"/>
 
       <!-- Index the metadata document as XML -->
       <document>
@@ -341,9 +340,7 @@
               "code": "<xsl:value-of select="gmd:code/(gco:CharacterString|gmx:Anchor)"/>",
               "codeSpace": "<xsl:value-of select="gmd:codeSpace/(gco:CharacterString|gmx:Anchor)"/>",
               "link": "<xsl:value-of select="gmd:code/gmx:Anchor/@xlink:href"/>"
-              }
-              <xsl:value-of select="."/>
-            </resourceIdentifier>
+              }</resourceIdentifier>
           </xsl:for-each>
 
           <xsl:for-each select="gmd:edition/*">
@@ -940,18 +937,22 @@
           </inspireConformResource>
         </xsl:if>
 
-        <specificationConformance type="object">{
-          "title": "<xsl:value-of select="gn-fn-index:json-escape($title)" />",
-          "date": "<xsl:value-of select="*/gmd:result/*/gmd:specification/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date/gco:Date" />",
-          <xsl:if test="*/gmd:result/*/gmd:specification/*/gmd:title/@xlink:href">
-            "link": "<xsl:value-of select="*/gmd:result/*/gmd:specification/*/gmd:title/@xlink:href"/>",
-          </xsl:if>
-          <xsl:if test="*/gmd:result/*/gmd:explanation/*/text() != ''">
-            "explanation": "<xsl:value-of select="gn-fn-index:json-escape((*/gmd:result/*/gmd:explanation/*/text())[1])" />",
-          </xsl:if>
-          "pass": "<xsl:value-of select="$pass" />"
-          }
-        </specificationConformance>
+        <xsl:if test="string($title)">
+          <specificationConformance type="object">{
+            "title": "<xsl:value-of select="gn-fn-index:json-escape($title)" />",
+            <xsl:if test="string(*/gmd:result/*/gmd:specification/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date/gco:Date)">
+              "date": "<xsl:value-of select="*/gmd:result/*/gmd:specification/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date/gco:Date" />",
+            </xsl:if>
+            <xsl:if test="*/gmd:result/*/gmd:specification/*/gmd:title/@xlink:href">
+              "link": "<xsl:value-of select="*/gmd:result/*/gmd:specification/*/gmd:title/@xlink:href"/>",
+            </xsl:if>
+            <xsl:if test="*/gmd:result/*/gmd:explanation/*/text() != ''">
+              "explanation": "<xsl:value-of select="gn-fn-index:json-escape((*/gmd:result/*/gmd:explanation/*/text())[1])" />",
+            </xsl:if>
+            "pass": "<xsl:value-of select="$pass" />"
+            }
+          </specificationConformance>
+        </xsl:if>
 
         <xsl:element name="conformTo_{replace(normalize-space($title), '[^a-zA-Z0-9]', '')}">
           <xsl:value-of select="$pass"/>

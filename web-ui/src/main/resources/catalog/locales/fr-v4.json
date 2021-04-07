@@ -148,5 +148,6 @@
   "translationPackCacheCleared": "Cache vidé.",
   "translationPackCacheClearFailure": "Erreur lors du vidage du cache de traductions !",
   "ui-isVegaEnabled": "Activer les facettes interactives (utilisant Vega)",
-  "ui-exactMatchToggle": "Afficher l'option de recherche exacte"
+  "ui-exactMatchToggle": "Afficher l'option de recherche exacte",
+  "facet-th_IWRM-theme": "IWRM themes"
 }

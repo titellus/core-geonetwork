@@ -99,7 +99,9 @@
               data-ng-init="aggResponse = searchInfo.aggregations[homeFacet.key]"
               data-ng-repeat="facet in searchInfo.aggregations[homeFacet.key].buckets"
               class="col-xs-12 col-sm-6 col-md-4 chips-card">
-          <div class="badge-result badge-result-topic clearfix">
+          <div class="badge-result clearfix"
+               data-ng-style="{'badge-result-topic': homeFacet.key !== 'th_IWRM-theme.default'}"
+               style="{{homeFacet.key === 'th_IWRM-theme.default' ? 'background-color: whitesmoke;' : 'background-color: #3277B3'}}">
             <a class="pull-left clearfix"
               title="{{facet.key}}"
               role="link"
@@ -107,12 +109,21 @@
               data-ng-href='#/search?query_string={"{{field}}": {"{{facet.key}}": true} }'>
 
               <!-- TODOES Link label to icons? -->
-              <span class="badge-icon badge-result-topic pull-left">
+              <span class="badge-icon badge-result-topic pull-left"
+                    data-ng-if="homeFacet.key !== 'th_IWRM-theme.default'">
                 <i class="fa fa-3x gn-icon gn-icon-{{facet.key.toLowerCase().replace('/', '').replace(' ', '')}}"
                     data-ng-show="homeFacet.key === 'topic.key' || homeFacet.key === 'cl_hierarchyLevel.key'">
                 </i>
               </span>
-              <span class="badge-text pull-left">
+
+              <span class="badge-icon pull-left"
+                    data-ng-if="homeFacet.key === 'th_IWRM-theme.default'">
+                 <img style="height: 41px; top: -5px; position: relative;"
+                      src="../../images/icons/{{facet.key | iwrmThemeIcon}}.png"/>
+              </span>
+
+              <span class="badge-text pull-left"
+                    style="{{homeFacet.key === 'th_IWRM-theme.default' ? 'color: black' : ''}}">
                 <span class="gn-icon-label">{{facet.key | facetTranslator: homeFacet.key | capitalize}}</span>
               </span>
             </a>

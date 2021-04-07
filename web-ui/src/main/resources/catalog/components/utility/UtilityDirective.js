@@ -1091,7 +1091,7 @@
               });
             }
           };
-          
+
           init();
 
           // model -> view
@@ -1397,6 +1397,41 @@
         return href;
       }}
   ]);
+
+  module.filter('iwrmThemeIcon', ['$http', 'gnLangs', 'gnConfig',
+    function($http, gnLangs, gnConfig) {
+      var registry = null,
+        serviceInvoked = false;
+
+      function realFilter(theme) {
+        if (registry[theme]) {
+          return encodeURIComponent(registry[theme]);
+        }
+        return 'blank';
+      }
+
+      function loadFilter(theme) {
+        if (registry === null) {
+          if (!serviceInvoked) {
+            serviceInvoked = true;
+            $http.get('../api/registries/vocabularies/search?type=CONTAINS&thesaurus=external.theme.IWRM-theme&rows=200&q=&uri=*&lang=' + gnLangs.getCurrent(),
+              {cache: true})
+              .then(function (r) {
+                registry = {};
+                for (var i = 0; i < r.data.length; i++) {
+                  registry[r.data[i].values[gnLangs.getCurrent()]] =
+                    r.data[i].uri.replace('http://oieau.org/iwrm/themes/', '');
+                }
+              });
+            return 'blank';
+          }
+        } else return realFilter(theme);
+      }
+
+      loadFilter.$stateful = true;
+
+      return loadFilter;
+    }]);
   /**
    * Append size parameter to request a smaller thumbnail.
    */

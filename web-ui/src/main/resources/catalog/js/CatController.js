@@ -81,21 +81,7 @@ goog.require('gn_login_service');
           'enabled': true,
           'languages': {
             'eng': 'en',
-            'dut': 'nl',
-            'fre': 'fr',
-            'ger': 'de',
-            'kor': 'ko',
-            'spa': 'es',
-            'cze': 'cs',
-            'cat': 'ca',
-            'fin': 'fi',
-            'ice': 'is',
-            'ita': 'it',
-            'por': 'pt',
-            'rus': 'ru',
-            'chi': 'zh',
-            'slo': 'sk',
-            'swe': 'sv'
+            'fre': 'fr'
           },
           'isLogoInHeader': false,
           'logoInHeaderPosition': 'left',
@@ -114,11 +100,10 @@ goog.require('gn_login_service');
           'showSocialBarInFooter': true,
           'fluidLayout': true,
           'facetConfig': {
-            'inspireThemeUri': {
-              'terms': {
-                'field': 'inspireThemeUri',
-                'size': 34
-                // "order" : { "_key" : "asc" }
+            "th_IWRM-theme.default": {
+              "terms": {
+                "field": "th_IWRM-theme.default",
+                "size": 34
               }
             },
             'cl_topic.key': {
@@ -288,34 +273,42 @@ goog.require('gn_login_service');
                 'size': 10
               }
             },
-            'availableInServices': {
-              'filters': {
-                //"other_bucket_key": "others",
-                // But does not support to click on it
-                'filters': {
-                  'availableInViewService': {
-                    'query_string': {
-                      'query': '+linkProtocol:/OGC:WMS.*/'
-                    }
-                  },
-                  'availableInDownloadService': {
-                    'query_string': {
-                      'query': '+linkProtocol:/OGC:WFS.*/'
-                    }
-                  }
+            "th_IWRM-theme_tree.key": {
+              "terms": {
+                "field": "th_IWRM-theme_tree.key",
+                "size": 34,
+                "order": {
+                  "_key": "asc"
                 }
+              },
+              'meta': {
+                'translateOnLoad': true,
+                'treeKeySeparator': '^'
+              }
+            },
+            "th_IWRM-country-basin_tree.key": {
+              "terms": {
+                "field": "th_IWRM-country-basin_tree.key",
+                "size": 34,
+                "order": {
+                  "_key": "asc"
+                }
+              },
+              'meta': {
+                'translateOnLoad': true,
+                'treeKeySeparator': '^'
               }
             },
             // GEMET configuration for non multilingual catalog
-            'th_gemet_tree.default': {
-              'terms': {
-                'field': 'th_gemet_tree.default',
-                'size': 100,
-                "order" : { "_key" : "asc" },
-                "include": "[^\^]+^?[^\^]+"
-                // Limit to 2 levels
-              }
-            },
+            // 'th_gemet_tree.default': {
+            //   'terms': {
+            //     'field': 'th_gemet_tree.default',
+            //     'size': 100,
+            //     "order" : { "_key" : "asc" },
+            //     "include": "[^\^]+^?[^\^]+"
+            //     // Limit to 2 levels
+            //   }
+            // },
             // GEMET configuration for multilingual catalog
             // The key is translated on client side by loading
             // required concepts
@@ -342,24 +335,24 @@ goog.require('gn_login_service');
             //     'translateOnLoad': true,
             //     'treeKeySeparator': '/'
             //   }
+            // // },
+            // 'th_httpinspireeceuropaeumetadatacodelistPriorityDatasetPriorityDataset_tree.default': {
+            //   'terms': {
+            //     'field': 'th_httpinspireeceuropaeumetadatacodelistPriorityDatasetPriorityDataset_tree.default',
+            //     'size': 100,
+            //     "order" : { "_key" : "asc" }
+            //   }
             // },
-            'th_httpinspireeceuropaeumetadatacodelistPriorityDatasetPriorityDataset_tree.default': {
-              'terms': {
-                'field': 'th_httpinspireeceuropaeumetadatacodelistPriorityDatasetPriorityDataset_tree.default',
-                'size': 100,
-                "order" : { "_key" : "asc" }
-              }
-            },
-            'tag.default': {
-              'terms': {
-                'field': 'tag.default',
-                'include': '.*',
-                'size': 10
-              },
-              'meta': {
-                'caseInsensitiveInclude': true
-              }
-            },
+            // 'tag.default': {
+            //   'terms': {
+            //     'field': 'tag.default',
+            //     'include': '.*',
+            //     'size': 10
+            //   },
+            //   'meta': {
+            //     'caseInsensitiveInclude': true
+            //   }
+            // },
             'th_regions_tree.default': {
               'terms': {
                 'field': 'th_regions_tree.default',
@@ -377,6 +370,20 @@ goog.require('gn_login_service');
             //     }
             //   }
             // },
+            'OrgForResource': {
+              'terms': {
+                'field': 'OrgForResource',
+                'include': '.*',
+                'size': 15
+              },
+              'meta': {
+                // Always display filter even no more elements
+                // This can be used when all facet values are loaded
+                // with a large size and you want to provide filtering.
+                // 'displayFilter': true,
+                'caseInsensitiveInclude': true
+              }
+            },
             "resolutionScaleDenominator": {
               "histogram": {
                 "field": "resolutionScaleDenominator",
@@ -422,20 +429,6 @@ goog.require('gn_login_service');
             //     }
             //   }
             // },
-            'OrgForResource': {
-              'terms': {
-                'field': 'OrgForResource',
-                'include': '.*',
-                'size': 15
-              },
-              'meta': {
-                // Always display filter even no more elements
-                // This can be used when all facet values are loaded
-                // with a large size and you want to provide filtering.
-                // 'displayFilter': true,
-                'caseInsensitiveInclude': true
-              }
-            },
             'cl_maintenanceAndUpdateFrequency.key': {
               'terms': {
                 'field': 'cl_maintenanceAndUpdateFrequency.key',

@@ -27,7 +27,7 @@ ALTER TABLE sourcesdes ALTER COLUMN label TYPE varchar(255);
 ALTER TABLE schematrondes ALTER COLUMN label TYPE varchar(255);
 
 -- New setting for server timezone
-INSERT INTO Settings (name, value, datatype, position, internal) VALUES ('system/server/timeZone', '', 0, 260, 'n');
+INSERT INTO Settings (name, value, datatype, "position", internal) VALUES ('system/server/timeZone', '', 0, 260, 'n');
 
 -- keep these at the bottom of the file!
 DROP INDEX idx_metadatafiledownloads_metadataid;
@@ -53,6 +53,14 @@ INSERT INTO Settings (name, value, datatype, position, internal) VALUES ('system
 
 
 UPDATE settings SET value = '1' WHERE name = 'system/threadedindexing/maxthreads';
+
+
+
+UPDATE Settings SET value='4.0.4' WHERE name='system/platform/version';
+UPDATE Settings SET value='0' WHERE name='system/platform/subVersion';
+
+-- #################################################################
+-- After start
 
 -- Utility script to update sequence to current value on Postgres
 -- https://github.com/geonetwork/core-geonetwork/pull/5003
@@ -82,8 +90,3 @@ SELECT setval('selection_id_seq', (SELECT max(id) + 1 FROM selections));
 SELECT setval('status_value_id_seq', (SELECT max(id) + 1 FROM statusvalues));
 SELECT setval('user_id_seq', (SELECT max(id) + 1 FROM users));
 SELECT setval('user_search_id_seq', (SELECT max(id) + 1 FROM usersearch));
-
-
-
-UPDATE Settings SET value='4.0.4' WHERE name='system/platform/version';
-UPDATE Settings SET value='0' WHERE name='system/platform/subVersion';

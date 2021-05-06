@@ -100,9 +100,9 @@ goog.require('gn_login_service');
           'showSocialBarInFooter': true,
           'fluidLayout': true,
           'facetConfig': {
-            "th_IWRM-theme.default": {
+            "th_IWRM-theme.link": {
               "terms": {
-                "field": "th_IWRM-theme.default",
+                "field": "th_IWRM-theme.link",
                 "size": 34
               }
             },
@@ -282,7 +282,7 @@ goog.require('gn_login_service');
                 }
               },
               'meta': {
-                'translateOnLoad': true,
+                'translateOnLoad': false,
                 'treeKeySeparator': '^'
               }
             },
@@ -295,7 +295,7 @@ goog.require('gn_login_service');
                 }
               },
               'meta': {
-                'translateOnLoad': true,
+                'translateOnLoad': false,
                 'treeKeySeparator': '^'
               }
             },

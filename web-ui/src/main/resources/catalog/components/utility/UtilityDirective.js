@@ -1398,19 +1398,24 @@
       }}
   ]);
 
-  module.filter('iwrmThemeIcon', ['$http', 'gnLangs', 'gnConfig',
+  module.filter('iwrmTheme', ['$http', 'gnLangs', 'gnConfig',
     function($http, gnLangs, gnConfig) {
       var registry = null,
         serviceInvoked = false;
 
-      function realFilter(theme) {
-        if (registry[theme]) {
-          return encodeURIComponent(registry[theme]);
+      function realFilter(theme, icon) {
+        if (registry[theme][icon ? 'icon' : 'label']) {
+          if (icon) {
+          return encodeURIComponent(registry[theme].icon);
+          } else {
+            return registry[theme].label;
+          }
+
         }
         return 'blank';
       }
 
-      function loadFilter(theme) {
+      function loadFilter(theme, icon) {
         if (registry === null) {
           if (!serviceInvoked) {
             serviceInvoked = true;
@@ -1419,19 +1424,23 @@
               .then(function (r) {
                 registry = {};
                 for (var i = 0; i < r.data.length; i++) {
-                  registry[r.data[i].values[gnLangs.getCurrent()]] =
-                    r.data[i].uri.replace('http://oieau.org/iwrm/themes/', '');
+                  registry[r.data[i].uri] = {
+                    icon: r.data[i].uri.replace('http://oieau.org/iwrm/themes/', ''),
+                    label: r.data[i].values[gnLangs.getCurrent()]
+                };
                 }
               });
             return 'blank';
           }
-        } else return realFilter(theme);
+        } else return realFilter(theme, icon);
       }
 
       loadFilter.$stateful = true;
 
       return loadFilter;
     }]);
+
+
   /**
    * Append size parameter to request a smaller thumbnail.
    */

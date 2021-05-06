@@ -655,7 +655,6 @@
       }
 
       buildTree(list, fieldId, tree, meta);
-
       if(Object.keys(translationsToLoad[fieldId]).length > 0) {
         loadTranslation(fieldId, tree).then(function(translations) {
           if (angular.isObject(translations)) {

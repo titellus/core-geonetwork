@@ -113,6 +113,9 @@
                     data-ng-if="homeFacet.key !== 'th_IWRM-theme.default'">
                 <i class="fa fa-3x gn-icon gn-icon-{{facet.key.toLowerCase().replace('/', '').replace(' ', '')}}"
                     data-ng-show="homeFacet.key === 'topic.key' || homeFacet.key === 'cl_hierarchyLevel.key'">
+<!--              <span class="badge-icon badge-result-topic pull-left">
+                <i class="fa fa-3x gn-icon gn-icon-{{facet.key.replace('/', '').replace(' ', '')}}"
+                    data-ng-show="homeFacet.key === 'cl_topic.key' || homeFacet.key === 'cl_hierarchyLevel.key'">-->
                 </i>
               </span>
 
@@ -164,7 +167,7 @@
                 class="pull-left clearfix"
                 data-ng-href='#/search?query_string={"{{homeFacet.lastKey}}": {"{{facet.key}}": true} }'>
                 <span class="badge-icon pull-left">
-                  <i class="fa fa-3x gn-icon gn-icon-{{facet.key.toLowerCase().replace('/', '').replace(' ', '')}}"
+                  <i class="fa fa-3x gn-icon gn-icon-{{facet.key.replace('/', '').replace(' ', '')}}"
                       data-ng-show="homeFacet.lastKey === 'topic_text' || homeFacet.lastKey === 'cl_hierarchyLevel.key'">
                   </i>
                 </span>

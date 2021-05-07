@@ -39,7 +39,6 @@ import org.springframework.jmx.support.RegistrationPolicy;
 
 import javax.annotation.PostConstruct;
 
-@EnableMBeanExport(registration = RegistrationPolicy.IGNORE_EXISTING)
 public class MessageProducerFactory {
 
     private static final String NEVER = "59 59 23 31 12 ? 2099";

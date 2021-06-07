@@ -29,7 +29,7 @@
   <groupId>org.geonetwork-opensource</groupId>
   <artifactId>geonetwork</artifactId>
   <packaging>pom</packaging>
-  <version>4.0.4-SNAPSHOT</version>
+  <version>4.0.5-SNAPSHOT</version>
   <name>GeoNetwork opensource</name>
   <description>GeoNetwork opensource is a standards based, Free and
     Open Source catalog application to manage spatially referenced
@@ -486,7 +486,7 @@
       <dependency>
         <groupId>commons-io</groupId>
         <artifactId>commons-io</artifactId>
-        <version>2.1</version>
+        <version>2.7</version>
       </dependency>
       <dependency>
         <groupId>commons-fileupload</groupId>
@@ -804,7 +804,7 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>24.1.1-jre</version>
+        <version>29.0-jre</version>
       </dependency>
       <dependency>
         <groupId>com.yammer.metrics</groupId>
@@ -831,7 +831,7 @@
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
-        <version>4.12</version>
+        <version>4.13.1</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -1118,6 +1118,16 @@
         <groupId>org.apache.pdfbox</groupId>
         <artifactId>pdfbox</artifactId>
         <version>2.0.19</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jasypt</groupId>
+        <artifactId>jasypt</artifactId>
+        <version>${jasypt.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jasypt</groupId>
+        <artifactId>jasypt-hibernate5</artifactId>
+        <version>${jasypt.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -1419,6 +1429,9 @@
      when watchlist notifier is triggered (Default 4AM) -->
     <savedselection.watchlist.frequency>0 0 4 * * ?</savedselection.watchlist.frequency>
 
+    <microservices.url></microservices.url>
+    <!--<microservices.url>http://localhost:9901</microservices.url>-->
+
     <!-- Proxy security configuration:
     * NONE: allow all.
     * DB_LINK_CHECK:
@@ -1449,6 +1462,12 @@
     <!-- Define the default analyzer for full text search. -->
     <es.index.analyzer.default>standard</es.index.analyzer.default>
 <!--    <es.default.analyzer>french_light</es.default.analyzer>-->
+
+    <!-- Define the number of records allowed to be retrieved during search.
+    Increase the value for large catalogue.
+    TODO: Probably better to switch to scroll API for full indexing. -->
+    <es.index.max_result_window.limit>15000</es.index.max_result_window.limit>
+
     <es.index.mapping.total_fields.limit>4000</es.index.mapping.total_fields.limit>
 
     <es.username></es.username>
@@ -1475,7 +1494,6 @@
      may be a bit slower as it requires to check for every
      request the list of hosts (but JPA cache db queries). -->
     <cors.allowedHosts>*</cors.allowedHosts>
-
 
     <jetty.version>9.4.27.v20200227</jetty.version>
     <jetty.file>jetty-distribution-${jetty.version}</jetty.file>
@@ -1511,6 +1529,7 @@
     <xbean.version>3.18</xbean.version>
     <jolokia.version>1.6.0</jolokia.version>
     <httpcomponents.version>4.5.9</httpcomponents.version>
+    <jasypt.version>1.9.3</jasypt.version>
 
     <skipIT>true</skipIT> <!-- disable integration tests by default, use the "it" profile to run them which enables them -->
   </properties>

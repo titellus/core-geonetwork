@@ -508,6 +508,7 @@
                 scope.layers = null;
                 scope.mapId = 'gn-thumbnail-maker-map';
                 scope.map = null;
+                scope.dataFormats = null;
 
                 scope.searchObj = {
                   internal: true,
@@ -713,6 +714,8 @@
                       getTypeConfig(linkToEdit) :
                       getType(linkType);
 
+                    scope.dataFormats = gnCurrentEdit.dataFormats;
+
                     if (gnCurrentEdit.mdOtherLanguages) {
                        scope.mdOtherLanguages = gnCurrentEdit.mdOtherLanguages;
                        scope.mdLangs = JSON.parse(scope.mdOtherLanguages);
@@ -834,7 +837,25 @@
                     gnSchemaManagerService.getEditorAssociationPanelConfig(
                       gnCurrentEdit.schema,
                       gnCurrentEdit.associatedPanelConfigId).then(function (r) {
-                      scope.config = r.config;
+                      scope.config = angular.copy(r.config);
+                      scope.config.types = [];
+                      for (var i = 0; i < r.config.types.length; i ++) {
+                        var c = r.config.types[i];
+                        if (c.extendWithDataFormats) {
+                          var labelPrefix = $translate.instant('recordFormatDownload');
+                          for (var j = 0; j < scope.gnCurrentEdit.dataFormats.length; j ++) {
+                            var f = scope.gnCurrentEdit.dataFormats[j],
+                              option = angular.copy(c);
+
+                            option.label = labelPrefix + f.label;
+                            option.fields.protocol.value = f.value;
+                            scope.config.types.push(option);
+                          }
+                        } else {
+                          scope.config.types.push(c);
+                        }
+                      }
+
 
                       if (withInit) {
                         init();
@@ -1120,6 +1141,11 @@
                       scope.params.name = '';
                       scope.params.desc = '';
                     }
+                    if (scope.params.function === ''
+                      && scope.params.protocol
+                      && scope.params.protocol.indexOf('DOWNLOAD') !== -1) {
+                      scope.params.function = 'download';
+                    }
                     scope.loadCurrentLink();
                   }
                 });
@@ -1234,7 +1260,7 @@
                     ['url', 'name'].forEach(function(pName) {
                       setParameterValue(pName, o[pName]);
                     });
-                    scope.params.protocol = 'WWW:DOWNLOAD-1.0-http--download';
+                    scope.params.protocol = scope.params.protocol || 'WWW:DOWNLOAD';
                   }
                 };
 
@@ -1247,11 +1273,12 @@
                         scope.metadataTitle = '';
                         var md = new Metadata(scope.stateObj.selectRecords[0]);
                         var links = md.getLinksByType();
+                        setParameterValue('desc', md.resourceTitle);
                         if (angular.isArray(links) && links.length === 1) {
                           scope.params.url = links[0].url;
                         } else {
                           scope.metadataLinks = links;
-                          scope.metadataTitle = md.title;
+                          scope.metadataTitle = md.resourceTitle;
                         }
                       }
                     });

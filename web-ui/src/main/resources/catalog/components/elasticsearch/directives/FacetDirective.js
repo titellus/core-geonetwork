@@ -286,9 +286,23 @@
       }
     }])
 
+  module.service('gnFacetVegaService', function() {
+    return {
+      check: function () {
+        try {
+          vegaEmbed
+        } catch (e) {
+          console.warn("Interactive graphic for facet not available. Vega is not available.", e);
+          return false;
+        }
+        return true;
+      }
+    };
+  });
+
   module.directive('gnFacetTemporalrange', [
-    '$timeout', '$translate',
-    function($timeout, $translate) {
+    '$timeout', '$translate', 'gnFacetVegaService',
+    function($timeout, $translate, gnFacetVegaService) {
     return {
       restrict: 'A',
       replace: true,
@@ -301,6 +315,10 @@
         updateCallback: '&callback'
       },
       link: function(scope, element, attrs, controller) {
+        if(!gnFacetVegaService.check()) {
+          return;
+        }
+
         scope.range = {
           from: null,
           to: null
@@ -308,11 +326,11 @@
         scope.signal = null;
 
         scope.vl = null;
-        scope.dateFormat = scope.facet.meta.dateFormat || 'DD-MM-YYYY';
-        scope.vegaDateFormat = scope.facet.meta.vegaDateFormat || '%d-%m-%Y';
+        scope.dateFormat = scope.facet.meta && scope.facet.meta.dateFormat || 'DD-MM-YYYY';
+        scope.vegaDateFormat = scope.facet.meta && scope.facet.meta.vegaDateFormat || '%d-%m-%Y';
         scope.dateRangeConfig = {
-          maxViewMode: scope.facet.meta.dateSelectMode || 'days',
-          minViewMode: scope.facet.meta.dateSelectMode || 'days'
+          maxViewMode: scope.facet.meta && scope.facet.meta.dateSelectMode || 'days',
+          minViewMode: scope.facet.meta && scope.facet.meta.dateSelectMode || 'days'
         };
         scope.initialRange = angular.copy(scope.facet.items);
 
@@ -326,7 +344,7 @@
             return d;
           });
           return [].concat(scope.initialRange, scope.facet.items);
-            }
+        }
         // Assign the specification to a local variable vlSpec.
         var vlSpec = {
           $schema: 'https://vega.github.io/schema/vega-lite/v4.json',
@@ -344,7 +362,7 @@
           },
           vconcat: [{
             mark: {
-              type: scope.facet.meta.mark || 'bar',
+              type: scope.facet.meta && scope.facet.meta.mark || 'bar',
               cornerRadiusEnd: 2
             },
             height: 100,
@@ -437,7 +455,7 @@
 
           scope.vl.view.addEventListener('click',
             function(event, item) {
-            if (item.datum && item.datum.$$hashKey) { // Avoid brush click
+            if (item && item.datum && item.datum.$$hashKey) { // Avoid brush click
               var vlId = item.datum.$$hashKey,
                 rangeItems = scope.vl.view.data('facetValues').filter(
                 function(e, i, a) {
@@ -496,14 +514,26 @@
         }
 
         scope.setRange = function() {
-          scope.signal = scope.range.from === undefined && scope.range.to === undefined
-            ? {}
+          scope.signal = (
+            (scope.range.from === undefined && scope.range.to === undefined)
+            || (scope.range.from === '' && scope.range.to === '')
+            ) ? {}
             : { key: [
               moment(scope.range.from, scope.dateFormat).valueOf(),
               moment(scope.range.to, scope.dateFormat).valueOf()
             ], update: false};
+          if (scope.vl) {
             scope.vl.view.signal('brush', scope.signal);
+          }
         }
+
+        scope.$watch('range.from', scope.setRange);
+        scope.$watch('range.to', scope.setRange);
+
+        scope.$on('resetSelection', function(event, args) {
+          scope.range.from = undefined;
+          scope.range.to = undefined;
+        });
       }
     }
   }])
@@ -511,8 +541,8 @@
 
 
   module.directive('gnFacetVega', [
-    '$timeout', '$filter',
-    function($timeout, $filter) {
+    '$timeout', '$filter', 'gnFacetVegaService',
+    function($timeout, $filter, gnFacetVegaService) {
       return {
         restrict: 'A',
         replace: true,
@@ -525,6 +555,10 @@
           updateCallback: '&callback'
         },
         link: function(scope, element, attrs, controller) {
+          if(!gnFacetVegaService.check()) {
+            return;
+          }
+
           scope.signal = null;
           scope.vl = null;
           scope.id = scope.facet.key.replace('.', '');
@@ -545,7 +579,7 @@
               // scale: {scheme: 'category20b'}
             }
           };
-          if (scope.facet.meta.vega === 'bar') {
+          if ((scope.facet.meta) && (scope.facet.meta.vega === 'bar')) {
             mark = 'bar';
             encoding = {
               y: {

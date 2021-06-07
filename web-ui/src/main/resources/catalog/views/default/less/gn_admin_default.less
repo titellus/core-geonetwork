@@ -52,9 +52,20 @@ ul.gn-resultview li.list-group-item {
     background-color: #fff;
     top: 0;
     z-index: 100;
+    padding-left: 0;
+    // navbar in admin always 100%
+    .container, .container-fluid {
+      width: auto;
+      padding: 0;
+      &> .navbar-header {
+        margin-right: 0;
+        margin-left: 0;
+      }
+    }
     .navbar-collapse {
       background: #fff;
     }
+
     .navbar-nav > li > a, .navbar-nav > .open > a, .navbar-nav > .active > a {
       color: @navbar-default-link-color;
       &:hover, &:focus {
@@ -202,6 +213,7 @@ ul.gn-resultview li.list-group-item {
       padding: 25px 10px 50px 10px;
       @media (max-width: @screen-xs-max) {
         margin-left: 0;
+        padding: 25px 0 50px 0;
       }
       // dashboard
       .gn-row-admin-buttons {
@@ -296,6 +308,9 @@ ul.gn-resultview li.list-group-item {
         }
         .navbar-right {
           margin-right: 0;
+          .btn {
+            float: none;
+          }
           @media (max-width: @screen-xs-max) {
             .form-control, .btn {
               margin: 10px 0;
@@ -337,6 +352,91 @@ ul.gn-resultview li.list-group-item {
         .gn-harvester-name {
           display: inline-block;
           width: 80%;
+          @media (max-width: 360px) {
+            width: 75%;
+          }
+        }
+      }
+      #gn-harvest-records-panel {
+        .gn-harvester-facets {
+          .gn-facet {
+            opacity: 1;
+            .gn-facet-root-container {
+              .clearfix();
+              .gn-facet-container {
+                width: calc(~"(100% / 3) - 15px");
+                float: left;
+                margin: 5px 15px 5px 0;
+                .gn-facet-item {
+                  a.flex-row {
+                    padding: 10px 15px;
+                    border-radius: @list-group-border-radius;
+                    border: 1px solid @list-group-border;
+                    text-align: center;
+                    flex-direction: column-reverse;
+                    &:hover {
+                      text-decoration: none;
+                    }
+                    .fa {
+                      display: none;
+                    }
+                    .gn-facet-label {
+                      color: #333;
+                      margin-bottom: 10px;
+                    }
+                    .gn-facet-count {
+                      color: #333;
+                      font-weight: 500;
+                      font-size: 36px;
+                      margin: 10px 0 0 0;
+                      &:after {
+                        content: none;
+                      }
+                      &:before {
+                        display: inline-block;
+                        font: normal normal normal 14px/1 FontAwesome;
+                        font-size: inherit;
+                        text-rendering: auto;
+                        -webkit-font-smoothing: antialiased;
+                        margin-right: 10px;
+                        content: "\f0f6";
+                      }
+                    }
+                    .gn-facet-count-0 {
+                      display: block;
+                    }
+                    &.gn-facet-checked {
+                      border-color: @brand-success;
+                    }
+                    &.gn-facet-checked-inverted {
+                      border-color: @brand-danger;
+                    }
+                  }
+                  a[title*="Download"] {
+                    .gn-facet-count {
+                      &:before {
+                        content: "\f019";
+                      }
+                    }
+                  }
+                  a[title*="View"] {
+                    .gn-facet-count {
+                      &:before {
+                        content: "\f06e";
+                      }
+                    }
+                  }
+                  .facet-invert {
+                    right: 18px;
+                    margin-top: 5px;
+                  }
+                }
+              }
+            }
+          }
+        }
+        .search-filter-tags .panel-body {
+          padding-left: 15px;
         }
       }
     }
@@ -345,11 +445,51 @@ ul.gn-resultview li.list-group-item {
       #gn-settings {
         margin-top: 15px;
       }
+      h1 {
+        font-size: 18px;
+        margin-bottom: 15px;
+        margin-top: 0;
+      }
+      .panel-heading h1 {
+        font-size: 18px;
+        margin: 0;
+        display: inline-block;
+      }
+      h2 {
+        font-size: 17px;
+        margin: 0;
+        border: none;
+      }
+      h3 {
+        font-size: 16px;
+        text-decoration: underline;
+        font-weight: 400;
+      }
+      legend {
+        font-size: 16px;
+        h2 {
+          display: inline-block;
+        }
+        h3 {
+          font-size: 16px;
+          text-decoration: none;
+          margin: 0;
+          display: inline-block;
+        }
+        .btn {
+          margin: 0;
+        }
+      }
       fieldset, [data-ng-show="uiConfiguration"] {
-        h1 {
-          font-size: 24px;
-          margin-bottom: 15px;
-          margin-top: 0;
+        label {
+          padding-top: 7px;
+          font-weight: normal;
+          &.control-label {
+            font-weight: 500;
+          }
+        }
+        .ace_editor {
+          border: 1px solid @panel-default-border;
         }
         fieldset {
           padding: 10px;
@@ -366,6 +506,12 @@ ul.gn-resultview li.list-group-item {
             font-size: 14px;
             border-top-left-radius: @gn-border-radius;
             border-top-right-radius: @gn-border-radius;
+            h1, h2, h3 {
+              display: inline-block;
+            }
+            h2 {
+              font-weight: 400;
+            }
             label {
               padding-top: 0;
               font-size: 14px;
@@ -380,8 +526,17 @@ ul.gn-resultview li.list-group-item {
           }
         }
       }
+      .input-group {
+        .table {
+          margin-bottom: 0;
+        }
+      }
     }
 
+    // statistics page
+    [data-ng-controller="GnDashboardRenderController"] {
+      margin: -25px -10px -50px -10px;
+    }
   }
 
 }

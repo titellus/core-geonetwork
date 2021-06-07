@@ -368,6 +368,14 @@
                'Failed to parse the following extent as JSON: ' +
                value);
              }
+             var dataFormats = [], value = getInputValue('dataformats');
+             try {
+               dataFormats = angular.fromJson(value);
+             } catch (e) {
+               console.warn(
+               'Failed to parse the following dataformats as JSON: ' +
+               value);
+             }
              angular.extend(gnCurrentEdit, {
                isService: getInputValue('isService') == 'true',
                isTemplate: getInputValue('template'),
@@ -389,6 +397,7 @@
                geoPublisherConfig:
                angular.fromJson(getInputValue('geoPublisherConfig')),
                extent: extent,
+               dataFormats: dataFormats,
                isMinor: getInputValue('minor') === 'true',
                layerConfig:
                angular.fromJson(getInputValue('layerConfig')),
@@ -654,8 +663,8 @@
            /**
            * Build a field name for an XML field
            */
-           buildXMLFieldName: function(elementRef, elementName) {
-             var t = ['_X', elementRef,
+           buildXMLFieldName: function(elementRef, elementName, prefix) {
+             var t = [(prefix || '_X'), elementRef,
                '_', elementName.replace(':', 'COLON')];
              return t.join('');
            }

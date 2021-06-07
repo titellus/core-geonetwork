@@ -47,8 +47,7 @@
            $location, $window, $timeout,
                gnUtilityService, gnConfig, gnGlobalSettings,
                vcRecaptchaService, $q) {
-          $scope.formAction = '../../signin#' +
-         $location.path();
+          $scope.formAction = '../../signin#' + $location.url();
           $scope.registrationStatus = null;
           $scope.sendPassword = false;
           $scope.password = null;
@@ -67,6 +66,13 @@
           $scope.gnConfig = gnConfig;
           $scope.isDisableLoginForm = gnGlobalSettings.isDisableLoginForm;
           $scope.isShowLoginAsLink = gnGlobalSettings.isShowLoginAsLink;
+
+         $scope.passwordMinLength =
+           Math.min(gnConfig['system.security.passwordEnforcement.minLength'], 6);
+         $scope.passwordMaxLength =
+           Math.max(gnConfig['system.security.passwordEnforcement.maxLength'], 6);
+         $scope.passwordPattern =
+           gnConfig['system.security.passwordEnforcement.pattern'];
 
           function initForm() {
            if ($window.location.pathname.indexOf('new.password') !== -1) {

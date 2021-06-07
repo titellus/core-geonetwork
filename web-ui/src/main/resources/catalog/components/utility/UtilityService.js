@@ -391,7 +391,8 @@
   module.factory('gnRegionService', [
     '$q',
     '$http',
-    function($q, $http) {
+    'gnGlobalSettings',
+    function($q, $http, gnGlobalSettings) {
 
       /**
       * Array of available region type
@@ -423,6 +424,8 @@
           }).success(function(response) {
             var data = response.region;
 
+            var defaultLang =  gnGlobalSettings.gnCfg.langDetector.default;
+
             // Compute default name and add a
             // tokens element which is used for filter
             angular.forEach(data, function(country) {
@@ -430,7 +433,7 @@
               angular.forEach(country.label, function(label) {
                 country.tokens.push(label);
               });
-              country.name = country.label[lang] || country.label[0];
+              country.name = country.label[lang] || country.label[defaultLang];
             });
             defer.resolve(data);
           });
@@ -615,15 +618,18 @@
             //   }
             // },
             if(meta && meta.treeKeySeparator) {
-              name = t.replaceAll(meta.treeKeySeparator, '^');
+              name = t.replaceAll(meta.treeKeySeparator, separator);
             }
 
             if (name.indexOf(separator) === 0) {
               name = name.slice(1);
             }
           }
+        } else {
+          if(meta && meta.treeKeySeparator) {
+            name = name.replaceAll(meta.treeKeySeparator, separator);
+          }
         }
-
 
         var g = name.split(separator);
         createNode(tree, fieldId, g, 0, e);
@@ -710,5 +716,67 @@
             timeout = $timeout(later, wait, invokeApply);
           });
       });
+  }]);
+
+
+
+  module.service('gnTreeFromSlash', [function() {
+    var findChild = function(node, name) {
+      var n;
+      if (node.nodes) {
+        for (var i = 0; i < node.nodes.length; i++) {
+          n = node.nodes[i];
+          if (name == n.name) {
+            return n;
+          }
+        }
+      }
+    };
+    var sortNodeFn = function(a, b) {
+      var aName = a.name;
+      var bName = b.name;
+      if (aName < bName) return -1;
+      if (aName > bName) return 1;
+      return 0;
+    };
+
+    var createNode = function(node, g, index, e) {
+      var group = g[index];
+      if (group) {
+        var newNode = findChild(node, group);
+        if (!newNode) {
+          newNode = {
+            name: group,
+            value: group
+            //selected: themesInSearch.indexOf(t['@name']) >= 0 ? true : false
+          };
+          if (!node.nodes) node.nodes = [];
+          node.nodes.push(newNode);
+          //node.nodes.sort(sortNodeFn);
+        }
+        createNode(newNode, g, index + 1, e);
+      } else {
+        node.key = e.key;
+        node.count = e.doc_count;
+      }
+    };
+
+    this.getTree = function(list) {
+      var tree = {
+        nodes: []
+      };
+      list.forEach(function(e) {
+        var name = e.key;
+        var g = name.split('/');
+        createNode(tree, g, 0, e);
+      });
+      return tree;
+    };
+  }]);
+
+  module.filter('sanitizeHtmlFilter', ['$filter', '$sanitize', function($filter, $sanitize) {
+    return function(input) {
+      return $sanitize(input);
+    }
   }]);
 })();

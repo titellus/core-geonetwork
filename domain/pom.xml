@@ -27,7 +27,7 @@
   <parent>
     <artifactId>geonetwork</artifactId>
     <groupId>org.geonetwork-opensource</groupId>
-    <version>4.0.4-SNAPSHOT</version>
+    <version>4.0.5-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -110,7 +110,14 @@
       <artifactId>h2</artifactId>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>org.jasypt</groupId>
+      <artifactId>jasypt</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jasypt</groupId>
+      <artifactId>jasypt-hibernate5</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

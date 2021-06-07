@@ -110,6 +110,20 @@
         },
         track_total_hits: true
       },
+      harvester: {
+        facets: gnGlobalSettings.gnCfg.mods.admin.facetConfig,
+        source: {
+          includes: [
+            'id',
+            'uuid',
+            'overview.*',
+            'resource*',
+            'isTemplate',
+            'valid'
+          ]
+        },
+        track_total_hits: true
+      },
       directory: {
         facets: {
           'valid': {
@@ -188,7 +202,8 @@
             'id',
             'uuid',
             'overview.*',
-            'resource*'
+            'resource*',
+            'link'
           ]
         }
       },
@@ -198,6 +213,11 @@
             "terms": {
               "field": "indexingErrorMsg.keyword",
               "size": 10
+            }
+          },
+          "isHarvested": {
+            "terms": {
+              "field": "isHarvested"
             }
           }
         },
@@ -359,11 +379,13 @@
           if (isTimeline) {
             facetModel.items = [];
             angular.forEach(respAgg.buckets, function(bucket, key) {
-              facetModel.items.push({
-                key_as_string: moment(parseInt(key)).toISOString(),
-                key: parseInt(key),
-                doc_count: bucket.doc_count
-              })
+              if (bucket.doc_count !== 0) {
+                facetModel.items.push({
+                  key_as_string: moment(parseInt(key)).toISOString(),
+                  key: parseInt(key),
+                  doc_count: bucket.doc_count
+                })
+              }
             });
           } else {
             facetModel.items = respAgg.buckets;

@@ -118,7 +118,9 @@ public final class Geonet {
         public static final String METADATA_BRIEF = "metadata-brief.xsl";
         public static final String METADATA_BASEBLANK = "blanks/metadata-schema00";
         public static final String METADATA_BLANK = "blanks/metadata-schema";
+        public static final String ENCRYPTOR_CONFIGURATION = "encryptor.properties";
         public static final int METADATA_MAX_BLANKS = 20;
+
     }
 
     public static final class SchemaPath {
@@ -627,7 +629,7 @@ public final class Geonet {
         public static final String HASXLINKS = "_hasxlinks";
         public static final String XLINK = "_xlink";
         public static final String ROOT = "_root";
-        public static final String SCHEMA = "schema";
+        public static final String SCHEMA = "documentStandard";
         public static final String DATABASE_CREATE_DATE = "createDate";
         public static final String DATABASE_CHANGE_DATE = "changeDate";
         public static final String SOURCE = "_source";

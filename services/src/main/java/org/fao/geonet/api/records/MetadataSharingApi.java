@@ -169,6 +169,7 @@ public class MetadataSharingApi {
     })
     @PreAuthorize("hasAuthority('Reviewer')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseBody
     public void publish(
         @Parameter(
             description = API_PARAM_RECORD_UUID,
@@ -195,6 +196,7 @@ public class MetadataSharingApi {
     })
     @PreAuthorize("hasAuthority('Reviewer')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseBody
     public void unpublish(
         @Parameter(
             description = API_PARAM_RECORD_UUID,
@@ -230,6 +232,7 @@ public class MetadataSharingApi {
     })
     @PreAuthorize("hasAuthority('Editor')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseBody
     public void share(
         @Parameter(
             description = API_PARAM_RECORD_UUID,
@@ -253,18 +256,14 @@ public class MetadataSharingApi {
         ApplicationContext appContext = ApplicationContextHolder.get();
         ServiceContext context = ApiUtils.createServiceContext(request);
 
-        boolean skip = false;
+        boolean skipAllReservedGroup = false;
 
         //--- in case of owner, privileges for groups 0,1 and GUEST are disabled
         //--- and are not sent to the server. So we cannot remove them
         UserSession us = ApiUtils.getUserSession(session);
         boolean isAdmin = Profile.Administrator == us.getProfile();
         if (!isAdmin && !accessManager.hasReviewPermission(context, Integer.toString(metadata.getId()))) {
-            skip = true;
-        }
-
-        if (sharing.isClear()) {
-            dataManager.deleteMetadataOper(context, String.valueOf(metadata.getId()), skip);
+            skipAllReservedGroup = true;
         }
 
         List<Operation> operationList = operationRepository.findAll();
@@ -274,7 +273,8 @@ public class MetadataSharingApi {
         }
 
         List<GroupOperations> privileges = sharing.getPrivileges();
-        setOperations(sharing, dataManager, context, appContext, metadata, operationMap, privileges, ApiUtils.getUserSession(session).getUserIdAsInt(), null, request);
+        setOperations(sharing, dataManager, context, appContext, metadata, operationMap, privileges,
+            ApiUtils.getUserSession(session).getUserIdAsInt(), skipAllReservedGroup, null, request);
         metadataIndexer.indexMetadataPrivileges(metadata.getUuid(), metadata.getId());
     }
 
@@ -386,7 +386,10 @@ public class MetadataSharingApi {
         AbstractMetadata metadata,
         Map<String, Integer> operationMap,
         List<GroupOperations> privileges,
-        Integer userId, MetadataProcessingReport report, HttpServletRequest request) throws Exception {
+        Integer userId,
+        boolean skipAllReservedGroup,
+        MetadataProcessingReport report,
+        HttpServletRequest request) throws Exception {
         if (privileges != null) {
 
             boolean sharingChanges = false;
@@ -395,6 +398,10 @@ public class MetadataSharingApi {
             boolean allowPublishNonApprovedMd = sm.getValueAsBool(Settings.METADATA_WORKFLOW_ALLOW_PUBLISH_NON_APPROVED_MD);
 
             SharingResponse sharingBefore = getRecordSharingSettings(metadata.getUuid(), request.getSession(), request);
+
+            if (sharing.isClear()) {
+                dataManager.deleteMetadataOper(context, String.valueOf(metadata.getId()), skipAllReservedGroup);
+            }
 
             for (GroupOperations p : privileges) {
                 for (Map.Entry<String, Boolean> o : p.getOperations().entrySet()) {
@@ -435,7 +442,9 @@ public class MetadataSharingApi {
             }
 
             if (sharingChanges) {
-                new RecordPrivilegesChangeEvent(metadata.getId(), userId, ObjectJSONUtils.convertObjectInJsonObject(sharingBefore.getPrivileges(), RecordPrivilegesChangeEvent.FIELD), ObjectJSONUtils.convertObjectInJsonObject(privileges, RecordPrivilegesChangeEvent.FIELD)).publish(appContext);
+                new RecordPrivilegesChangeEvent(metadata.getId(), userId,
+                    ObjectJSONUtils.convertObjectInJsonObject(sharingBefore.getPrivileges(), RecordPrivilegesChangeEvent.FIELD),
+                    ObjectJSONUtils.convertObjectInJsonObject(privileges, RecordPrivilegesChangeEvent.FIELD)).publish(appContext);
             }
         }
     }
@@ -960,7 +969,7 @@ public class MetadataSharingApi {
 
         List<GroupOperations> privileges = sharing.getPrivileges();
         setOperations(sharing, dataManager, context, appContext, metadata, operationMap, privileges,
-            ApiUtils.getUserSession(session).getUserIdAsInt(), null, request);
+            ApiUtils.getUserSession(session).getUserIdAsInt(), true,null, request);
         dataManager.indexMetadata(String.valueOf(metadata.getId()), true);
     }
 
@@ -1004,14 +1013,9 @@ public class MetadataSharingApi {
                     ApiUtils.createServiceContext(request), String.valueOf(metadata.getId()))) {
                     report.addNotEditableMetadataId(metadata.getId());
                 } else {
-                    boolean skip = false;
+                    boolean skipAllReservedGroup = false;
                     if (!isAdmin && accessMan.hasReviewPermission(context, Integer.toString(metadata.getId()))) {
-                        skip = true;
-                    }
-
-                    if (sharing.isClear()) {
-                        dataMan.deleteMetadataOper(context,
-                            String.valueOf(metadata.getId()), skip);
+                        skipAllReservedGroup = true;
                     }
 
                     OperationRepository operationRepository = appContext.getBean(OperationRepository.class);
@@ -1023,7 +1027,7 @@ public class MetadataSharingApi {
 
                     List<GroupOperations> privileges = sharing.getPrivileges();
                     setOperations(sharing, dataMan, context, appContext, metadata, operationMap, privileges,
-                        ApiUtils.getUserSession(session).getUserIdAsInt(), report, request);
+                        ApiUtils.getUserSession(session).getUserIdAsInt(), skipAllReservedGroup, report, request);
                     report.incrementProcessedRecords();
                     listOfUpdatedRecords.add(String.valueOf(metadata.getId()));
                 }

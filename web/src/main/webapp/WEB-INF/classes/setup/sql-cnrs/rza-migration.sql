@@ -284,6 +284,29 @@ DROP TABLE metadatastatus;
 UPDATE Settings SET value='4.0.3' WHERE name='system/platform/version';
 
 
+-- https://github.com/geonetwork/core-geonetwork/blob/4.0.x/web/src/main/webapp/WEB-INF/classes/setup/sql/migrate/v404/migrate-default.sql
+
+DELETE FROM Schematrondes WHERE iddes IN (SELECT id FROM schematron WHERE filename LIKE 'schematron-rules-inspire%');
+DELETE FROM Schematroncriteria WHERE group_name || group_schematronid IN (SELECT name || schematronid FROM schematroncriteriagroup WHERE schematronid IN (SELECT id FROM schematron WHERE filename LIKE 'schematron-rules-inspire%'));
+DELETE FROM Schematroncriteriagroup WHERE schematronid IN (SELECT id FROM schematron WHERE filename LIKE 'schematron-rules-inspire%');
+DELETE FROM Schematron WHERE filename LIKE 'schematron-rules-inspire%';
+
+
+UPDATE Settings SET value='4.0.4' WHERE name='system/platform/version';
+UPDATE Settings SET value='SNAPSHOT' WHERE name='system/platform/subVersion';
+
+-- ALTER TABLE Settings ADD COLUMN encrypted VARCHAR(1) DEFAULT 'n';
+-- UPDATE Settings SET encrypted='y' WHERE name='system/proxy/password';
+-- UPDATE Settings SET encrypted='y' WHERE name='system/feedback/mailServer/password';
+-- UPDATE Settings SET encrypted='y' WHERE name='system/publication/doi/doipassword';
+
+-- https://github.com/geonetwork/core-geonetwork/blob/4.0.x/web/src/main/webapp/WEB-INF/classes/setup/sql/migrate/v405/migrate-default.sql
+
+UPDATE metadata SET data = replace(data, 'WWW:DOWNLOAD-OGC:OWS-C', 'OGC:OWS-C') WHERE data LIKE '%WWW:DOWNLOAD-OGC:OWS-C%';
+
+UPDATE Settings SET value='4.0.5' WHERE name='system/platform/version';
+UPDATE Settings SET value='SNAPSHOT' WHERE name='system/platform/subVersion';
+
 
 -- RZA clean up
 

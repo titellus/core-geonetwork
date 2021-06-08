@@ -1,4 +1,15 @@
-# GeoNetwork RZA - Database migration
+# GeoNetwork RZA 
+
+http://meta.data-za.org/geonetwork/
+
+## Application
+
+```bash
+mkdir catalogue
+wget https://files.titellus.net/geonetwork/rza/catalogue.war
+```
+
+## Database migration
 
 Current version (eg. 3.6.0):
 ```sql
@@ -22,22 +33,77 @@ The migration will update metadata content with:
 * Update to ISO19139:2007
 
 
-# Restore current 3.6.0 database
+### Restore current 3.6.0 database
 
 Create the new database:
 ```sql
-CREaTE DATABASE rza-catalogue OWNER gn;
+CREATE DATABASE rza-catalogue OWNER gn;
 ```
+
 Import old database content:
 ```shell script
 psql -U gn -h localhost -f gndb.sql rza-catalogue
 ```
 
-# SQL migration
+or if on same server
+
+```sql
+CREATE DATABASE rza-catalogue WITH TEMPLATE old_db_name OWNER gn;
+```
+
+
+### SQL migration
 
 Migrate the db structure and data using SQL script: See [rza-migration.sql](rza-migration.sql).
 
-# Start the application
+## Install Elasticsearch
+
+Cf. https://www.elastic.co/downloads/elasticsearch
+
+## Install Kibana
+
+Cf. https://www.elastic.co/downloads/kibana
+
+## Check Tomcat
+
+TODO
+
+## Configure the application
+
+```bash
+cp catalogue.war /usr/share/tomcat8/webapp/.
+mkdir /usr/share/tomcat8/gn_data_dir
+
+vi /usr/share/tomcat8/bin/setenv.sh
+```
+
+Update `setenv.sh`:
+```bash
+GEONETWORK_DB_HOST=localhost
+GEONETWORK_DB_PORT=5432
+GEONETWORK_DB_NAME=rza-catalogue
+GEONETWORK_DB_USERNAME=gn
+GEONETWORK_DB_PASSWORD=changeme
+CATALINA_OPTS="$CATALINA_OPTS -Xms1g -Xmx2g -XX:MaxPermSize=512m -Dgeonetwork.dir=/usr/share/tomcat8/gn_data_dir -Dgeonetwork.schema.dir=/var/lib/tomcat8/webapps/catalogue/WEB-INF/data/config/schema_plugins -Ddb.type=postgres"
+```
+
+Copy old data directory content:
+```bash
+TODO
+```
+
+## Start the application
+
+```bash
+sudo service tomcat8 start
+```
+
+
+Copy new thesaurus from webapp to datadir:
+```bash
+TODO
+```
+
 
 
 # Migrate application using API call

@@ -1,0 +1,541 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:dcterms="http://purl.org/dc/terms/"
+         xmlns:foaf="http://xmlns.com/foaf/0.1/"
+         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:skos="http://www.w3.org/2004/02/skos/core#">
+  <skos:ConceptScheme rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7">
+    <dc:title>Classification des habitats EUNIS</dc:title>
+    <dc:description></dc:description>
+    <dc:creator>
+      <foaf:Organization>
+        <foaf:name>RZA</foaf:name>
+      </foaf:Organization>
+    </dc:creator>
+    <dc:rights>GPL v2</dc:rights>
+    <dcterms:issued>Mon Mar 21 09:00:00 CEST 2016</dcterms:issued>
+    <dcterms:modified>2021-03-15 09:00:00</dcterms:modified>
+    <skos:hasTopConcept rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/root"/>
+  </skos:ConceptScheme>
+
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/root">
+    <skos:prefLabel xml:lang="en">Classification des habitats EUNIS</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Classification des habitats EUNIS</skos:prefLabel>
+    <skos:inScheme rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7"/>
+  </skos:Concept>
+
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/80">
+    <skos:prefLabel xml:lang="en">Inland surface waters</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Eaux de surface continentales</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/root"/>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/80"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/81">
+    <skos:prefLabel xml:lang="en">Coastal habitats</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Habitats côtiers</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/root"/>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/81"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/82">
+    <skos:prefLabel xml:lang="en">Mires, bogs and fens</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Tourbières hautes et bas-marais</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/root"/>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/82"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/83">
+    <skos:prefLabel xml:lang="en">Grasslands and lands dominated by forbs, mosses or lichens</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Prairies ; terrains dominés par des herbacées non graminoïdes, des mousses ou des
+      lichens
+    </skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/root"/>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/83"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/84">
+    <skos:prefLabel xml:lang="en">Heathland, scrub and tundra</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Landes, fourrés et toundras</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/root"/>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/84"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/85">
+    <skos:prefLabel xml:lang="en">Woodland, forest and other wooded land</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Boisements, forêts et autres habitats boisés</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/root"/>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/85"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/86">
+    <skos:prefLabel xml:lang="en">Habitat complexes</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Complexes d'habitats</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/root"/>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/87">
+    <skos:prefLabel xml:lang="en">Inland unvegetated or sparsely vegetated habitats</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Habitats continentaux sans végétation ou à végétation clairsemée</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/root"/>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/87"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/88">
+    <skos:prefLabel xml:lang="en">Regularly or recently cultivated agricultural, horticultural and domestic habitats
+    </skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Habitats agricoles, horticoles et domestiques régulièrement ou récemment cultivés
+    </skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/root"/>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/88"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/89">
+    <skos:prefLabel xml:lang="en">Constructed, industrial and other artificial habitats</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Zones bâties, sites industriels et autres habitats artificiels</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/root"/>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/89"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/79">
+    <skos:prefLabel xml:lang="en">Marine habitats</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Habitats marins</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/root"/>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/79"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/579">
+    <skos:prefLabel xml:lang="en">Littoral rock and other hard substrata</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Roche et autres substrats durs intertidaux</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/79"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/580">
+    <skos:prefLabel xml:lang="en">Littoral sediment</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Sédiment intertidal</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/79"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/581">
+    <skos:prefLabel xml:lang="en">Infralittoral rock and other hard substrata</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Roche et autres substrats durs infralittoraux</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/79"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/582">
+    <skos:prefLabel xml:lang="en">Sublittoral sediment</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Sédiment subtidal</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/79"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/583">
+    <skos:prefLabel xml:lang="en">Circalittoral rock and other hard substrata</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Roche et autres substrats durs circalittoraux</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/79"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/584">
+    <skos:prefLabel xml:lang="en">Surface running waters</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Eaux courantes de surface</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/80"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/585">
+    <skos:prefLabel xml:lang="en">Rock cliffs, ledges and shores, including the supralittoral</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Falaises, corniches et rivages rocheux, incluant le supralittoral</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/81"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/586">
+    <skos:prefLabel xml:lang="en">Surface standing waters</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Eaux dormantes de surface</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/80"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/587">
+    <skos:prefLabel xml:lang="en">Littoral zone of inland surface waterbodies</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Zones littorales des eaux de surface continentales</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/80"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/588">
+    <skos:prefLabel xml:lang="en">Ice-associated marine habitats</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr"></skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/79"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/589">
+    <skos:prefLabel xml:lang="en">Coastal shingle</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Galets côtiers</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/81"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/590">
+    <skos:prefLabel xml:lang="en">Coastal dunes and sandy shores</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Dunes côtières et rivages sableux</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/81"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/591">
+    <skos:prefLabel xml:lang="en">Deep-sea bed</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Habitats profonds</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/79"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/592">
+    <skos:prefLabel xml:lang="en">Raised and blanket bogs</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Tourbières hautes et tourbières de couverture</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/82"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/593">
+    <skos:prefLabel xml:lang="en">Pelagic water column</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Habitats pélagiques</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/79"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/594">
+    <skos:prefLabel xml:lang="en">Inland saline and brackish marshes and reedbeds</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Marais continentaux salés et saumâtres et roselières</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/82"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/595">
+    <skos:prefLabel xml:lang="en">Dry grasslands</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Pelouses sèches</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/83"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/596">
+    <skos:prefLabel xml:lang="en">Sedge and reedbeds, normally without free-standing water</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Roselières sèches et cariçaies, normalement sans eau libre</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/82"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/597">
+    <skos:prefLabel xml:lang="en">Valley mires, poor fens and transition mires</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Tourbières de vallée, bas-marais acides et tourbières de transition</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/82"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/598">
+    <skos:prefLabel xml:lang="en">Aapa, palsa and polygon mires</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr"></skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/82"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/599">
+    <skos:prefLabel xml:lang="en">Base-rich fens and calcareous spring mires</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Bas-marais riches en bases et tourbières des sources calcaires</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/82"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/600">
+    <skos:prefLabel xml:lang="en">Woodland fringes and clearings and tall forb stands</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Ourlets, clairières forestières et peuplements de grandes herbacées non graminoïdes
+    </skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/83"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/601">
+    <skos:prefLabel xml:lang="en">Alpine and subalpine grasslands</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Pelouses alpines et subalpines</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/83"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/602">
+    <skos:prefLabel xml:lang="en">Seasonally wet and wet grasslands</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Prairies humides et prairies humides saisonnières</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/83"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/603">
+    <skos:prefLabel xml:lang="en">Maquis, arborescent matorral and thermo-Mediterranean brushes</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Maquis, matorrals arborescents et fourrés thermo-méditerranéens</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/84"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/604">
+    <skos:prefLabel xml:lang="en">Temperate and mediterranean-montane scrub</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Fourrés tempérés et méditerranéo-montagnards</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/84"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/605">
+    <skos:prefLabel xml:lang="en">Sparsely wooded grasslands</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Prairies peu boisées</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/83"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/606">
+    <skos:prefLabel xml:lang="en">Mesic grasslands</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Prairies mésiques</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/83"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/607">
+    <skos:prefLabel xml:lang="en">Tundra</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr"></skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/84"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/608">
+    <skos:prefLabel xml:lang="en">Arctic, alpine and subalpine scrub</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Fourrés arctiques, alpins et subalpins</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/84"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/609">
+    <skos:prefLabel xml:lang="en">Temperate shrub heathland</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Landes arbustives tempérées</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/84"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/610">
+    <skos:prefLabel xml:lang="en">Inland salt steppes</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Steppes salées continentales</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/83"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/611">
+    <skos:prefLabel xml:lang="en">Garrigue</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Garrigues</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/84"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/612">
+    <skos:prefLabel xml:lang="en">Shrub plantations</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Plantations d'arbustes</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/84"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/613">
+    <skos:prefLabel xml:lang="en">Thermo-Atlantic xerophytic scrub</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr"></skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/84"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/614">
+    <skos:prefLabel xml:lang="en">Riverine and fen scrubs</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Fourrés ripicoles et des bas-marais</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/84"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/615">
+    <skos:prefLabel xml:lang="en">Hedgerows</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Haies</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/84"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/616">
+    <skos:prefLabel xml:lang="en">Broadleaved deciduous woodland</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Forêts de feuillus caducifoliés</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/85"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/617">
+    <skos:prefLabel xml:lang="en">Spiny Mediterranean heaths (phrygana, hedgehog-heaths and related coastal cliff
+      vegetation)
+    </skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Landes épineuses méditerranéennes (phryganes, landes-hérisson et végétation apparentée
+      des falaises littorales)
+    </skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/84"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/618">
+    <skos:prefLabel xml:lang="en">Coniferous woodland</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Forêts de conifères</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/85"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/619">
+    <skos:prefLabel xml:lang="en">Broadleaved evergreen woodland</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Forêts de feuillus sempervirents</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/85"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/620">
+    <skos:prefLabel xml:lang="en">Low density buildings</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Constructions à faible densité</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/89"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/621">
+    <skos:prefLabel xml:lang="en">Extractive industrial sites</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Sites industriels d'extraction</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/89"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/622">
+    <skos:prefLabel xml:lang="en">Transport networks and other constructed hard-surfaced areas</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Réseaux de transport et autres zones de construction à surface dure</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/89"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/623">
+    <skos:prefLabel xml:lang="en">Highly artificial man-made waters and associated structures</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Plans d'eau construits très artificiels et structures connexes</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/89"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/624">
+    <skos:prefLabel xml:lang="en">Lines of trees, small anthropogenic woodlands, recently felled woodland, early-stage
+      woodland and coppice
+    </skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Alignements d'arbres, petits bois anthropiques, boisements récemment abattus, stades
+      initiaux de boisements et taillis
+    </skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/85"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/625">
+    <skos:prefLabel xml:lang="en">Inland cliffs, rock pavements and outcrops</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Falaises continentales, pavements rocheux et affleurements rocheux</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/87"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/626">
+    <skos:prefLabel xml:lang="en">Snow or ice-dominated habitats</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Habitats dominés par la neige ou la glace</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/87"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/627">
+    <skos:prefLabel xml:lang="en">Estuaries</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Estuaires</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/628">
+    <skos:prefLabel xml:lang="en">Pasture woods (with a tree layer overlying pasture)</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Pâturages boisés (avec une strate arborée recouvrant le pâturage)</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/629">
+    <skos:prefLabel xml:lang="en">Mosaic landscapes with a woodland element (bocages)</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Bocages</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/630">
+    <skos:prefLabel xml:lang="en">Miscellaneous inland habitats with very sparse or no vegetation</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Habitats continentaux divers sans végétation ou à végétation clairsemée
+    </skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/87"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/631">
+    <skos:prefLabel xml:lang="en">Treeline ecotones</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Écotones de la limite de développement des arbres</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/632">
+    <skos:prefLabel xml:lang="en">Small city centre non-domestic gardens</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Petits jardins non domestiques des centres-villes</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/633">
+    <skos:prefLabel xml:lang="en">Large non-domestic gardens</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Grands jardins non domestiques</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/634">
+    <skos:prefLabel xml:lang="en">Terrestrial underground caves, cave systems, passages and waterbodies</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Grottes, systèmes de grottes, passages et plans d'eau souterrains terrestres
+    </skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/87"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/635">
+    <skos:prefLabel xml:lang="en">Saline coastal lagoons</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Lagunes littorales salées</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/636">
+    <skos:prefLabel xml:lang="en">Brackish coastal lagoons</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Lagunes littorales saumâtres</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/637">
+    <skos:prefLabel xml:lang="en">Recent volcanic features</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Reliefs volcaniques récents</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/87"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/638">
+    <skos:prefLabel xml:lang="en">Large parks</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Grands parcs</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/639">
+    <skos:prefLabel xml:lang="en">Land sparsely wooded with broadleaved deciduous trees</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Terrains faiblement boisés avec des arbres feuillus caducifoliés</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/640">
+    <skos:prefLabel xml:lang="en">Land sparsely wooded with broadleaved evergreen trees</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Terrains faiblement boisés avec des arbres feuillus sempervirents</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/641">
+    <skos:prefLabel xml:lang="en">Land sparsely wooded with coniferous trees</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Terrains faiblement boisés avec des conifères</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/642">
+    <skos:prefLabel xml:lang="en">Land sparsely wooded with mixed broadleaved and coniferous trees</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Terrains faiblement boisés avec des arbres feuillus et des conifères</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/643">
+    <skos:prefLabel xml:lang="en">Wooded steppe</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr"></skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/644">
+    <skos:prefLabel xml:lang="en">Wooded tundra</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr"></skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/645">
+    <skos:prefLabel xml:lang="en">Waste deposits</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Dépôts de déchets</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/89"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/646">
+    <skos:prefLabel xml:lang="en">Raised bog complexes</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Complexes de tourbières hautes</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/647">
+    <skos:prefLabel xml:lang="en">Snow patches</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Combes à neige</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/648">
+    <skos:prefLabel xml:lang="en">Crops shaded by trees</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Cultures ombragées par des arbres</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/649">
+    <skos:prefLabel xml:lang="en">Intensively-farmed crops interspersed with strips of natural and/or semi-natural
+      vegetation
+    </skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Cultures intensives parsemées de bandes de végétation naturelle et/ou semi-naturelle
+    </skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/650">
+    <skos:prefLabel xml:lang="en">Screes</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Éboulis</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/87"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/651">
+    <skos:prefLabel xml:lang="en">Arable land and market gardens</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Cultures et jardins maraîchers</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/88"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/652">
+    <skos:prefLabel xml:lang="en">Cultivated areas of gardens and parks</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Zones cultivées des jardins et des parcs</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/88"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/653">
+    <skos:prefLabel xml:lang="en">Mixed deciduous and coniferous woodland</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Formations mixtes d'espèces caducifoliées et de conifères</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/85"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/654">
+    <skos:prefLabel xml:lang="en">Buildings of cities, towns and villages</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Bâtiments des villes et des villages</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/89"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/655">
+    <skos:prefLabel xml:lang="en">Domestic gardens of city and town centres</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Jardins domestiques des villes et des centres-villes</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/656">
+    <skos:prefLabel xml:lang="en">Domestic gardens of villages and urban peripheries</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Jardins domestiques des villages et des périphéries urbaines</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/657">
+    <skos:prefLabel xml:lang="en">Machair complexes</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr"></skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/658">
+    <skos:prefLabel xml:lang="en">Blanket bog complexes</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Complexes de tourbières de couverture</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/659">
+    <skos:prefLabel xml:lang="en">Salt lake islands</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr"></skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/660">
+    <skos:prefLabel xml:lang="en">Bentho-pelagic habitats</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Habitats bentho-pélagiques</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/661">
+    <skos:prefLabel xml:lang="en">Mosaics of mobile and non-mobile substrata in the littoral zone</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Mosaïques de substrats mobiles et non-mobile de la zone intertidale</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/662">
+    <skos:prefLabel xml:lang="en">Mosaics of mobile and non-mobile substrata in the infralittoral zone</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Mosaïques de substrats mobiles et non-mobile de l'infralittoral</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/663">
+    <skos:prefLabel xml:lang="en">Mosaics of mobile and non-mobile substrata in the circalittoral zone</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Mosaïques de substrats mobiles et non-mobiles du circalittoral</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="https://inpn.mnhn.fr/habitat/cd_typo/7/664">
+    <skos:prefLabel xml:lang="en">Anchihaline caves</skos:prefLabel>
+    <skos:prefLabel xml:lang="fr">Grottes anchialines</skos:prefLabel>
+    <skos:broader rdf:resource="https://inpn.mnhn.fr/habitat/cd_typo/7/86"/>
+  </skos:Concept>
+</rdf:RDF>

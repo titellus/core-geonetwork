@@ -42,10 +42,11 @@ CREATE DATABASE rza-catalogue OWNER gn;
 
 Import old database content:
 ```shell script
+pg_dump -U postgres -d sourcedb -f gndb.sql
 psql -U gn -h localhost -f gndb.sql rza-catalogue
 ```
 
-or if on same server
+or if on same server (and no user session)
 
 ```sql
 CREATE DATABASE rza-catalogue WITH TEMPLATE old_db_name OWNER gn;

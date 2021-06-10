@@ -49,8 +49,7 @@
            $location, $window, $timeout,
                gnUtilityService, gnConfig, gnGlobalSettings,
                vcRecaptchaService, $q, gnLoginService) {
-          $scope.formAction = '../../signin#' +
-         $location.path();
+          $scope.formAction = '../../signin#' + $location.url();
           $scope.registrationStatus = null;
           $scope.sendPassword = false;
           $scope.password = null;

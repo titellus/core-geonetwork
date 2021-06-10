@@ -160,7 +160,7 @@
       this.validateMdLinks = function(bucket) {
         $rootScope.$broadcast('operationOnSelectionStart');
         return gnHttp.callService('../api/records/links?' +
-          'bucket=' + bucket, null, {
+          'analyze=true&bucket=' + bucket, null, {
           method: 'POST'
         }).then(function(data) {
           $rootScope.processReport = data.data;
@@ -250,7 +250,7 @@
         scope.task = t;
         scope.statusToSelect = statusToBe;
         gnUtilityService.openModal({
-          title: 'mdStatusTitle-' + label,
+          title: label ? 'mdStatusTitle-' + label : "status-" + t.id,
           content: '<div data-gn-metadata-status-updater="md" ' +
                         'data-status-to-select="' + statusToBe +
                         '" data-status-type="' + statusType + '" task="t"></div>'

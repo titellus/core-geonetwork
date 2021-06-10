@@ -32,6 +32,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.fao.geonet.api.ApiParams;
 import org.fao.geonet.api.ApiUtils;
 import org.fao.geonet.api.exception.ResourceNotFoundException;
+import org.fao.geonet.api.tools.i18n.TranslationPackBuilder;
 import org.fao.geonet.domain.*;
 import org.fao.geonet.guiapi.search.XsltResponseWriter;
 import org.fao.geonet.repository.LanguageRepository;
@@ -70,6 +71,9 @@ public class SourcesApi {
 
     @Autowired
     LanguageRepository langRepository;
+
+    @Autowired
+    private TranslationPackBuilder translationPackBuilder;
 
     @io.swagger.v3.oas.annotations.Operation(
         summary = "Get all sources",
@@ -154,6 +158,7 @@ public class SourcesApi {
         @ApiResponse(responseCode = "201", description = "Source created."),
         @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_ADMIN)
     })
+    @ResponseBody
     public ResponseEntity addSource(
         @Parameter(
             name = "source"
@@ -187,6 +192,9 @@ public class SourcesApi {
 
         Source sourceCreated = sourceRepository.save(source);
         copySourceLogo(source, request);
+
+        translationPackBuilder.clearCache();
+
         return new ResponseEntity(sourceCreated.getUuid(), HttpStatus.CREATED);
     }
 
@@ -211,6 +219,7 @@ public class SourcesApi {
         @ApiResponse(responseCode = "404", description = "Source not found."),
         @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_USER_ADMIN)
     })
+    @ResponseBody
     public ResponseEntity updateSource(
         @Parameter(
             description = "Source identifier",
@@ -227,8 +236,16 @@ public class SourcesApi {
             HttpServletRequest request) throws Exception {
         Optional<Source> existingSource = sourceRepository.findById(sourceIdentifier);
         if (existingSource.isPresent()) {
+            // Rebuild translation pack cache if there are changes in the translations
+            boolean clearTranslationPackCache =
+                !existingSource.get().getLabelTranslations().equals(source.getLabelTranslations());
+
             updateSource(sourceIdentifier, source, sourceRepository);
             copySourceLogo(source, request);
+
+            if (clearTranslationPackCache) {
+                translationPackBuilder.clearCache();
+            }
         } else {
             throw new ResourceNotFoundException(String.format(
                 "Source with uuid '%s' does not exist.",
@@ -252,6 +269,7 @@ public class SourcesApi {
         @ApiResponse(responseCode = "201", description = "Source deleted."),
         @ApiResponse(responseCode = "403", description = ApiParams.API_RESPONSE_NOT_ALLOWED_ONLY_ADMIN)
     })
+    @ResponseBody
     public ResponseEntity deleteSource(
         @Parameter(
             description = "Source identifier",

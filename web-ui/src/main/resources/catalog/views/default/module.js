@@ -129,13 +129,15 @@
     'gnGlobalSettings',
     'gnESClient',
     'gnESFacet',
+    'gnFacetSorter',
     'gnExternalViewer',
     function($scope, $location, $filter,
              suggestService, $http, $translate,
              gnUtilityService, gnSearchSettings, gnViewerSettings,
              gnMap, gnMdView, mdView, gnWmsQueue,
              gnSearchLocation, gnOwsContextService,
-             hotkeys, gnGlobalSettings, gnESClient, gnESFacet, gnExternalViewer) {
+             hotkeys, gnGlobalSettings, gnESClient,
+             gnESFacet, gnFacetSorter, gnExternalViewer) {
 
 
       var viewerMap = gnSearchSettings.viewerMap;
@@ -145,7 +147,10 @@
       $scope.modelOptions = angular.copy(gnGlobalSettings.modelOptions);
       $scope.modelOptionsForm = angular.copy(gnGlobalSettings.modelOptions);
       $scope.isFilterTagsDisplayedInSearch = gnGlobalSettings.gnCfg.mods.search.isFilterTagsDisplayedInSearch;
+      $scope.showStatusFooterFor = gnGlobalSettings.gnCfg.mods.search.showStatusFooterFor;
       $scope.exactMatchToggle = gnGlobalSettings.gnCfg.mods.search.exactMatchToggle;
+      $scope.exactTitleToggle = gnGlobalSettings.gnCfg.mods.search.exactTitleToggle;
+      $scope.searchOptions = gnGlobalSettings.gnCfg.mods.search.searchOptions;
       $scope.gnWmsQueue = gnWmsQueue;
       $scope.$location = $location;
       $scope.activeTab = '/home';
@@ -161,6 +166,8 @@
       $scope.fluidEditorLayout = gnGlobalSettings.gnCfg.mods.editor.fluidEditorLayout;
       $scope.fluidHeaderLayout = gnGlobalSettings.gnCfg.mods.header.fluidHeaderLayout;
       $scope.showGNName = gnGlobalSettings.gnCfg.mods.header.showGNName;
+
+      $scope.facetSorter = gnFacetSorter.sortByTranslation;
 
       $scope.toggleMap = function () {
         $(searchMap.getTargetElement()).toggle();

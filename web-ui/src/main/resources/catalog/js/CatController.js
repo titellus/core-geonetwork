@@ -87,7 +87,8 @@ goog.require('gn_login_service');
           'logoInHeaderPosition': 'left',
           'fluidHeaderLayout': true,
           'showGNName': true,
-          'isHeaderFixed': false
+          'isHeaderFixed': false,
+          'isMenubarAccessible': true
         },
         'cookieWarning': {
           'enabled': true,
@@ -131,8 +132,9 @@ goog.require('gn_login_service');
           // Full text on all fields
           // 'queryBase': '${any}',
           // Full text but more boost on title match
-          'queryBase': 'any:(${any}) resourceTitleObject.default:(${any})^2',
-          'exactMatchToggle': true,
+          'queryBase': 'any:(${any}) resourceTitleObject.\\*:(${any})^2',
+          'queryTitle': '${any}',
+          'searchOptions': true,
           // Score query may depend on where we are in the app?
           'scoreConfig': {
             // Score experiments:
@@ -550,6 +552,7 @@ goog.require('gn_login_service');
             'maps': ['ows']
           },
           'isFilterTagsDisplayedInSearch': true,
+          'showStatusFooterFor': 'historicalArchive,obsolete,superseded',
           'usersearches': {
             'enabled': false,
             'includePortals': true,
@@ -629,8 +632,9 @@ goog.require('gn_login_service');
             'appUrl': 'https://secure.geonames.org/searchJSON'
         },
         'recordview': {
-          'enabled': true,
-          'isSocialbarEnabled': true
+          'isSocialbarEnabled': true,
+          'showStatusWatermarkFor': 'historicalArchive,obsolete,superseded',
+          'showStatusTopBarFor': ''
         },
         'editor': {
           'enabled': true,
@@ -759,12 +763,10 @@ goog.require('gn_login_service');
             }
           }
         },
-        'signin': {
+        'authentication': {
           'enabled': true,
-          'appUrl': '../../{{node}}/{{lang}}/catalog.signin'
-        },
-        'signout': {
-          'appUrl': '../../signout'
+          'signinUrl': '../../{{node}}/{{lang}}/catalog.signin',
+          'signoutUrl': '../../signout'
         },
         'page': {
           'enabled': true,
@@ -792,6 +794,8 @@ goog.require('gn_login_service');
       current: null,
       isDisableLoginForm: false,
       isShowLoginAsLink: false,
+      isUserProfileUpdateEnabled: true,
+      isUserGroupUpdateEnabled: true,
       init: function(config, gnUrl, gnViewerSettings, gnSearchSettings) {
         // start from the default config to make sure every field is present
         // and override with config arg if required
@@ -964,6 +968,7 @@ goog.require('gn_login_service');
       $scope.fluidHeaderLayout = gnGlobalSettings.gnCfg.mods.header.fluidHeaderLayout;
       $scope.showGNName = gnGlobalSettings.gnCfg.mods.header.showGNName;
       $scope.isHeaderFixed = gnGlobalSettings.gnCfg.mods.header.isHeaderFixed;
+      $scope.isMenubarAccessible = gnGlobalSettings.gnCfg.mods.header.isMenubarAccessible;
       $scope.isLogoInHeader = gnGlobalSettings.gnCfg.mods.header.isLogoInHeader;
       $scope.isFooterEnabled = gnGlobalSettings.gnCfg.mods.footer.enabled;
 
@@ -1018,7 +1023,7 @@ goog.require('gn_login_service');
       gnConfig.env.defaultNode = defaultNode;
       gnConfig.env.baseURL = detectBaseURL(gnGlobalSettings.gnCfg.baseURLDetector);
 
-      $scope.signoutUrl = gnGlobalSettings.gnCfg.mods.signout.appUrl
+      $scope.signoutUrl = gnGlobalSettings.gnCfg.mods.authentication.signoutUrl
         + '?redirectUrl='
         + window.location.href.slice(
             0,
@@ -1039,9 +1044,18 @@ goog.require('gn_login_service');
       $scope.isDebug = window.location.search.indexOf('debug') !== -1;
       $scope.isDisableLoginForm = gnGlobalSettings.isDisableLoginForm;
       $scope.isShowLoginAsLink = gnGlobalSettings.isShowLoginAsLink;
+      $scope.isUserProfileUpdateEnabled = gnGlobalSettings.isUserProfileUpdateEnabled;
+      $scope.isUserGroupUpdateEnabled = gnGlobalSettings.isUserGroupUpdateEnabled;
       $scope.isExternalViewerEnabled = gnExternalViewer.isEnabled();
       $scope.externalViewerUrl = gnExternalViewer.getBaseUrl();
 
+      $scope.isSelfRegisterPossible = function() {
+        return gnConfig['system.userSelfRegistration.enable'];
+      };
+
+      $scope.isHostDefined = function () {
+        return gnConfig['system.feedback.mailServer.hostIsDefined'];
+      };
 
       $scope.layout = {
         hideTopToolBar: false

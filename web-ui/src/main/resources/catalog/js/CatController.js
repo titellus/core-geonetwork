@@ -386,12 +386,27 @@ goog.require('gn_login_service');
                 'caseInsensitiveInclude': true
               }
             },
+            'sourceCatalogue': {
+              'terms': {
+                'field': 'sourceCatalogue',
+                'size': 15
+              }
+            },
             "resolutionScaleDenominator": {
               "histogram": {
                 "field": "resolutionScaleDenominator",
                 "interval": 10000,
                 "keyed" : true,
                 'min_doc_count': 1
+              },
+              'meta': {
+                'collapsed': true
+              }
+            },
+            "resolutionDistance": {
+              "terms": {
+                "field": "resolutionDistance",
+                "include": ".* (m|km)"
               },
               'meta': {
                 'collapsed': true

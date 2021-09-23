@@ -411,7 +411,8 @@
         templateUrl: '../../catalog/components/metadataactions/partials/' +
           'citation.html',
         scope: {
-          md: '=gnMetadataCitation'
+          md: '=gnMetadataCitation',
+          format: '@'
         },
         link: function(scope) {
           scope.defaultFormat = 'html';
@@ -453,7 +454,7 @@
               });
           }
           scope.getCitation('?').then(function() {
-            scope.getCitation(scope.defaultFormat);
+            scope.getCitation(scope.format || scope.defaultFormat);
           });
         }
       };

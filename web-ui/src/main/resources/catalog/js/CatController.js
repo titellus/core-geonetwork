@@ -81,7 +81,10 @@ goog.require('gn_login_service');
           'enabled': true,
           'languages': {
             'eng': 'en',
-            'fre': 'fr'
+            'fre': 'fr',
+            'por': 'pt',
+            'spa': 'es',
+            'rus': 'ru'
           },
           'isLogoInHeader': false,
           'logoInHeaderPosition': 'left',

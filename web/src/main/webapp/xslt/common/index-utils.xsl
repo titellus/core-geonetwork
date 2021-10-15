@@ -452,7 +452,7 @@
     </xsl:variable>
 
     <xsl:variable name="keyWithoutDot"
-                  select="replace($key, '\\.', '-')"/>
+                  select="replace($key, '\.', '-')"/>
 
     <xsl:value-of select="concat('th_', replace($keyWithoutDot, '[^a-zA-Z0-9_-]', ''))"/>
   </xsl:function>

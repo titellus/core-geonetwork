@@ -474,7 +474,7 @@
       function findKeywordByUri(uri) {
         for (var i = 0; i < $scope.keywords.length; i ++) {
           if ($scope.keywords[i].uri === uri) {
-            return $scope.keywords[i]
+            return $scope.keywords[i];
           }
         }
         return undefined;

@@ -484,7 +484,7 @@
        * Edit an existing keyword, open the modal, search relations
        */
       $scope.editKeyword = function(k) {
-        $scope.keywordSelected = angular.isObject(k) ? angular.copy(k) : findKeywordByUri(k);
+        $scope.keywordSelected = angular.copy(angular.isObject(k) ? k : findKeywordByUri(k));
         $scope.keywordSelected.oldId = $scope.keywordSelected.uri;
 
         // create geo object (if not already there)

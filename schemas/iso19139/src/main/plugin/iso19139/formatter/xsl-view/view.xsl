@@ -981,9 +981,13 @@
                 priority="100"/>
 
 
-  <!-- Link to other metadata records -->
+  <!-- Link to other metadata records
+  and not elements using internal xlink which have a xlink:show attribute
+  <gmd:extent xlink:show="embed"
+              uuidref="geocatch-subtpl-extent-kantonsgebiet-13">
+  -->
   <xsl:template mode="render-field"
-                match="*[@uuidref]"
+                match="*[@uuidref and not(@xlink:show)]"
                 priority="100">
     <xsl:variable name="nodeName" select="name()"/>
 

@@ -195,9 +195,9 @@ ALTER TABLE schematrondes ALTER COLUMN label TYPE varchar(255);
 INSERT INTO Settings (name, value, datatype, position, internal) VALUES ('system/server/timeZone', '', 0, 260, 'n');
 
 -- keep these at the bottom of the file!
-DROP INDEX idx_metadatafiledownloads_metadataid;
-DROP INDEX idx_metadatafileuploads_metadataid;
-DROP INDEX idx_operationallowed_metadataid;
+-- DROP INDEX idx_metadatafiledownloads_metadataid;
+-- DROP INDEX idx_metadatafileuploads_metadataid;
+-- DROP INDEX idx_operationallowed_metadataid;
 
 UPDATE Settings SET value='3.10.3' WHERE name='system/platform/version';
 UPDATE Settings SET value='0' WHERE name='system/platform/subVersion';
@@ -419,4 +419,4 @@ UPDATE Settings SET value = 'MNHN, CNRS, BBEES' WHERE name = 'system/site/organi
 UPDATE Settings SET value = 'www.indores.fr' WHERE name = 'system/server/host';
 
 
-DELETE * FROM Metadata WHERE isTemplate = 'y';
+DELETE FROM Metadata WHERE isTemplate = 'y';

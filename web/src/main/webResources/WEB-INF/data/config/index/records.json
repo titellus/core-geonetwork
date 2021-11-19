@@ -1729,7 +1729,7 @@
         "type": "keyword"
       },
       "resourceIdentifier": {
-        "type": "object",
+        "type": "nested",
         "properties": {
           "code": {
             "type": "keyword",

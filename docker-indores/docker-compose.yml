@@ -80,7 +80,8 @@ services:
       GEONETWORK_DB_USERNAME: mnhn
       GEONETWORK_DB_PASSWORD: changeme
     volumes:
-      - /sites/bddiwork/www/data:/catalogue-data
+#      - /sites/bddiwork/www/data:/catalogue-data
+      - /home/aggregate/data:/catalogue-data
     depends_on:
       - elasticsearch
       - database

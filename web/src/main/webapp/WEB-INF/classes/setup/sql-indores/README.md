@@ -8,16 +8,31 @@
 * Appliquer [le script shell de migration](indores-migration.sh) en adaptant l'utilisateur et le mot de passe à utiliser
 
 
-## Démarrage du catalogue
-
 ```shell
+cd /home/aggregate
 mkdir indores-catalogue
 cd indores-catalogue
+wget https://files.titellus.net/geonetwork/indores/geonetwork.war
 wget https://files.titellus.net/geonetwork/indores/docker-config.zip
 unzip docker-config.zip
-wget https://files.titellus.net/geonetwork/indores/geonetwork.war
 
-docker-compose up --build
+
+docker-compose up -d --build database
+psql -U mnhn -W -p 13432 -h localhost -d geonetwork -f ../sauvegarde_old_geonetwork/dump_20211104.sql
+
+
+wget https://raw.githubusercontent.com/titellus/core-geonetwork/indores-4.0.x/web/src/main/webapp/WEB-INF/classes/setup/sql-indores/indores-migration.sql
+psql -U mnhn -W -p 13432 -h localhost -d geonetwork -c "SELECT value FROM settings WHERE name LIKE '%version%';"
+# Return 3.4.4
+psql -U mnhn -W -p 13432 -h localhost -d geonetwork -f indores-migration.sql
+psql -U mnhn -W -p 13432 -h localhost -d geonetwork -c "SELECT value FROM settings WHERE name LIKE '%version%';"
+# Return 4.0.6
+
+docker-compose up -d --build geonetwork www elasticsearch kibana
+
+wget https://raw.githubusercontent.com/titellus/core-geonetwork/indores-4.0.x/web/src/main/webapp/WEB-INF/classes/setup/sql-indores/indores-migration.sh
+chmod +x indores-migration.sh
+./indores-migration.sh
 ```
 
 
@@ -28,7 +43,6 @@ docker-compose up --build
 
 
 ## Moissonnage
-
 
 Cf. https://docs.google.com/spreadsheets/d/1QoXeB5RYw1HdPMY08eXgN7LIFKnNh9vESaDwbBL3lM8/edit#gid=0
 

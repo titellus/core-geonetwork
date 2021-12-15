@@ -225,7 +225,13 @@
   </bean>
 
   <bean id="namingStrategy"
-        class="org.springframework.jmx.export.naming.IdentityNamingStrategy"/>
+        class="org.springframework.jmx.export.naming.KeyNamingStrategy">
+    <property name="mappings">
+      <props>
+        <prop key="jdbcDataSource">org.apache.commons.dbcp2:name=jdbcDataSource</prop>
+      </props>
+    </property>
+  </bean>
 
   <!-- Resource Storage -->
   <!-- geonetwork.store.type can be supplied

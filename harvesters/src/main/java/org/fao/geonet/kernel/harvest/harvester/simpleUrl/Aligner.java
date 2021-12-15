@@ -141,6 +141,11 @@ public class Aligner extends BaseAligner<SimpleUrlParams> {
                 } else {
                     //record exists and belongs to this harvester
                     updateMetadata(e, id, false);
+                    if (params.isIfRecordExistAppendPrivileges()) {
+                        addPrivileges(id, params.getPrivileges(), localGroups, context);
+                        result.privilegesAppendedOnExistingRecord++;
+                    }
+
                 }
                 result.totalMetadata++;
             } catch (Throwable t) {

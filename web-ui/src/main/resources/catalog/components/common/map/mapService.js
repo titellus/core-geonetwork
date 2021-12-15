@@ -86,13 +86,10 @@
         };
         var getLayerInMap = function(map, name, url, style) {
           if (gnWmsQueue.isPending(url, name, style)) {
-            return true;
+            return null;
           }
 
-          if(getTheLayerFromMap(map, name, url, style) != null) {
-            return true;
-          }
-          return null;
+          return getTheLayerFromMap(map, name, url, style);
         };
 
         /**
@@ -104,6 +101,13 @@
          * @param {string} url of the service
          */
         var getTheLayerFromMap = function(map, name, url, style) {
+
+          // If style is undefined use empty value to compare with source.getParams().STYLES,
+          // that returns empty value for the default style.
+          if (style == undefined) {
+            style = '';
+          }
+
           for (var i = 0; i < map.getLayers().getLength(); i++) {
             var l = map.getLayers().item(i);
             var source = l.getSource();
@@ -120,6 +124,19 @@
                   l.get('url').split('?')[0] == url.split('?')[0]) {
                 return l;
               }
+            }
+            else if (source instanceof ol.source.ImageArcGISRest) {
+              if (!!name) {
+                if ((url.indexOf(source.getUrl()) == 0) &&
+                  source.getParams().LAYERS == "show:" + name) {
+                  return l;
+                }
+              } else {
+                if (source.getUrl() == url) {
+                  return l;
+                }
+              }
+
             }
           }
           return null;
@@ -1432,19 +1449,41 @@
             return defer.promise;
           },
 
-          addEsriRestFromScratch: function(map, url, name, createOnly, md) {
+          /**
+           * @ngdoc method
+           * @methodOf gn_map.addEsriRestLayer:gnMap
+           * @name gnMap#addEsriRestLayer
+           *
+           * @description
+           * Here is the method to use when you want to add a ESRIREst layer from
+           * a url and a name (layer identifier).
+           *
+           * Return a promise with ol.Layer as data is succeed, and url/name
+           * if failure.
+           * If createOnly, we don't add the layer to the map.
+           * If the md object is given, we add it to the layer, or we try
+           * to retrieve it in the catalog
+           *
+           * @param {ol.Map} map to add the layer
+           * @param {string} url of the service
+           * @param {string} name of the layer (identifier)
+           * @param {boolean} createOnly or add it to the map
+           * @param {!Object} md object
+           */
+          addEsriRestLayer: function(map, url, name, createOnly, md) {
             if (url === '') {
               var error = "Trying to add an ESRI layer with no service URL. Layer name is " + name + ". Check the metadata or the map.";
               console.warn(error);
               return $q.reject(error);
             }
             var serviceUrl = url.replace(/(.*\/MapServer).*/, '$1');
-            var layer = !!name && parseInt(name).toString() === name
+            var layer = angular.isNumber(name)
               ? name
               : url.replace(/.*\/([^\/]*)\/MapServer\/?(.*)/, '$2');
             name = url.replace(/.*\/([^\/]*)\/MapServer\/?(.*)/, '$1 $2');
 
-            var olLayer = getTheLayerFromMap(map, name, url);
+            // Use the url and the layer identifier to check if the layer exists
+            var olLayer = getTheLayerFromMap(map, layer, url);
             if (olLayer !== null) {
               if(md) {
                 olLayer.set('md', md);
@@ -2021,7 +2060,7 @@
                       opt);
                   break;
                 }
-                this.addEsriRestFromScratch(map, opt.url, opt.name)
+                this.addEsriRestLayer(map, opt.url, opt.name)
                     .then(function(layer) {
                       if (title) {
                         layer.set('title', title);

@@ -95,7 +95,7 @@ public class SimpleUrlParams extends AbstractParams {
 
         return copy;
     }
-    
+
     @Override
     public String getIcon() {
         return icon;

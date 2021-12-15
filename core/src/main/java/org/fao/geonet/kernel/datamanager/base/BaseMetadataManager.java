@@ -238,7 +238,7 @@ public class BaseMetadataManager implements IMetadataManager {
                 Set<Integer> integerList = toIndex.stream().map(Integer::parseInt).collect(Collectors.toSet());
                 new BatchOpsMetadataReindexer(
                     context.getBean(DataManager.class),
-                    integerList).process(false);
+                    integerList).process(settingManager.getSiteId(), false);
             } else {
                 metadataIndexer.batchIndexInThreadPool(context, toIndex);
             }
@@ -1276,5 +1276,20 @@ public class BaseMetadataManager implements IMetadataManager {
         } catch (ClassCastException t) {
             throw new ClassCastException("Unknown AbstractMetadata subtype: " + specs.getClass().getName());
         }
+    }
+
+    @Override
+    public boolean isValid(Integer id) {
+        List<MetadataValidation> validationInfo = metadataValidationRepository.findAllById_MetadataId(id);
+        if (validationInfo == null || validationInfo.size() == 0) {
+            return false;
+        }
+        for (Object elem : validationInfo) {
+            MetadataValidation vi = (MetadataValidation) elem;
+            if (!vi.isValid() && vi.isRequired()) {
+                return false;
+            }
+        }
+        return true;
     }
 }

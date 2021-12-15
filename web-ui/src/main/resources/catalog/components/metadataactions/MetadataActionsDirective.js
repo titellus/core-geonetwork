@@ -97,6 +97,11 @@
                 '/status', scope.newStatus
             ).then(
                 function(response) {
+                  //After the new status is approved, the working copy will get deleted and will not get searched.
+                  //The search parameter will need to reset to draft=n
+                  if (angular.isDefined(scope.md.draft) && scope.newStatus.status === "2") {
+                    scope.md.draft = "n";
+                  }
                   gnMetadataManager.updateMdObj(scope.md);
                   scope.$emit('metadataStatusUpdated', true);
                   scope.$emit('StatusUpdated', {
@@ -400,6 +405,83 @@
     }]
   );
 
+
+  module.directive('gnMetadataCitation', [
+    '$translate', '$http', 'gnAlertService',
+    function($translate, $http, gnAlertService) {
+
+      return {
+        restrict: 'A',
+        replace: true,
+        templateUrl: '../../catalog/components/metadataactions/partials/' +
+          'citation.html',
+        scope: {
+          md: '=gnMetadataCitation',
+          format: '@'
+        },
+        link: function(scope) {
+          scope.defaultFormat = 'html';
+          scope.currentFormat = null;
+          scope.formats = [];
+          scope.citationText = '';
+          scope.citationAvailable = false;
+          scope.isCode = false;
+
+          function buildUrl() {
+            return '../api/records/' + scope.md.uuid + '/formatters/citation?format=';
+          }
+
+          scope.getCitation = function(format) {
+            return $http.get(buildUrl() + format, {
+              cache: true,
+              headers: {'Accept': format === '?' ? 'application/json' : 'text/plain'}
+            })
+              .then(function(r) {
+                if(format === '?') {
+                  for (var i = 0; i < r.data.length; i ++) {
+                    var f = r.data[i],
+                      prefix = 'cite.format.',
+                      translation = $translate.instant(prefix + f),
+                      translationFound = translation.indexOf(prefix) === -1,
+                      help = $translate.instant(prefix + f + '.help'),
+                      helpFound = translation.indexOf(prefix) === -1;
+                    scope.formats.push({
+                      id: f,
+                      label: translationFound ? translation : f,
+                      help: helpFound ? help : ''
+                    })
+                  }
+                } else {
+                  scope.currentFormat = format;
+                  scope.isCode = ['ris', 'bibtex'].indexOf(format) != -1;
+                  scope.citationText = r.data;
+                  scope.citationAvailable = true;
+                }
+              }, function(r) {
+                scope.citationAvailable = false;
+              });
+          }
+
+          function loadCitation() {
+            scope.citationAvailable = false;
+            scope.formats = [];
+            scope.getCitation('?').then(function() {
+              scope.getCitation(scope.format || scope.defaultFormat);
+            });
+          }
+
+          if (scope.md) {
+            loadCitation();
+          }
+
+          scope.$watchCollection('md', function(n, o) {
+            if (n && n !== o) {
+              loadCitation();
+            }
+          });
+        }
+      };
+    }]);
 
   /**
    * @ngdoc directive

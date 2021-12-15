@@ -42,10 +42,10 @@
   module.controller('GnHarvestSettingsController', [
     '$scope', '$q', '$http', '$translate', '$injector', '$rootScope',
     'gnSearchManagerService', 'gnUtilityService', '$timeout',
-    'Metadata', 'gnMapsManager', 'gnGlobalSettings',
+    'Metadata', 'gnMapsManager', 'gnGlobalSettings', 'gnConfig',
     function($scope, $q, $http, $translate, $injector, $rootScope,
              gnSearchManagerService, gnUtilityService, $timeout,
-             Metadata, gnMapsManager, gnGlobalSettings) {
+             Metadata, gnMapsManager, gnGlobalSettings, gnConfig) {
 
       $scope.searchObj = {
         internal: true,
@@ -191,11 +191,9 @@
             .success(function(data) {
               angular.forEach(data[0], function(value) {
                 $scope.harvesterTypes[value] = {
-                  label: value
+                  type: value,
+                  label: 'harvester-' + value
                 };
-                $translate('harvester-' + value).then(function(translated) {
-                  $scope.harvesterTypes[value].text = translated;
-                });
 
                 $.getScript('../../catalog/templates/admin/harvest/type/' +
                     value + '.js')
@@ -385,7 +383,7 @@
       };
       $scope.assignHarvestedRecordToLocalNode = function() {
         $http.post('../api/harvesters/' + $scope.harvesterSelected.site.uuid +
-                   '/assign?source=' + $scope.info['system/site/siteId'])
+                   '/assign?source=' + gnConfig['system.site.siteId'])
             .success(function(data) {
               $scope.harvesterSelected = {};
               $scope.harvesterUpdated = false;

@@ -23,44 +23,33 @@
 
 package org.fao.geonet.kernel.harvest.harvester.simpleUrl;
 
-import jeeves.server.context.ServiceContext;
 import org.fao.geonet.Logger;
-import org.fao.geonet.domain.Source;
-import org.fao.geonet.domain.SourceType;
-import org.fao.geonet.exceptions.BadInputEx;
 import org.fao.geonet.kernel.harvest.harvester.AbstractHarvester;
-import org.fao.geonet.kernel.harvest.harvester.AbstractParams;
 import org.fao.geonet.kernel.harvest.harvester.HarvestResult;
-import org.fao.geonet.repository.SourceRepository;
-import org.fao.geonet.resources.Resources;
-import org.jdom.Element;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.File;
 import java.sql.SQLException;
-import java.util.UUID;
 
 /**
  * Harvest metadata from a JSON source.
  */
 public class SimpleUrlHarvester extends AbstractHarvester<HarvestResult, SimpleUrlParams> {
 
-    private SimpleUrlParams params;
-
-    @Autowired
-    SourceRepository sourceRepository;
+    @Override
+    protected SimpleUrlParams createParams() {
+        return new SimpleUrlParams(dataMan);
+    }
 
     /**
      * Stores in the harvester settings table some values not managed by {@link AbstractHarvester}
      *
-     * @param p         the harvester parameters.
+     * @param params         the harvester parameters.
      * @param path
      * @param siteId
      * @param optionsId
      * @throws SQLException
      */
     protected void storeNodeExtra(SimpleUrlParams params, String path, String siteId, String optionsId) throws SQLException {
-        setParams(params);
+
         harvesterSettingsManager.add("id:" + siteId, "url", params.url);
         harvesterSettingsManager.add("id:" + siteId, "icon", params.icon);
         harvesterSettingsManager.add("id:" + siteId, "loopElement", params.loopElement);
@@ -74,9 +63,5 @@ public class SimpleUrlHarvester extends AbstractHarvester<HarvestResult, SimpleU
     public void doHarvest(Logger log) throws Exception {
         Harvester h = new Harvester(cancelMonitor, log, context, params);
         result = h.harvest(log);
-    }
-
-    protected SimpleUrlParams createParams() {
-        return new SimpleUrlParams(dataMan);
     }
 }

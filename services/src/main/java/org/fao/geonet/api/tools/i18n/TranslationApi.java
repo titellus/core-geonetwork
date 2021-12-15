@@ -24,19 +24,21 @@
 package org.fao.geonet.api.tools.i18n;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jeeves.server.context.ServiceContext;
-import org.apache.commons.lang.StringUtils;
-import org.fao.geonet.ApplicationContextHolder;
 import org.fao.geonet.api.ApiUtils;
 import org.fao.geonet.api.exception.ResourceNotFoundException;
 import org.fao.geonet.domain.*;
 import org.fao.geonet.kernel.SchemaManager;
+import org.fao.geonet.languages.IsoLanguagesMapper;
 import org.fao.geonet.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -46,7 +48,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.groupingBy;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -58,7 +62,7 @@ import static org.springframework.http.HttpStatus.OK;
 })
 @Tag(name = "tools")
 @RestController
-public class TranslationApi implements ApplicationContextAware {
+public class TranslationApi {
 
     @Autowired
     SchemaManager schemaManager;
@@ -68,38 +72,141 @@ public class TranslationApi implements ApplicationContextAware {
     TranslationsRepository translationsRepository;
     @Autowired
     TranslationPackBuilder translationPackBuilder;
+    @Autowired
+    IsoLanguagesMapper isoLanguagesMapper;
 
-    private ApplicationContext context;
+    /**
+     * @param type The type of object to return.
+     * @return A map of translations in JSON format.
+     */
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "List translations for database description table")
+    @RequestMapping(value = "/db",
+        method = RequestMethod.GET,
+        produces = {
+            MediaType.APPLICATION_JSON_VALUE
+        })
+    @ResponseBody
+    public Map<String, String> getTranslations(
+        @RequestParam(required = false) final List<String> type,
+        ServletRequest request
+    ) throws Exception {
+        Locale locale = languageUtils.parseAcceptLanguage(request.getLocales());
+        String language = isoLanguagesMapper.iso639_2T_to_iso639_2B(locale.getISO3Language());
+        return translationPackBuilder.getDbTranslation(language, type);
+    }
 
-    public synchronized void setApplicationContext(ApplicationContext context) {
-        this.context = context;
+    @io.swagger.v3.oas.annotations.Operation(summary = "List custom user translations")
+    @RequestMapping(value = "/db/custom",
+        method = RequestMethod.GET,
+        produces = {
+            MediaType.APPLICATION_JSON_VALUE
+        })
+    @ResponseBody
+    public List<Translations> getCustomTranslations(
+        @RequestParam(required = false) final List<String> type,
+        ServletRequest request
+    ) throws Exception {
+        return translationsRepository.findAll();
     }
 
     @io.swagger.v3.oas.annotations.Operation(
-        summary = "Add or update database translations.")
-    @PutMapping(value = "/db/translations/{key}",
+        summary = "Add or update all database translations.")
+    @PutMapping(value = "/db/translations",
         produces = {
             MediaType.APPLICATION_JSON_VALUE
         })
     @PreAuthorize("hasAuthority('Administrator')")
     @ResponseStatus(CREATED)
     public ResponseEntity addTranslations(
-        @PathVariable
-        final String key,
         @Parameter(
             name = "values"
         )
         @RequestBody(required = true)
-        final Map<String, String> values,
+        final List<Translations> values,
         @RequestParam(required = false)
-        final boolean replace,
-        ServletRequest request
+        final boolean replace
+    ) throws Exception {
+        if (replace) {
+            translationsRepository.deleteAll();
+        }
+
+        Map<String, Map<String, String>> translations = values.stream()
+            .filter(Objects::nonNull)
+            .collect(groupingBy(Translations::getFieldName,
+                Collectors.toMap(Translations::getLangId, Translations::getValue)));
+
+        translations.forEach((key, t) -> {
+            updateTranslation(key, t);
+        });
+        translationPackBuilder.clearCache();
+        return new ResponseEntity(HttpStatus.CREATED);
+    }
+
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Remove all database translations.")
+    @DeleteMapping(value = "/db/translations",
+        produces = {
+            MediaType.APPLICATION_JSON_VALUE
+        })
+    @PreAuthorize("hasAuthority('Administrator')")
+    @ResponseStatus(CREATED)
+    public void removeAllTranslations() throws Exception {
+        translationsRepository.deleteAll();
+        translationPackBuilder.clearCache();
+    }
+
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Add or update database translations for a key.",
+        description = "Database translations can be used to customize labels in the UI for different languages.")
+    @PutMapping(value = "/db/translations/{key:.+}",
+        produces = {
+            MediaType.APPLICATION_JSON_VALUE
+        })
+    @PreAuthorize("hasAuthority('Administrator')")
+    @ResponseStatus(CREATED)
+    public ResponseEntity addTranslationsFor(
+        @PathVariable
+        @Parameter(
+            name = "key",
+            description = "Untranslated key for which translations are provided."
+        )
+        final String key,
+        @Parameter(
+            name = "values"
+        )
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "An object where keys are valid 3-letter language codes (e.g. `eng` or `fre`) and values are custom translations for the corresponding language.",
+            content = @Content(examples = {
+                @ExampleObject(value =
+                    "{" +
+                        "  \"eng\": \"my translation\",\n" +
+                        "  \"ger\": \"meine Übersetzung\",\n" +
+                        "  \"fre\": \"ma traduction\"\n" +
+                        "}")
+            })
+        )
+        @RequestBody(required = true)
+        final Map<String, String> values,
+        @Parameter(
+            name = "replace",
+            description = "Set to `true` to erase all existing translations for that key"
+        )
+        @RequestParam(required = false)
+        final boolean replace
     ) throws Exception {
         if (replace) {
             translationsRepository.deleteAll(
                 translationsRepository.findAllByFieldName(key)
             );
         }
+        updateTranslation(key, values);
+        translationPackBuilder.clearCache();
+        return new ResponseEntity(HttpStatus.CREATED);
+    }
+
+
+    private void updateTranslation(String key, Map<String, String> values) {
         List<Translations> translations = translationsRepository.findAllByFieldName(key);
         if(translations.size() == 0) {
             values.forEach((l, v) -> {
@@ -117,24 +224,30 @@ public class TranslationApi implements ApplicationContextAware {
             });
             translationsRepository.saveAll(translations);
         }
-        return new ResponseEntity(HttpStatus.CREATED);
+        translationPackBuilder.clearCache();
     }
 
+
     @io.swagger.v3.oas.annotations.Operation(
-        summary = "Delete database translations.")
-    @DeleteMapping(value = "/db/translations/{key}",
+        summary = "Delete database translations.",
+        description = "Delete custom translations stored in the database.")
+    @DeleteMapping(value = "/db/translations/{key:.+}",
         produces = {
             MediaType.APPLICATION_JSON_VALUE
         })
     @PreAuthorize("hasAuthority('Administrator')")
     @ResponseStatus(OK)
     public void deleteTranslations(
+        @Parameter(
+            name = "key",
+            description = "Untranslated key for which all translations will be deleted."
+        )
         @PathVariable
         final String key,
         ServletRequest request
     ) throws Exception {
         Locale locale = languageUtils.parseAcceptLanguage(request.getLocales());
-        String language = languageUtils.locale2gnCode(locale.getISO3Language());
+        String language = isoLanguagesMapper.iso639_2T_to_iso639_2B(locale.getISO3Language());
         List<Translations> translations = translationsRepository.findAllByFieldName(key);
         if(translations.size() == 0) {
             throw new ResourceNotFoundException(String.format(
@@ -142,6 +255,7 @@ public class TranslationApi implements ApplicationContextAware {
                 key, language));
         } else {
             translationsRepository.deleteInBatch(translations);
+            translationPackBuilder.clearCache();
         }
     }
 
@@ -152,35 +266,25 @@ public class TranslationApi implements ApplicationContextAware {
         produces = {
             MediaType.APPLICATION_JSON_VALUE
         })
+    @ApiResponse(
+        responseCode = "200",
+        content = @Content(mediaType = "application/json", examples = {
+            @ExampleObject(value =
+                "{" +
+                    "  \"translationKey1\": \"Translated Key One\",\n" +
+                    "  \"translationKey2\": \"Translated Key Two\",\n" +
+                    "  \"translationKey3\": \"Translated Key Two\"\n" +
+                    "}")
+        }, schema = @Schema(type = "{ < * >: string }"))
+    )
     @ResponseBody
     public Map<String, String> getDbTranslations(
         ServletRequest request
-    ) throws Exception {
+    ) {
         Locale locale = languageUtils.parseAcceptLanguage(request.getLocales());
-        String language = languageUtils.locale2gnCode(locale.getISO3Language());
+        String language = isoLanguagesMapper.iso639_2T_to_iso639_2B(locale.getISO3Language());
         return translationPackBuilder.getAllDbTranslations(language);
 
-    }
-
-
-    /**
-     * @param type The type of object to return.
-     * @return A map of translations in JSON format.
-     */
-    @io.swagger.v3.oas.annotations.Operation(summary = "List translations for database description table")
-    @RequestMapping(value = "/db",
-        method = RequestMethod.GET,
-        produces = {
-            MediaType.APPLICATION_JSON_VALUE
-        })
-    @ResponseBody
-    public Map<String, String> getTranslations(
-        @RequestParam(required = false) final List<String> type,
-        ServletRequest request
-    ) throws Exception {
-        Locale locale = languageUtils.parseAcceptLanguage(request.getLocales());
-        String language = languageUtils.locale2gnCode(locale.getISO3Language());
-        return translationPackBuilder.getDbTranslation(language, type);
     }
 
 
@@ -196,8 +300,7 @@ public class TranslationApi implements ApplicationContextAware {
             MediaType.APPLICATION_JSON_VALUE
         })
     @ResponseBody
-    public Map<String, List<String>> getTranslationsPackage(
-    ) throws Exception {
+    public Map<String, List<String>> getTranslationsPackage() {
         return translationPackBuilder.getPackages();
     }
 
@@ -219,10 +322,10 @@ public class TranslationApi implements ApplicationContextAware {
         final String pack,
         ServletRequest request,
         HttpServletRequest httpRequest
-    ) throws Exception {
+    ) {
         final ServiceContext context = ApiUtils.createServiceContext(httpRequest);
         Locale locale = languageUtils.parseAcceptLanguage(request.getLocales());
-        String language = languageUtils.locale2gnCode(locale.getISO3Language());
+        String language = isoLanguagesMapper.iso639_2T_to_iso639_2B(locale.getISO3Language());
         return translationPackBuilder.getPack(language, pack, context);
     }
 
@@ -241,9 +344,7 @@ public class TranslationApi implements ApplicationContextAware {
     @PreAuthorize("hasAuthority('Administrator')")
     @ResponseStatus(OK)
     @ResponseBody
-    public void cleanTranslationsPackagesCache(
-        ServletRequest request
-    ) throws Exception {
+    public void cleanTranslationsPackagesCache() {
         translationPackBuilder.clearCache();
     }
 }

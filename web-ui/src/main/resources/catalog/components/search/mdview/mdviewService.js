@@ -72,7 +72,6 @@
 
         // Set the route only if not same as before
         formatter = gnSearchLocation.getFormatter();
-        gnMdViewObj.usingFormatter = formatter !== undefined;
 
         gnUtilityService.scrollTo();
 
@@ -267,14 +266,61 @@
     'gnSearchSettings',
     '$q',
     'gnMetadataManager',
+    'gnUtilityService',
     function($rootScope, $http, $compile, $translate,
              $sce, gnAlertService,
-             gnSearchSettings, $q, gnMetadataManager) {
+             gnSearchSettings, $q, gnMetadataManager,
+             gnUtilityService) {
 
+      /**
+       * First matching view for each formatter is returned.
+       *
+       * @param record
+       * @returns {*[]}
+       */
+      this.getFormatterForRecord = function(record) {
+        var list = [];
+        if (record == null) {
+          return list;
+        }
+        for (var i = 0; i < gnSearchSettings.formatter.list.length; i ++) {
+          var f = gnSearchSettings.formatter.list[i];
+          if (f.views === undefined) {
+            list.push(f);
+          } else {
+            // Check conditional views
+            var isViewSet = false;
+
+            function addView(f, v) {
+              list.push({label: f.label, url: v.url});
+              isViewSet = true;
+            }
+            function evaluateView(v) {
+              gnUtilityService.checkConfigurationPropertyCondition(
+                record, v, function() {
+                  if (!isViewSet) {
+                    addView(f, v)
+                  }
+                  return;
+                });
+            }
+            for (var j = 0; j < f.views.length; j ++) {
+              var v = f.views[j];
+              evaluateView(v);
+            }
+
+            if (f.url !== undefined && !isViewSet) {
+              list.push(f);
+            }
+          }
+        }
+        return list;
+      }
 
       this.getFormatterUrl = function(fUrl, scope, uuid, opt_url) {
         var url;
         var promiseMd;
+        var gnMetadataFormatter = this;
         if (scope && scope.md) {
           var deferMd = $q.defer();
           deferMd.resolve(scope.md);
@@ -297,7 +343,9 @@
             scope.$parent.md = md;
             scope.md = md;
           }
-          return url;
+          return url ||
+            ('../api/records/' + uuid
+              + gnMetadataFormatter.getFormatterForRecord(md)[0].url);
         });
       };
 

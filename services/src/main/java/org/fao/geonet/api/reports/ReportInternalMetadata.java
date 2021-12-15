@@ -15,6 +15,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static org.fao.geonet.api.reports.ReportUtils.CSV_FORMAT;
+
 /**
  * Created by jose on 31/01/17.
  */
@@ -46,9 +48,7 @@ public class ReportInternalMetadata implements IReport {
 
         try {
             //initialize CSVPrinter object
-            CSVFormat csvFileFormat =
-                CSVFormat.DEFAULT.withRecordSeparator("\n");
-            csvFilePrinter = new CSVPrinter(writer, csvFileFormat);
+            csvFilePrinter = new CSVPrinter(writer, CSV_FORMAT);
 
             // Retrieve metadata
             final IMetadataUtils metadataRepository =
@@ -67,7 +67,7 @@ public class ReportInternalMetadata implements IReport {
             csvFilePrinter.println();
 
             String[] entries = (
-                "Metadata ID#Metadata Title#Metadata Create date#"
+                "Metadata ID#Metadata Title#Metadata Create date#Last update#"
                     + "Owner Username#Owner Surname#Owner Name#Owner Email#"
                     + "Group Owner#Group Owner Email").split("#");
             csvFilePrinter.printRecord(Arrays.asList(entries));
@@ -137,6 +137,7 @@ public class ReportInternalMetadata implements IReport {
                 record.add(metadata.getUuid());
                 record.add("" + mdTitle);
                 record.add("" + metadata.getDataInfo().getCreateDate());
+                record.add("" + metadata.getDataInfo().getChangeDate());
                 record.add(userOwnerUsername);
                 record.add(userOwnerSurname);
                 record.add(userOwnerName);

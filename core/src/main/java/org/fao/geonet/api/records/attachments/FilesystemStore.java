@@ -115,7 +115,9 @@ public class FilesystemStore extends AbstractStore {
             return new ResourceHolderImpl(resourceFile, getResourceDescription(context, metadataUuid, visibility, resourceFile, approved));
         } else {
             throw new ResourceNotFoundException(
-                    String.format("Metadata resource '%s' not found for metadata '%s'", resourceId, metadataUuid));
+                String.format("Metadata resource '%s' not found for metadata '%s'", resourceId, metadataUuid))
+                .withMessageKey("exception.resourceNotFound.resource", new String[]{ resourceId })
+                .withDescriptionKey("exception.resourceNotFound.resource.description", new String[]{ resourceId, metadataUuid });
         }
     }
 
@@ -190,6 +192,7 @@ public class FilesystemStore extends AbstractStore {
                                         final InputStream is, @Nullable final Date changeDate, final MetadataResourceVisibility visibility,
                                         Boolean approved) throws Exception {
         int metadataId = canEdit(context, metadataUuid, approved);
+        checkResourceId(filename);
         Path filePath = getPath(context, metadataId, visibility, filename, approved);
         Files.copy(is, filePath, StandardCopyOption.REPLACE_EXISTING);
         if (changeDate != null) {

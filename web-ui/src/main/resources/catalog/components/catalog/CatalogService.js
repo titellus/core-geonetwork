@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2016 Food and Agriculture Organization of the
+ * Copyright (C) 2001-2021 Food and Agriculture Organization of the
  * United Nations (FAO-UN), United Nations World Food Programme (WFP)
  * and United Nations Environment Programme (UNEP)
  *
@@ -217,18 +217,28 @@
 
         /**
          * @ngdoc method
-         * @name gnMetadataManager#getMdObjByUuid
+         * @name gnMetadataManager#getMdObjByUuidInPortal
          * @methodOf gnMetadataManager
          *
          * @description
          * Get the metadata js object from catalog. Trigger a search and
          * return a promise.
+         * @param {portal} portal name to query, null to use the current portal
          * @param {string} uuid or id of the metadata
          * @param {array} isTemplate optional isTemplate value (y, n, s, t...)
          * @return {HttpPromise} of the $http post
          */
-        getMdObjByUuid: function(uuid, isTemplate) {
-          return $http.post('../api/search/records/_search', {"query": {
+        getMdObjByUuidInPortal: function(portal, uuid, isTemplate) {
+          var url;
+
+          if (portal == null) {
+            // Use current portal
+            url = '../api/search/records/_search';
+          } else {
+            url = '../../' + portal + '/api/search/records/_search';
+          }
+
+          return $http.post(url, {"query": {
               "bool" : {
                 "must": [
                   {"multi_match": {
@@ -239,12 +249,28 @@
                 ]
               }
             }}).then(function(r) {
-              if (r.data.hits.total.value > 0) {
-                return new Metadata(r.data.hits.hits[0]);
-              } else {
-                console.warn("Record with UUID/ID " + uuid + " not found.")
-              }
-              });
+            if (r.data.hits.total.value > 0) {
+              return new Metadata(r.data.hits.hits[0]);
+            } else {
+              console.warn("Record with UUID/ID " + uuid + " not found.")
+            }
+          });
+        },
+
+        /**
+         * @ngdoc method
+         * @name gnMetadataManager#getMdObjByUuid
+         * @methodOf gnMetadataManager
+         *
+         * @description
+         * Get the metadata js object from catalog current portal. Trigger a search and
+         * return a promise.
+         * @param {string} uuid or id of the metadata
+         * @param {array} isTemplate optional isTemplate value (y, n, s, t...)
+         * @return {HttpPromise} of the $http post
+         */
+        getMdObjByUuid: function(uuid, isTemplate) {
+          return this.getMdObjByUuidInPortal(null, uuid, isTemplate);
         },
 
         /**
@@ -520,11 +546,11 @@
             port = ':' + gnConfig['system.server.port'];
 
           } else if (gnConfig['system.server.protocol'] === 'https' &&
-             gnConfig['system.server.securePort'] &&
-             gnConfig['system.server.securePort'] != null &&
-             gnConfig['system.server.securePort'] != 443) {
+             gnConfig['system.server.port'] &&
+             gnConfig['system.server.port'] != null &&
+             gnConfig['system.server.port'] != 443) {
 
-            port = ':' + gnConfig['system.server.securePort'];
+            port = ':' + gnConfig['system.server.port'];
 
           }
 
@@ -770,6 +796,20 @@
           });
         }
         return res;
+      },
+      getKeywordsGroupedByUriBase: function(thesaurusId, groupExtractionRegex) {
+        var thesaurus = this.allKeywords[thesaurusId];
+        if (thesaurus && thesaurus.keywords) {
+          var keywordsWithGroup = [];
+          for (var i = 0; i < thesaurus.keywords.length; i++) {
+            var k = angular.copy(thesaurus.keywords[i]);
+            k.group = k.link ? k.link.replaceAll(new RegExp(groupExtractionRegex, 'g'), '$1') : '';
+            keywordsWithGroup.push(k);
+          }
+          return keywordsWithGroup;
+        } else {
+          return [];
+        }
       }
     };
     return Metadata;

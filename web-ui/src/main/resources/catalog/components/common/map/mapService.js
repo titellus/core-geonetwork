@@ -186,7 +186,7 @@
           return getLayerInMap(map, name, url, style) !== null;
         };
         var getLayerInMap = function(map, name, url, style) {
-          if (gnWmsQueue.isPending(url, name, style)) {
+          if (gnWmsQueue.isPending(url, name, style, map)) {
             return null;
           }
 
@@ -213,7 +213,7 @@
             var l = map.getLayers().item(i);
             var source = l.getSource();
             if (source instanceof ol.source.WMTS &&
-                l.get('url') == url) {
+                l.get('url').toLowerCase() == url.toLowerCase()) {
               if (l.get('name') == name) {
                 return l;
               }
@@ -222,18 +222,18 @@
                 source instanceof ol.source.ImageWMS) {
               if (source.getParams().LAYERS == name &&
                   source.getParams().STYLES == style &&
-                  l.get('url').split('?')[0] == url.split('?')[0]) {
+                  l.get('url').split('?')[0].toLowerCase() == url.split('?')[0].toLowerCase()) {
                 return l;
               }
             }
             else if (source instanceof ol.source.ImageArcGISRest) {
               if (!!name) {
-                if ((url.indexOf(source.getUrl()) == 0) &&
+                if ((url.toLowerCase().indexOf(source.getUrl().toLowerCase()) == 0) &&
                   source.getParams().LAYERS == "show:" + name) {
                   return l;
                 }
               } else {
-                if (source.getUrl() == url) {
+                if (source.getUrl().toLowerCase() == url.toLowerCase()) {
                   return l;
                 }
               }
@@ -930,6 +930,8 @@
             olDecorateLayer(olLayer);
             olLayer.displayInLayerManager = true;
 
+            // Do not notify for tile load errors in small maps.
+            var isNotifyingTileLoadErrors = map.get("type") !== 'search';
             var unregisterEventKey = olLayer.getSource().on(
                 (gnViewerSettings.singleTileWMS) ?
                 'imageloaderror' : 'tileloaderror',
@@ -940,16 +942,18 @@
                   var layer = tileEvent.currentTarget &&
                       tileEvent.currentTarget.getParams ?
                       tileEvent.currentTarget.getParams().LAYERS :
-                      layerParams.LAYERS;
-
-                  var msg = $translate.instant('layerTileLoadError', {
+                      layerParams.LAYERS,
+                    msg = $translate.instant('layerTileLoadError', {
                     url: url,
                     layer: layer
                   });
-                  $rootScope.$broadcast('StatusUpdated', {
-                    msg: msg,
-                    timeout: 0,
-                    type: 'danger'});
+
+                  if (isNotifyingTileLoadErrors) {
+                    $rootScope.$broadcast('StatusUpdated', {
+                      msg: msg,
+                      timeout: 0,
+                      type: 'danger'});
+                  }
                   olLayer.get('errors').push(msg);
                   ol.Observable.unByKey(unregisterEventKey);
 
@@ -957,7 +961,7 @@
                     url: url,
                     name: layer,
                     msg: msg
-                  });
+                  }, map);
                 });
             return olLayer;
           },
@@ -1426,33 +1430,6 @@
           /**
            * @ngdoc method
            * @methodOf gn_map.service:gnMap
-           * @name gnMap#addWmsToMap
-           *
-           * @description
-           * Create a new WMS layer from basic info object containing
-           * the name of the layer and the url of the service.
-           *
-           * @param {ol.map} map to add the layer
-           * @param {Object} layerInfo object
-           * @return {ol.Layer} the created layer
-           */
-          addWmsToMap: function(map, layerInfo) {
-            if (layerInfo) {
-              var layer = this.createOlWMS(map, {
-                LAYERS: layerInfo.name
-              }, {
-                url: layerInfo.url,
-                label: layerInfo.name
-              }
-              );
-              map.addLayer(layer);
-              return layer;
-            }
-          },
-
-          /**
-           * @ngdoc method
-           * @methodOf gn_map.service:gnMap
            * @name gnMap#addWmsFromScratch
            *
            * @description
@@ -1477,22 +1454,18 @@
            * @param {!Object} md object
            */
           addWmsFromScratch: function(map, url, name, createOnly, md, version, style) {
-            var defer = $q.defer();
-            var $this = this;
+            var defer = $q.defer(),
+              $this = this;
+
 
             if (!isLayerInMap(map, name, url, style || '')) { // if style is not specified, use empty string
-              gnWmsQueue.add(url, name, style ? style.Name : '');
+              gnWmsQueue.add(url, name, style ? style.Name : '', map);
               gnOwsCapabilities.getWMSCapabilities(url).then(function(capObj) {
                 var capL = gnOwsCapabilities.getLayerInfoFromCap(
                     name, capObj, md && md.uuid),
                     olL;
 
                 if (!capL) {
-                  // If layer not found in the GetCapabilities
-                  // Try to add the layer from the metadata
-                  // information only. A tile error loading
-                  // may be reported after the layer is added
-                  // to the map and will give more details.
                   var errormsg = $translate.instant(
                       'layerNotfoundInCapability', {
                         layer: name,
@@ -1503,26 +1476,10 @@
                     url: url,
                     name: name,
                     msg: errormsg
-                  }, errors = [];
-                  if (version) {
-                    o.version = version;
-                  }
-                  olL = $this.addWmsToMap(map, o);
+                  };
 
-                  if(olL && md) {
-                    olL.set('md', md);
-                  }
-
-                  if (!angular.isArray(olL.get('errors'))) {
-                    olL.set('errors', []);
-                  }
-                  errors.push(errormsg);
                   console.warn(errormsg);
-
-                  olL.get('errors').push(errors);
-
-                  gnWmsQueue.error(o);
-                  o.layer = olL;
+                  gnWmsQueue.error(o, map);
                   defer.reject(o);
                 } else {
 
@@ -1545,13 +1502,13 @@
                           if (!createOnly) {
                             map.addLayer(olL);
                           }
-                          gnWmsQueue.removeFromQueue(url, name, style ? style.Name : '');
+                          gnWmsQueue.removeFromQueue(url, name, style ? style.Name : '', map);
                           defer.resolve(olL);
                         });
                   };
 
                   var feedMdPromise =
-                    typeof md === 'object' ?
+                    md && typeof md === 'object' ?
                     $q.resolve(md).then(function(md) {
                       olL.set('md', md);
                     }) : (
@@ -1569,7 +1526,7 @@
                   msg: $translate.instant('getCapFailure') +
                     (error  ? ', ' + error : '')
                 };
-                gnWmsQueue.error(o);
+                gnWmsQueue.error(o, map);
                 defer.reject(o);
               });
             } else {
@@ -1609,7 +1566,8 @@
               return $q.reject(error);
             }
             var serviceUrl = url.replace(/(.*\/MapServer).*/, '$1');
-            var layer = angular.isNumber(name)
+            // ESRI layer are CSV of integer
+            var layer = name && name.match(/^\d+(?:,\d+)*$/)
               ? name
               : url.replace(/.*\/([^\/]*)\/MapServer\/?(.*)/, '$2');
             name = url.replace(/.*\/([^\/]*)\/MapServer\/?(.*)/, '$1 $2');
@@ -1623,7 +1581,7 @@
               return $q.resolve(olLayer);
             }
 
-            gnWmsQueue.add(url, name);
+            gnWmsQueue.add(url, name, '', map);
 
             var params = {};
             if (!!layer) {
@@ -1716,7 +1674,7 @@
                 if (!createOnly) {
                   map.addLayer(olLayer);
                 }
-                gnWmsQueue.removeFromQueue(url, name);
+                gnWmsQueue.removeFromQueue(url, name, map);
                 return olLayer;
               });
           },
@@ -1782,7 +1740,7 @@
             var $this = this;
 
             if (!isLayerInMap(map, name, url)) {
-              gnWmsQueue.add(url, name, map);
+              gnWmsQueue.add(url, name, '', map);
               gnOwsCapabilities.getWMTSCapabilities(url).then(function(capObj) {
 
                 var capL = gnOwsCapabilities.getLayerInfoFromCap(
@@ -1831,7 +1789,7 @@
                   name: name,
                   msg: $translate.instant('getCapFailure')
                 };
-                gnWmsQueue.error(o);
+                gnWmsQueue.error(o, map);
                 defer.reject(o);
               });
             }
@@ -1869,7 +1827,7 @@
             var defer = $q.defer();
             var $this = this;
 
-            gnWmsQueue.add(url, name, map);
+            gnWmsQueue.add(url, name, '', map);
             gnWfsService.getCapabilities(url).then(function(capObj) {
               var capL = gnOwsCapabilities.
                   getLayerInfoFromWfsCap(name, capObj, md.uuid),
@@ -1912,7 +1870,7 @@
                 name: name,
                 msg: $translate.instant('getCapFailure')
               };
-              gnWmsQueue.error(o);
+              gnWmsQueue.error(o, map);
               defer.reject(o);
             });
             return defer.promise;

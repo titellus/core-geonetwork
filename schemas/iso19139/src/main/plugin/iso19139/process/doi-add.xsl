@@ -80,7 +80,7 @@
 
   Adding a new transfer option block.
   -->
-  <xsl:template match="gmd:distributionInfo[not($isDoiAlreadySet) and position() = 1]"
+  <!--<xsl:template match="gmd:distributionInfo[not($isDoiAlreadySet) and position() = 1]"
                 priority="2">
     <xsl:copy>
       <xsl:apply-templates select="@*"/>
@@ -108,7 +108,7 @@
         </gmd:transferOptions>
       </gmd:MD_Distribution>
     </xsl:copy>
-  </xsl:template>
+  </xsl:template>-->
 
 
   <!-- Do a copy of every nodes and attributes -->

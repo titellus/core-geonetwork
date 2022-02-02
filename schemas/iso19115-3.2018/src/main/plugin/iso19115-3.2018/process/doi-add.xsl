@@ -78,7 +78,7 @@
   </xsl:template>
 
 
-  <xsl:template match="mdb:distributionInfo[not($isDoiAlreadySet) and position() = 1]">
+  <!--<xsl:template match="mdb:distributionInfo[not($isDoiAlreadySet) and position() = 1]">
     <xsl:copy>
       <xsl:apply-templates select="@*"/>
       <mrd:MD_Distribution>
@@ -105,7 +105,7 @@
         </mrd:transferOptions>
       </mrd:MD_Distribution>
     </xsl:copy>
-  </xsl:template>
+  </xsl:template>-->
 
   <!-- Do a copy of every nodes and attributes -->
   <xsl:template match="@*|node()">

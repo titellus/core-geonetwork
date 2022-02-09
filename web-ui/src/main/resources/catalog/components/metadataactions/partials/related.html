@@ -108,17 +108,21 @@
 
       <div class="col-xs-12 col-sm-3">
 
-        <div >
-          <div data-gn-record-links-button="[r]"
-               data-type="type"
-               data-icon-mode="none"
-               data-btn-class="btn-block"
-               data-record="md">
+        <div class="row">
+          <div class="col-md-8 gn-nopadding-left gn-nopadding-right">
+            <div data-gn-record-links-button="[r]"
+                 data-type="type"
+                 data-icon-mode="none"
+                 data-btn-class="btn btn-default btn-block"
+                 data-record="md">
+            </div>
           </div>
-          <div class="pull-right"
-               gn-copy-to-clipboard-button=""
-               data-text="{{::r.locUrl}}"
-               data-tooltip="copyUrlToClipboard"></div>
+          <div class="col-md-4 gn-nopadding-right">
+            <div data-btn-class="btn btn-default btn-sm"
+                 gn-copy-to-clipboard-button=""
+                 data-text="{{::r.locUrl}}"
+                 data-tooltip="copyUrlToClipboard"></div>
+          </div>
         </div>
 
         <button type="button"

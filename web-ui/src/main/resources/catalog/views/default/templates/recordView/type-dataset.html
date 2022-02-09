@@ -8,6 +8,16 @@
 
     <div class="gn-margin-top" ng-include="'../../catalog/views/default/templates/recordView/summary.html'"/>
   </div>
+
+  <!-- Display the first metadata status (apply to ISO19139 record) -->
+  <div data-ng-if="mdView.current.record.cl_status.length > 0"
+       data-ng-repeat="c in mdView.current.record.cl_status track by $index"
+       class="col-md-12 gn-nopadding-left">
+    <div data-ng-if="showStatusWatermarkFor.indexOf(c.key) === -1 && showStatusTopBarFor.indexOf(c.key) === -1"
+         class="gn-status gn-status-{{c.key}}">
+      {{c.key | translate}}
+    </div>
+  </div>
 </div>
 
 <!-- map & extent -->
@@ -107,7 +117,7 @@
       </span>
       <div>
         <h3 data-translate="">scale</h3>
-        <ul class="gn-label-list">
+        <ul class="gn-comma-list">
           <li data-ng-repeat="d in mdView.current.record.resolutionScaleDenominator"
               class="gn-scale">{{d}}
           </li>
@@ -122,7 +132,7 @@
       </span>
       <div>
         <h3 data-translate="">resolution</h3>
-        <ul class="gn-label-list">
+        <ul class="gn-comma-list">
           <li data-ng-repeat="r in mdView.current.record.resolutionDistance">{{r}}</li>
         </ul>
       </div>
@@ -135,7 +145,7 @@
       </span>
       <div>
         <h3 data-translate="">crs</h3>
-        <ul class="gn-label-list">
+        <ul class="gn-comma-list">
           <li data-ng-repeat="r in mdView.current.record.crsDetails">
             <a ng-show="r.url" href="{{r.url}}">{{r.name || r.code}}</a>
             <span ng-hide="r.url">{{r.name || r.code}}</span>
@@ -213,7 +223,7 @@
       </span>
       <div>
         <h3 data-translate="">identifier</h3>
-        <ul class="gn-label-list">
+        <ul class="gn-comma-list">
           <li data-ng-repeat="i in mdView.current.record.resourceIdentifier">
             <span data-ng-bind-html="i.code | linky"/>
           </li>
@@ -229,7 +239,7 @@
       </span>
       <div>
         <h3 data-translate="">language</h3>
-        <ul class="gn-label-list">
+        <ul class="gn-comma-list">
           <li data-ng-repeat="l in mdView.current.record.resourceLanguage">
             {{l | translate}}
           </li>

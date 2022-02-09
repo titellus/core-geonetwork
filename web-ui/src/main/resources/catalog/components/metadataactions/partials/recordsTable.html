@@ -18,7 +18,7 @@
           <span data-ng-if="isArray(r[c])">
             <div data-ng-if="!c.startsWith('link') && !c.startsWith('format')"
                 data-ng-repeat="l in r[c]">
-              {{l}}
+              <span class="gn-status gn-{{l}}">{{l}}</span>
             </div>
 
             <div data-ng-if="c.startsWith('format') "

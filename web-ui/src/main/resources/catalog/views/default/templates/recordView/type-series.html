@@ -13,6 +13,16 @@
 </div>
 <div class="col-md-12 gn-record">
 
+  <!-- Records filters -->
+  <div data-ng-if="mdView.current.record.relatedRecords"
+    data-gn-records-filters
+    data-agg="mdView.current.record.relatedRecords.children.length > 0
+        ? mdView.current.record.relatedRecords.aggregations_children
+        :mdView.current.record.relatedRecords.aggregations_siblings"
+    data-title="{{'seriesComposedOf' | translate}}">
+  </div>
+
+  <!-- Related records -->
   <div data-ng-if="mdView.current.record.relatedRecords"
        data-gn-related-with-stats="mdView.current.record.relatedRecords.children.length > 0
                                           ? mdView.current.record.relatedRecords.children
@@ -25,11 +35,15 @@
        data-title="{{'seriesComposedOf' | translate}}">
   </div>
 
+  <!-- Related records table -->
   <div data-gn-records-table="mdView.current.record.relatedRecords.children.length > 0
                               ? mdView.current.record.relatedRecords.children
                               : mdView.current.record.relatedRecords.siblings"
+       data-agg="mdView.current.record.relatedRecords.children.length > 0
+        ? mdView.current.record.relatedRecords.aggregations_children
+        :mdView.current.record.relatedRecords.aggregations_siblings"
        labels="{{::viewConfig.collectionTableConfig.labels}}"
-       columns="{{::viewConfig.collectionTableConfig.columns}}"/>
+       columns="{{::viewConfig.collectionTableConfig.columns}}" />
 </div>
 
 

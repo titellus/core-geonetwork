@@ -6,7 +6,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr data-ng-repeat="r in data track by $index">
+      <tr data-ng-repeat="r in displayedRecords track by $index">
         <td data-ng-repeat="c in columnsConfig track by $index">
           <span data-ng-if="$index === 0">
             <a gn-metadata-open="r.md"

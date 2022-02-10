@@ -53,10 +53,6 @@
           <a data-ng-href="{{::r.locUrl}}">
             {{::r.locTitle || r.locUrl}}
           </a>
-          <div class="pull-right"
-               gn-copy-to-clipboard-button=""
-               data-text="{{::r.locUrl}}"
-               data-tooltip="copyUrlToClipboard"></div>
         </h3>
         <!-- Display description if available -->
         <p data-ng-if="::r.locDescription.length > 0

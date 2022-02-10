@@ -42,7 +42,6 @@
     }
     .btn {
       margin: 0 5px 5px 0;
-      font-size: 14px;
     }
     margin-bottom: 15px;
   }
@@ -68,7 +67,6 @@
     gap: 10px;
     li {
       flex-grow: 2;
-      text-align: center;
       img {
         object-fit: cover;
         vertical-align: bottom;
@@ -99,11 +97,11 @@
   .gn-card-badge {
     padding: 15px;
     margin-top: 30px !important;
-    margin-bottom: 30px !important;
+    //margin-bottom: 30px !important;
     color: #fff;
     position: absolute;
-    left: -10px;
-    bottom: 5px;
+    left: -5px;
+    bottom: 10px;
   }
   .gn-card {
     h1 {
@@ -139,22 +137,30 @@
     }
   }
   .gn-card-series {
-    background-color: @brand-primary;
+    background-color: lighten(@brand-primary, 15%);
     color: #fff;
     a {
       color: #fff;
     }
     &:hover {
-      background-color: @brand-primary;
+      background-color: lighten(@brand-primary, 15%);
+    }
+    .gn-status {
+      position: relative;
+      font-size: 1.3em;
     }
   }
   .gn-card-dataset {
-    background-color: @brand-info;
+    background-color: lighten(@brand-info, 15%);
     a {
       color: #000;
     }
     &:hover {
-      background-color: @brand-info;
+      background-color: lighten(@brand-info, 15%);
+    }
+    .gn-status {
+      position: relative;
+      font-size: 1.3em;
     }
   }
   .gn-card-nonGeographicDataset {
@@ -168,6 +174,13 @@
     &:hover {
       background-color: @brand-success;
     }
+  }
+  // status
+  .table .gn-status {
+    position: relative;
+    bottom: unset;
+    margin-top: 0;
+    margin-left: 0;
   }
 
   .gn-series {
@@ -220,9 +233,30 @@
       border: 1px solid @btn-default-border;
       border-radius: @btn-border-radius-base;
       float: left;
-      padding: 4px 5px;
+      padding: 5px 5px 3px 5px;
       margin: 0 5px 5px 0;
-      font-size: 14px;
+      font-size: 12px;
+    }
+  }
+  .gn-comma-list {
+    list-style: none;
+    padding: 0 !important;
+    margin-bottom: 0;
+    .clearfix();
+    li {
+      line-height: 1.7em;
+      display: inline;
+      word-break: break-all;
+      a {
+        line-break: normal;
+      }
+      &:after {
+        content: ",";
+        margin-left: -0.3ch;
+      }
+      &:last-child:after {
+        content: "";
+      }
     }
   }
   .gn-md-side {
@@ -252,6 +286,7 @@
     }
     a {
       line-break: anywhere;
+      cursor: pointer;
     }
     ul {
       padding-left: 1em;
@@ -279,6 +314,22 @@
         }
       }
     }
+    // card
+    .gn-info-list-blocks {
+      .gn-info-list {
+        .gn-card {
+          width: 100%;
+          margin: 0 0 10px 0;
+          .gn-card-body {
+            height: calc(~"20em - @{gn-card-header-height} - @{gn-card-footer-height}");
+            .gn-img-thumbnail {
+              height: calc(~"20em - @{gn-card-header-height} - @{gn-card-footer-height}") !important;
+            }
+          }
+        }
+      }
+    }
+
   }
   .view-header {
     border-bottom: 2px solid #e5e5e5;
@@ -396,6 +447,17 @@
   // IE11 flexbox fix
   .gn-record > table {
     table-layout: fixed;
+  }
+  // OpenLayers
+  .ol-attribution {
+    ul {
+      margin-top: 2px;
+      max-width: none;
+      display: block;
+      a {
+        color: @link-color;
+      }
+    }
   }
 }
 

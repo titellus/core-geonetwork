@@ -531,7 +531,7 @@ ul.container-list {
         padding-left: 0;
       }
       &.gn-table-attribute {
-        padding-left: 8px;
+        padding: 0;
         table {
           th {
             border-top: 0;
@@ -574,6 +574,11 @@ ul.container-list {
       border-radius: 3px;
       &:hover, &:focus {
         background-color: #f8f8f8;
+      }
+      [gn-popover-anchor] {
+        &:hover, &:focus {
+          color: #000;
+        }
       }
       .col-md-6, .col-md-4 {
         padding-left: 0px;

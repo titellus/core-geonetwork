@@ -809,6 +809,40 @@ i.fa-times.delete:hover {
       border-radius: 5px;
     }
   }
+
+  // positioning
+  //
+  // default is lower left and absolute
+  //
+  // options:
+  // - bottom left
+  // - top right
+  // - in a table row
+  .gn-status-bottomleft {
+    position: relative;
+  }
+  .gn-status-topright {
+    position: absolute;
+    left: auto;
+    right: 0;
+    float: right;
+    top: 8px;
+    margin-right: -8px;
+    bottom: auto;
+  }
+  .gn-status-table {
+    position: relative;
+    bottom: unset;
+    margin-top: 0;
+    margin-left: 0;
+  }
+  // ----- increase the text size
+  .gn-status-md {
+    font-size: 1.3em;
+  }
+  .gn-status-lg {
+    font-size: 1.6em;
+  }
 }
 
 // Language specific layout

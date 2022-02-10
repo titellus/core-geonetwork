@@ -919,6 +919,11 @@ button, .btn, .btn:active, a {
   .popover-content {
     display: table-cell;
     vertical-align: middle;
+    // 'extra' title within the popover content to re-use the title styles
+    .popover-title {
+      display: block !important;
+      margin: -10px -15px 10px -15px;
+    }
     ul {
       margin: 0;
       list-style: none;

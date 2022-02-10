@@ -556,6 +556,7 @@ goog.require('gn_alert');
           }],
           'resultTemplate': '../../catalog/components/' +
               'search/resultsview/partials/viewtemplates/grid.html',
+          'searchResultContact': 'OrgForResource',
           'formatter': {
             'list': [{
               'label': 'defaultView',

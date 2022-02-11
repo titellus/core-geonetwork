@@ -52,26 +52,32 @@
 
       <div gn-popover-anchor
            class="row">
-        <div class="col-md-4"
-             data-gn-circle-letter-icon="cnts[0].role"/>
-
-        <div class="col-md-8" >
+        <div class="col-md-12">
           <div class="gn-contact-card-role">
             {{cnts[0].role | translate}}
           </div>
-          <div class="gn-contact-card-org" data-ng-repeat="c in cnts | orderBy:'organisation'">
-          <span data-ng-if="::c.website">
-            <a data-ng-href="{{::c.website}}">{{c.organisation}}</a>
-          </span>
-            <span data-ng-if="::!c.website">
-            {{c.organisation}}
-          </span>
+          <div class="col-md-12" data-ng-repeat="c in cnts | orderBy:'organisation'">
+            <div class="row">
+              <div class="col-md-4"
+                   data-gn-circle-letter-icon="c.organisation"/>
+              <div class="col-md-8">
+                <div class="gn-contact-card-org-group">
+                  <span data-ng-if="::c.website">
+                    <a data-ng-href="{{::c.website}}">{{c.organisation}}</a>
+                  </span>
+                  <span data-ng-if="::!c.website">
+                    {{c.organisation}}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       <div gn-popover-content>
-        <h3 class="popover-title">{{cnts[0].role | translate}}</h3>
+<!--     Removing for now, because if you close open popup
+   the title disappear. <h3 class="popover-title">{{cnts[0].role | translate}}</h3>-->
         <div data-ng-repeat="c in cnts | orderBy:'organisation'">
           <div data-gn-metadata-individual="c"/>
 
@@ -106,7 +112,7 @@
 
         <div class="col-md-8" ng-repeat="c in contactByOrgRole">
           <div class="gn-contact-card-org-group">
-           <span data-ng-if="::c.website">
+            <span data-ng-if="::c.website">
               <a data-ng-href="{{::c.website}}">{{c.organisation}}</a>
             </span>
             <span data-ng-if="::!c.website">

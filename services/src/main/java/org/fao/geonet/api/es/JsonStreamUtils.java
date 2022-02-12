@@ -96,31 +96,6 @@ public class JsonStreamUtils {
         }
     }
 
-    public static void filterObjectInPathOld(JsonParser parser, JsonGenerator generator,
-                                          JsonFilter callback,
-                                          String... path) throws Exception {
-            if (parser.getCurrentToken() != JsonToken.START_OBJECT) {
-                throw new RuntimeException("Expecting an object");
-            }
-            generator.writeStartObject();
-            while (parser.nextToken() != JsonToken.END_OBJECT) {
-                final String name = parser.getCurrentName();
-                if (name.equals(path[0])) {
-                    generator.writeFieldName(name);
-                    parser.nextToken();
-                    if (path.length == 1) {
-                        callback.apply(parser, generator);
-                    } else {
-                        final String[] sub = Arrays.copyOfRange(path, 1, path.length);
-                        filterObjectInPathOld(parser, generator, callback, sub);
-                    }
-                } else {
-                    generator.copyCurrentStructure(parser);
-                }
-            }
-            generator.writeEndObject();
-        }
-
     public static void addInfoToDocs(JsonParser parser, JsonGenerator generator, TreeFilter callback) throws Exception {
         /* ES response for hits
             hits

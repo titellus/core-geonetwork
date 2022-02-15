@@ -37,7 +37,7 @@
   </csw:Query>
 </csw:GetRecords>
 ```
-Replace by
+Add `*` to match all. Replace AnyText literal by
 ```xml
   <PropertyName>AnyText</PropertyName>
   <Literal>*</Literal>
@@ -80,7 +80,18 @@ Replace by
 </csw:GetRecords>
 ```
 
-Add `gml` namespace to Envelope and Corners:
+Add `gml` namespace to the Envelope and Corners elements:
+
+```
+<Envelope><lowerCorner>...
+```
+must be
+
+```
+<gml:Envelope><gml:lowerCorner>...
+```
+
+Error reported is:
 ```
     <ows:ExceptionText>java.lang.IllegalArgumentException: cvc-complex-type.2.4.a: Invalid content was found starting with element '{"http://www.opengis.net/ogc":Envelope}'. One of '{"http://www.opengis.net/gml":Envelope}' is expected.</ows:ExceptionText>
 ```
@@ -89,8 +100,9 @@ Replace `keyword` by `Subject` (which is a CSW queryable; `keyword` was only a G
 
 
 
-```xml
 * Advanced search
+
+```xml
 <csw:GetRecords xmlns:csw="http://www.opengis.net/cat/csw/2.0.2" service="CSW" version="2.0.2" resultType="results"
                 maxRecords="1000" startPosition="1">
   <csw:Query typeNames="csw:Record">
@@ -128,4 +140,4 @@ Invalid query:
     <ows:ExceptionText>java.lang.IllegalArgumentException: cvc-complex-type.2.4.b: The content of element 'Or' is not complete. One of '{"http://www.opengis.net/ogc":comparisonOps, "http://www.opengis.net/ogc":spatialOps, "http://www.opengis.net/ogc":logicOps, "http://www.opengis.net/ogc":Function}' is expected.</ows:ExceptionText>
 ```
 
-At least 2 clauses in `Or`.
+At least 2 clauses are needed in `Or` operator.

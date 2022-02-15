@@ -114,43 +114,6 @@
             });
           }
 
-          function checkSelection(md) {
-            scope.isSelected = false;
-            return $http.get('../api/selections/' + scope.searchObj.selectionBucket, {}).
-            success(function(data) {
-              scope.selectedCount = data.length
-              if (md && data.includes(md._id)) {
-                scope.isSelected = true
-              } else {}
-            });
-          }
-
-          scope.addToSelection = function(md) {
-            return $http.put('../api/selections/'+  scope.searchObj.selectionBucket , null, {
-              params: {
-                uuid: md.uuid
-              }
-          }).then(function(response) {
-              checkSelection();
-              scope.isSelected = true;
-              var res = response.data;
-            }, function(response) {
-            });
-          };
-
-          scope.removeFromSelection = function(md) {
-            return $http.delete('../api/selections/'+  scope.searchObj.selectionBucket , {
-              params: {
-                uuid: md.uuid
-              }
-            }).then(function(response) {
-              checkSelection();
-              scope.isSelected = false;
-              var res = response.data;
-            }, function(response) {
-            });
-          };
-
           scope.getVisibleTasks = function() {
             $.each(scope.tasks, function(i,t) {
               scope.hasVisibletasks = scope.taskConfiguration[t.name] &&
@@ -178,7 +141,6 @@
 
           scope.$watch(attrs.gnMdActionsMenu, function(a) {
             scope.md = a;
-            checkSelection(scope.md)
           });
 
           scope.getScope = function() {

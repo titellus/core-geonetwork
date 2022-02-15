@@ -28,10 +28,10 @@
   var module = angular.module('gn_selection_directive', []);
 
   module.directive('gnSelectionWidget', [
-    '$translate', '$http', 'hotkeys', 'gnAlertService',
+    '$translate', '$http', 'hotkeys', 'gnAlertService', '$rootScope',
     'gnHttp', 'gnMetadataActions', 'gnConfig', 'gnConfigService',
     'gnSearchSettings', 'gnSearchManagerService', 'gnCollectionService',
-    function($translate, $http, hotkeys, gnAlertService,
+    function($translate, $http, hotkeys, gnAlertService, $rootScope,
              gnHttp, gnMetadataActions, gnConfig, gnConfigService,
              gnSearchSettings, gnSearchManagerService, gnCollectionService) {
 
@@ -232,19 +232,24 @@
 
   module.directive('gnSelectionMd', ['gnSearchManagerService',
     function(gnSearchManagerService) {
-
       return {
         restrict: 'A',
+        scope: {
+          'md': '=gnSelectionMd',
+          'bucket': '=bucket',
+          'results': '=results'
+        },
         link: function(scope, element, attrs) {
-
-          scope.change = function() {
+          element[0] && element[0].addEventListener('click', function(e){
             var method = element[0].checked ? 'select' : 'unselect';
             gnSearchManagerService[method](
-                scope.md.uuid, scope.searchResults.selectionBucket).
+                scope.md.uuid, scope.bucket).
                 success(function(res) {
-                  scope.searchResults.selectedCount = parseInt(res, 10);
+                  scope.md.selected = element[0].checked;
+                  scope.results.selectedCount = parseInt(res, 10);
                 });
-          };
+            e.stopPropagation();
+          });
 
         }
       };

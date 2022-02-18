@@ -6,9 +6,13 @@
 * Dump database
 * Restore dump in new one (if needed)
 * Apply [SQL migration script](migrate-4.1.0.sql)
+* Configure the database type to use in WEB-INF/config-node/srv.xml - comment h2 and uncomment postgresql.
+* Configure the database connection in WEB-INF/config-db/jdbc.properties
 * Start new version, sign in
 * http://localhost:8080/geonetwork/doc/api/index.html#/tools/callStep and apply
   step `org.fao.geonet.MetadataResourceDatabaseMigration`
+  
+  
 
 ## Query test
 

@@ -489,3 +489,42 @@ UPDATE metadata SET data = REGEXP_REPLACE(data, ' xlink:href="\/geonetwork\/srv\
 -- <gmd:code>
 -- <gco:CharacterString>onegeology-geonetwork.brgm.fr/geonetwork3/srv/metadata/50b5175e6544ab368c3e1759b13949242f41865</gco:CharacterString>
 -- </gmd:code>
+
+
+
+
+
+-- ## Les cas
+-- http://http://onegeology-catalog.brgm-rec.fr/geonetwork3/srv/eng//xml.metadata.get?uuid=
+-- <srv:operatesOn uuidref="f4b7a016e0b8d9357c67487de6c9f4f7a1a7087a" xlink:href="http://http://onegeology-catalog.brgm-rec.fr/geonetwork3/srv/eng//xml.metadata.get?uuid=f4b7a016e0b8d9357c67487de6c9f4f7a1a7087a"/>
+UPDATE metadata SET data = replace(data,
+                                   'http://http://onegeology-catalog.brgm-rec.fr/geonetwork3/srv/eng//xml.metadata.get?uuid=',
+                                   'http://onegeology-geonetwork.brgm.fr/geonetwork3/srv/api/records/')
+WHERE data LIKE '%http://http://onegeology-catalog.brgm-rec.fr/geonetwork3/srv/eng//xml.metadata.get?uuid=%';
+
+-- <gmd:MD_BrowseGraphic>
+-- <gmd:fileName>
+-- <gco:CharacterString>http://http://onegeology-catalog.brgm-rec.fr/geonetwork3/srv/fre/resources.get?uuid=2b680d6c-df90-430e-afc4-dfc8a4e017ef&fname=2b680d6c-df90-430e-afc4-dfc8a4e017ef_s.png</gco:CharacterString>
+
+UPDATE metadata SET data = replace(data,
+                                   '&amp;fname=',
+                                   '/attachments/')
+WHERE data LIKE '%&amp;fname=%';
+
+UPDATE metadata SET data = replace(data,
+                                   '>http://http://onegeology-catalog.brgm-rec.fr/geonetwork3/srv/fre/resources.get?uuid=',
+                                   '>http://onegeology-geonetwork.brgm.fr/geonetwork3/srv/api/records/')
+WHERE data LIKE '%>http://http://onegeology-catalog.brgm-rec.fr/geonetwork3/srv/fre/resources.get?uuid=%';
+
+UPDATE metadata SET data = replace(data,
+                                   '>http://onegeology-geonetwork.brgm.fr/geonetwork3/srv/eng/resources.get?uuid=',
+                                   '>http://onegeology-geonetwork.brgm.fr/geonetwork3/srv/api/records/')
+WHERE data LIKE '%>http://onegeology-geonetwork.brgm.fr/geonetwork3/srv/eng/resources.get?uuid=%';
+
+UPDATE metadata SET data = replace(data,
+                                   '>http://onegeology-catalog.brgm-rec.fr/geonetwork3/srv/fre/resources.get?uuid=',
+                                   '>http://onegeology-geonetwork.brgm.fr/geonetwork3/srv/api/records/')
+WHERE data LIKE '%>http://onegeology-catalog.brgm-rec.fr/geonetwork3/srv/fre/resources.get?uuid=%';
+
+
+

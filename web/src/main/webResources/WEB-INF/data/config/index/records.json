@@ -9,19 +9,15 @@
           "trigram": {
             "type": "custom",
             "tokenizer": "standard",
-            "filter": [
-              "shingle"
-            ]
+            "filter": ["shingle"]
           },
           "reverse": {
             "type": "custom",
             "tokenizer": "standard",
-            "filter": [
-              "reverse"
-            ]
+            "filter": ["reverse"]
           },
           "french_rebuilt": {
-            "tokenizer":  "standard",
+            "tokenizer": "standard",
             "filter": [
               "lowercase",
               "french_synonym",
@@ -33,10 +29,11 @@
             ]
           },
           "english_rebuilt": {
-            "tokenizer":  "standard",
+            "tokenizer": "standard",
             "filter": [
               "english_possessive_stemmer",
               "lowercase",
+              "asciifolding",
               "english_synonym",
               "english_stop",
               "english_keywords",
@@ -54,38 +51,23 @@
           },
           "synInspireThemeUris": {
             "tokenizer": "keyword",
-            "filter": [
-              "lowercase",
-              "synInspireThemeUris"
-            ]
+            "filter": ["lowercase", "synInspireThemeUris"]
           },
           "synInspireThemes": {
             "tokenizer": "keyword",
-            "filter": [
-              "lowercase",
-              "synInspireThemes"
-            ]
+            "filter": ["lowercase", "synInspireThemes"]
           },
           "keepInspireServiceTypes": {
             "tokenizer": "keyword",
-            "filter": [
-              "lowercase",
-              "keepInspireServiceTypes"
-            ]
+            "filter": ["lowercase", "keepInspireServiceTypes"]
           },
           "keepInspireAnnexes": {
             "tokenizer": "keyword",
-            "filter": [
-              "lowercase",
-              "keepInspireAnnexes"
-            ]
+            "filter": ["lowercase", "keepInspireAnnexes"]
           },
           "keepInspireThemes": {
             "tokenizer": "keyword",
-            "filter": [
-              "lowercase",
-              "keepInspireThemes"
-            ]
+            "filter": ["lowercase", "keepInspireThemes"]
           }
         },
         "filter": {
@@ -95,12 +77,22 @@
             "max_shingle_size": 3
           },
           "french_elision": {
-            "type":         "elision",
+            "type": "elision",
             "articles_case": true,
             "articles": [
-              "l", "m", "t", "qu", "n", "s",
-              "j", "d", "c", "jusqu", "quoiqu",
-              "lorsqu", "puisqu"
+              "l",
+              "m",
+              "t",
+              "qu",
+              "n",
+              "s",
+              "j",
+              "d",
+              "c",
+              "jusqu",
+              "quoiqu",
+              "lorsqu",
+              "puisqu"
             ]
           },
           "french_synonym": {
@@ -114,38 +106,37 @@
             ]
           },
           "french_stop": {
-            "type":       "stop",
-            "stopwords":  "_french_"
+            "type": "stop",
+            "stopwords": "_french_"
           },
           "french_keywords": {
-            "type":       "keyword_marker",
-            "keywords":   []
+            "type": "keyword_marker",
+            "keywords": []
           },
           "french_stemmer": {
-            "type":       "stemmer",
-            "language":   "light_french"
+            "type": "stemmer",
+            "language": "light_french"
           },
           "english_stop": {
-            "type":       "stop",
-            "stopwords":  "_english_"
+            "type": "stop",
+            "stopwords": "_english_"
           },
           "english_synonym": {
             "type": "synonym",
             "expand": true,
-            "synonyms": [
-            ]
+            "synonyms": []
           },
           "english_keywords": {
-            "type":       "keyword_marker",
-            "keywords":   ["example"]
+            "type": "keyword_marker",
+            "keywords": ["example"]
           },
           "english_stemmer": {
-            "type":       "stemmer",
-            "language":   "english"
+            "type": "stemmer",
+            "language": "english"
           },
           "english_possessive_stemmer": {
-            "type":       "stemmer",
-            "language":   "possessive_english"
+            "type": "stemmer",
+            "language": "possessive_english"
           },
           "keepInspireServiceTypes": {
             "type": "keep",
@@ -160,11 +151,7 @@
           },
           "keepInspireAnnexes": {
             "type": "keep",
-            "keep_words": [
-              "i",
-              "ii",
-              "iii"
-            ]
+            "keep_words": ["i", "ii", "iii"]
           },
           "keepInspireThemes": {
             "type": "keep",
@@ -1046,6 +1033,43 @@
         }
       },
       {
+        "org": {
+          "match": "*Org*Object",
+          "mapping": {
+            "type": "object",
+            "properties": {
+              "default": {
+                "type": "keyword",
+                "copy_to": ["any.default"]
+              },
+              "langeng": {
+                "type": "keyword",
+                "copy_to": ["any.langeng"]
+              },
+              "langfre": {
+                "type": "keyword",
+                "copy_to": ["any.langfre"]
+              },
+              "langger": {
+                "type": "keyword",
+                "copy_to": ["any.langger"]
+              },
+              "langita": {
+                "type": "keyword",
+                "copy_to": ["any.langita"]
+              },
+              "langspa": {
+                "type": "keyword",
+                "copy_to": ["any.langspa"]
+              },
+              "link": {
+                "type": "keyword"
+              }
+            }
+          }
+        }
+      },
+      {
         "textField": {
           "match": "*Object",
           "mapping": {
@@ -1054,14 +1078,11 @@
               "default": {
                 "type": "text",
                 "analyzer": "${es.index.analyzer.default}",
-                "copy_to": [
-                  "any.default",
-                  "anytext"
-                ],
+                "copy_to": ["any.default", "anytext"],
                 "fields": {
                   "keyword": {
                     "type": "keyword",
-                    "ignore_above": 256
+                    "ignore_above": ${es.index.ignore_above}
                   },
                   "trigram": {
                     "type": "text",
@@ -1076,78 +1097,79 @@
               "langeng": {
                 "type": "text",
                 "analyzer": "english_rebuilt",
-                "copy_to": [
-                  "any.langeng"
-                ],
+                "copy_to": ["any.langeng"],
                 "fields": {
                   "keyword": {
                     "type": "keyword",
-                    "ignore_above": 256
+                    "ignore_above": ${es.index.ignore_above}
                   }
                 }
               },
               "langfre": {
                 "type": "text",
                 "analyzer": "french_rebuilt",
-                "copy_to": [
-                  "any.langfre"
-                ],
+                "copy_to": ["any.langfre"],
                 "fields": {
                   "keyword": {
                     "type": "keyword",
-                    "ignore_above": 256
+                    "ignore_above": ${es.index.ignore_above}
                   }
                 }
               },
               "langger": {
                 "type": "text",
                 "analyzer": "german",
+                "copy_to": ["any.langger"],
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": ${es.index.ignore_above}
+                  }
+                }
+              },
+              "langdut": {
+                "type": "text",
+                "analyzer": "dutch",
                 "copy_to": [
-                  "any.langger"
+                  "any.langdut"
                 ],
                 "fields": {
                   "keyword": {
                     "type": "keyword",
-                    "ignore_above": 256
+                    "ignore_above": ${es.index.ignore_above}
                   }
                 }
               },
               "langita": {
                 "type": "text",
                 "analyzer": "italian",
-                "copy_to": [
-                  "any.langita"
-                ],
+                "copy_to": ["any.langita"],
                 "fields": {
                   "keyword": {
                     "type": "keyword",
-                    "ignore_above": 256
+                    "ignore_above": ${es.index.ignore_above}
                   }
                 }
               },
               "langspa": {
                 "type": "text",
                 "analyzer": "spanish",
-                "copy_to": [
-                  "any.langspa"
-                ],
+                "copy_to": ["any.langspa"],
                 "fields": {
                   "keyword": {
                     "type": "keyword",
-                    "ignore_above": 256
+                    "ignore_above": ${es.index.ignore_above}
                   }
                 }
               },
               "langroh": {
                 "type": "text",
                 "analyzer": "${es.index.analyzer.default}",
-                "copy_to": [
-                  "any.langroh"
-                ],
+                "copy_to": ["any.langroh"],
                 "fields": {
                   "keyword": {
                     "type": "keyword",
-                    "ignore_above": 256
+                    "ignore_above": ${es.index.ignore_above}
                   }
                 }
               },
@@ -1189,14 +1211,6 @@
         }
       },
       {
-        "org": {
-          "match": "*Org*",
-          "mapping": {
-            "type": "keyword"
-          }
-        }
-      },
-      {
         "tree": {
           "match": "th_*_tree",
           "mapping": {
@@ -1217,45 +1231,37 @@
           "match": "th_*",
           "mapping": {
             "type": "object",
-            "copy_to": [
-              "th_tag"
-            ],
+            "copy_to": ["tag"],
             "properties": {
               "default": {
                 "type": "keyword",
-                "copy_to": [
-                  "any.default"
-                ]
+                "copy_to": ["any.default"]
               },
               "langeng": {
                 "type": "keyword",
-                "copy_to": [
-                  "any.langeng"
-                ]
+                "copy_to": ["any.langeng"]
               },
               "langfre": {
                 "type": "keyword",
-                "copy_to": [
-                  "any.langfre"
-                ]
+                "copy_to": ["any.langfre"]
               },
               "langger": {
                 "type": "keyword",
+                "copy_to": ["any.langger"]
+              },
+              "langdut": {
+                "type": "keyword",
                 "copy_to": [
-                  "any.langger"
+                  "any.langdut"
                 ]
               },
               "langita": {
                 "type": "keyword",
-                "copy_to": [
-                  "any.langita"
-                ]
+                "copy_to": ["any.langita"]
               },
               "langspa": {
                 "type": "keyword",
-                "copy_to": [
-                  "any.langspa"
-                ]
+                "copy_to": ["any.langspa"]
               },
               "text": {
                 "type": "keyword"
@@ -1289,7 +1295,7 @@
           "mapping": {
             "type": "nested",
             "properties": {
-              "org": {
+              "organisation": {
                 "type": "keyword"
               },
               "role": {
@@ -1422,6 +1428,10 @@
             "type": "text",
             "analyzer": "german"
           },
+          "langdut": {
+            "type": "text",
+            "analyzer": "dutch"
+          },
           "langita": {
             "type": "text",
             "analyzer": "italian"
@@ -1444,40 +1454,33 @@
         "properties": {
           "default": {
             "type": "keyword",
-            "copy_to": [
-              "any.default",
-              "anytext"
-            ]
+            "copy_to": ["any.default", "anytext"]
           },
           "langeng": {
             "type": "keyword",
-            "copy_to": [
-              "any.langeng"
-            ]
+            "copy_to": ["any.langeng"]
           },
           "langfre": {
             "type": "keyword",
-            "copy_to": [
-              "any.langfre"
-              ]
+            "copy_to": ["any.langfre"]
           },
           "langger": {
             "type": "keyword",
+            "copy_to": ["any.langger"]
+          },
+          "langdut": {
+            "type": "keyword",
             "copy_to": [
-              "any.langger"
+              "any.langdut"
               ]
           },
           "langita": {
             "type": "keyword",
-            "copy_to": [
-              "any.langita"
-              ]
+            "copy_to": ["any.langita"]
           },
           "langspa": {
             "type": "keyword",
-            "copy_to": [
-              "any.langspa"
-            ]
+            "copy_to": ["any.langspa"]
           },
           "link": {
             "type": "keyword"
@@ -1505,10 +1508,12 @@
         "type": "keyword"
       },
       "geom": {
-        "type": "geo_shape"
+        "type": "geo_shape",
+        "ignore_malformed": true
       },
       "shape": {
-        "type": "geo_shape"
+        "type": "geo_shape",
+        "ignore_malformed": true
       },
       "location": {
         "type": "geo_point"
@@ -1610,12 +1615,33 @@
             "type": "text",
             "copy_to": "any.common"
           },
+          "linkObject": {
+            "type": "object",
+            "properties": {
+              "default": {
+                "type": "keyword",
+                "copy_to": "any.common"
+              }
+            }
+          },
           "name": {
             "type": "text",
             "copy_to": "any.common"
           },
+          "nameObject": {
+            "type": "object",
+            "properties": {
+              "default": {
+                "type": "keyword",
+                "copy_to": "any.common"
+              }
+            }
+          },
           "description": {
             "type": "text"
+          },
+          "descriptionObject": {
+            "type": "object"
           }
         }
       },
@@ -1630,7 +1656,7 @@
         "fields": {
           "keyword": {
             "type": "keyword",
-            "ignore_above": 256
+            "ignore_above": ${es.index.ignore_above}
           }
         }
       },
@@ -1639,7 +1665,7 @@
         "fields": {
           "keyword": {
             "type": "keyword",
-            "ignore_above": 256
+            "ignore_above": ${es.index.ignore_above}
           }
         }
       },
@@ -1657,7 +1683,7 @@
         "fields": {
           "keyword": {
             "type": "keyword",
-            "ignore_above": 256
+            "ignore_above": ${es.index.ignore_above}
           }
         }
       },
@@ -1666,7 +1692,7 @@
         "fields": {
           "keyword": {
             "type": "keyword",
-            "ignore_above": 256
+            "ignore_above": ${es.index.ignore_above}
           }
         }
       },
@@ -1685,12 +1711,7 @@
       "recordJoin": {
         "type": "join",
         "relations": {
-          "record": [
-            "children",
-            "dataset",
-            "sibling",
-            "feature"
-          ]
+          "record": ["children", "dataset", "sibling", "feature"]
         }
       },
       "recordLink": {
@@ -1728,6 +1749,14 @@
       "resourceType": {
         "type": "keyword"
       },
+      "resourceTypeNameObject": {
+        "type": "object",
+        "properties": {
+          "default": {
+            "type": "keyword"
+          }
+        }
+      },
       "resourceIdentifier": {
         "type": "object",
         "properties": {
@@ -1740,6 +1769,66 @@
           },
           "link": {
             "type": "keyword"
+          }
+        }
+      },
+      "featureTypes": {
+        "type": "object",
+        "properties": {
+          "aliases": {
+            "type": "keyword",
+            "copy_to": "any.common"
+          },
+          "code": {
+            "type": "keyword"
+          },
+          "definition": {
+            "type": "text"
+          },
+          "typeName": {
+            "type": "keyword",
+            "copy_to": "any.common"
+          },
+          "isAbstract": {
+            "type": "boolean"
+          },
+          "attributeTable": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "keyword",
+                "copy_to": "any.common"
+              },
+              "definition": {
+                "type": "text"
+              },
+              "link": {
+                "type": "keyword"
+              },
+              "name": {
+                "type": "keyword",
+                "copy_to": "any.common"
+              },
+              "type": {
+                "type": "keyword"
+              },
+              "values": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "keyword",
+                    "copy_to": "any.common"
+                  },
+                  "definition": {
+                    "type": "text"
+                  },
+                  "label": {
+                    "type": "keyword",
+                    "copy_to": "any.common"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -1772,7 +1861,7 @@
         "fields": {
           "keyword": {
             "type": "keyword",
-            "ignore_above": 256
+            "ignore_above": ${es.index.ignore_above}
           }
         }
       },
@@ -1781,6 +1870,9 @@
         "copy_to": "any.common"
       },
       "groupPublished": {
+        "type": "keyword"
+      },
+      "groupPublishedId": {
         "type": "keyword"
       },
       "isPublishedToAll": {
@@ -1821,6 +1913,18 @@
       },
       "root": {
         "type": "keyword"
+      },
+      "indexingError": {
+        "type": "boolean"
+      },
+      "indexingErrorMsg": {
+        "type": "keyword"
+      },
+      "statusWorkflow": {
+        "type": "keyword"
+      },
+      "userSavedCount": {
+        "type": "long"
       }
     }
   },

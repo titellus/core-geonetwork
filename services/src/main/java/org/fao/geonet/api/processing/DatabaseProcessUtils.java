@@ -35,6 +35,7 @@ import org.fao.geonet.kernel.SchemaManager;
 import org.fao.geonet.kernel.datamanager.IMetadataManager;
 import org.fao.geonet.kernel.datamanager.IMetadataSchemaUtils;
 import org.fao.geonet.kernel.datamanager.IMetadataUtils;
+import org.fao.geonet.kernel.search.IndexingMode;
 import org.fao.geonet.kernel.setting.SettingManager;
 import org.fao.geonet.lib.Lib;
 import org.fao.geonet.repository.MetadataRepository;
@@ -97,17 +98,25 @@ public class DatabaseProcessUtils {
                 // Check XML is still well formed.
                 wellFormedXml = Xml.loadString(updatedXml, false);
 
-                // --- save metadata and return status
-                if (save) {
-                    boolean validate = false;
-                    boolean ufo = true;
-                    String language = context.getLanguage();
+                String beforeProcessXML = info.getData();
+                if (beforeProcessXML.equals(updatedXml)) {
+                    report.incrementUnchangedRecords();
+                } else {
+                    // --- save metadata and return status
+                    if (save) {
+                        boolean validate = false;
+                        boolean ufo = true;
+                        String language = context.getLanguage();
 
-                    dataMan.updateMetadata(context, id, wellFormedXml, validate, ufo, index, language, new ISODate().toString(), updateDateStamp);
-                    if (index) {
-                        dataMan.indexMetadata(id, true);
+                        dataMan.updateMetadata(context, id, wellFormedXml, validate, ufo, language, new ISODate().toString(),
+                            updateDateStamp, index ? IndexingMode.full : IndexingMode.none);
+                        if (index) {
+                            dataMan.indexMetadata(id, true);
+                        }
                     }
                 }
+
+
 
                 report.addMetadataId(iId);
                 // TODO : it could be relevant to list at least

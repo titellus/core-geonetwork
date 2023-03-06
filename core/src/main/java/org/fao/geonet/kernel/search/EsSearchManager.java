@@ -62,6 +62,7 @@ import org.fao.geonet.kernel.DataManager;
 import org.fao.geonet.kernel.GeonetworkDataDirectory;
 import org.fao.geonet.kernel.SelectionManager;
 import org.fao.geonet.kernel.datamanager.IMetadataUtils;
+import org.fao.geonet.kernel.search.index.OverviewIndexFieldUpdater;
 import org.fao.geonet.kernel.setting.SettingInfo;
 import org.fao.geonet.repository.SourceRepository;
 import org.fao.geonet.repository.specification.MetadataSpecs;
@@ -82,8 +83,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 
-import static org.elasticsearch.rest.RestStatus.*;
+import static org.elasticsearch.rest.RestStatus.CREATED;
+import static org.elasticsearch.rest.RestStatus.OK;
 import static org.fao.geonet.constants.Geonet.IndexFieldNames.IS_TEMPLATE;
+import static org.fao.geonet.kernel.search.IndexFields.INDEXING_ERROR_FIELD;
+import static org.fao.geonet.kernel.search.IndexFields.INDEXING_ERROR_MSG;
 
 
 public class EsSearchManager implements ISearchManager {
@@ -99,6 +103,7 @@ public class EsSearchManager implements ISearchManager {
 
     public static Map<String, String> relatedIndexFields;
     public static Set<String> FIELDLIST_CORE;
+    public static Set<String> FIELDLIST_RELATED;
     public static Set<String> FIELDLIST_UUID;
 
     static {
@@ -125,6 +130,23 @@ public class EsSearchManager implements ISearchManager {
             .add(Geonet.IndexFieldNames.UUID)
             .add(Geonet.IndexFieldNames.RESOURCETITLE)
             .add(Geonet.IndexFieldNames.RESOURCETITLE + "Object")
+            .add(Geonet.IndexFieldNames.RESOURCEABSTRACT)
+            .add(Geonet.IndexFieldNames.RESOURCEABSTRACT + "Object")
+            .add("operatesOn")
+            .build();
+
+        FIELDLIST_RELATED = ImmutableSet.<String>builder()
+            .add(Geonet.IndexFieldNames.ID)
+            .add(Geonet.IndexFieldNames.UUID)
+            .add(Geonet.IndexFieldNames.RESOURCETITLE)
+            .add(Geonet.IndexFieldNames.RESOURCETITLE + "Object")
+            .add("overview.*")
+            .add("link")
+            .add("format")
+            .add("resourceType")
+            .add("cl_status.key")
+            .add(Geonet.IndexFieldNames.OP_PREFIX + "*")
+            .add(Geonet.IndexFieldNames.GROUP_OWNER)
             .add(Geonet.IndexFieldNames.RESOURCEABSTRACT)
             .add(Geonet.IndexFieldNames.RESOURCEABSTRACT + "Object")
             .add("operatesOn")
@@ -156,6 +178,9 @@ public class EsSearchManager implements ISearchManager {
     @Autowired
     public EsRestClient client;
 
+    @Autowired
+    OverviewIndexFieldUpdater overviewFieldUpdater;
+
     private int commitInterval = 200;
 
     // public for test, to be private or protected
@@ -177,10 +202,15 @@ public class EsSearchManager implements ISearchManager {
         return xsltForIndexing;
     }
 
-    private void addMDFields(Element doc, Path schemaDir, Element metadata, MetadataType metadataType) {
+    private void addMDFields(Element doc, Path schemaDir,
+                             Element metadata, MetadataType metadataType,
+                             IndexingMode indexingMode) {
         final Path styleSheet = getXSLTForIndexing(schemaDir, metadataType);
         try {
-            Element fields = Xml.transform(metadata, styleSheet);
+            Map<String, Object> indexParams = new HashMap<String, Object>();
+            indexParams.put("fastIndexMode", indexingMode.equals(IndexingMode.core));
+
+            Element fields = Xml.transform(metadata, styleSheet, indexParams);
             /* Generates something like that:
             <doc>
               <field name="toto">Contenu</field>
@@ -190,27 +220,9 @@ public class EsSearchManager implements ISearchManager {
             }
         } catch (Exception e) {
             LOGGER.error("Indexing stylesheet contains errors: {} \n  Marking the metadata as _indexingError=1 in index", e.getMessage());
-            doc.addContent(new Element(IndexFields.INDEXING_ERROR_FIELD).setText("true"));
-            doc.addContent(new Element(IndexFields.INDEXING_ERROR_MSG).setText("GNIDX-XSL||" + e.getMessage()));
+            doc.addContent(new Element(INDEXING_ERROR_FIELD).setText("true"));
+            doc.addContent(new Element(INDEXING_ERROR_MSG).setText("GNIDX-XSL||" + e.getMessage()));
             doc.addContent(new Element(IndexFields.DRAFT).setText("n"));
-
-            StringBuilder sb = new StringBuilder();
-            allText(metadata, sb);
-            doc.addContent(new Element("_text_").setText(sb.toString()));
-        }
-    }
-
-    private void allText(Element metadata, StringBuilder sb) {
-        String text = metadata.getText().trim();
-        if (text.length() > 0) {
-            if (sb.length() > 0)
-                sb.append(" ");
-            sb.append(text);
-        }
-        @SuppressWarnings("unchecked")
-        List<Element> children = metadata.getChildren();
-        for (Element aChildren : children) {
-            allText(aChildren, sb);
         }
     }
 
@@ -321,7 +333,12 @@ public class EsSearchManager implements ISearchManager {
     }
 
     public BulkResponse updateFields(String id, Multimap<String, Object> fields, Set<String> fieldsToRemove) throws Exception {
-        fields.put("indexingDate", new Date());
+        Map<String, Object> fieldMap = new HashMap<>();
+        fields.asMap().forEach((e, v) -> fieldMap.put(e, v.toArray()));
+        return updateFields(id, fieldMap, fieldsToRemove);
+    }
+    public BulkResponse updateFields(String id, Map<String, Object> fieldMap, Set<String> fieldsToRemove) throws Exception {
+        fieldMap.put("indexingDate", new Date());
         BulkRequest bulkrequest = new BulkRequest();
         StringBuffer script = new StringBuffer();
         fieldsToRemove.forEach(f ->
@@ -333,8 +350,6 @@ public class EsSearchManager implements ISearchManager {
                 script.toString(),
                 Collections.emptyMap()));
         bulkrequest.add(deleteFieldRequest);
-        Map<String, Object> fieldMap = new HashMap<>();
-        fields.asMap().forEach((e, v) -> fieldMap.put(e, v.toArray()));
         UpdateRequest addFieldRequest = new UpdateRequest(defaultIndex, id)
             .doc(fieldMap);
         bulkrequest.add(addFieldRequest);
@@ -375,11 +390,12 @@ public class EsSearchManager implements ISearchManager {
     public void index(Path schemaDir, Element metadata, String id,
                       Multimap<String, Object> dbFields,
                       MetadataType metadataType,
-                      boolean forceRefreshReaders) throws Exception {
+                      boolean forceRefreshReaders,
+                      IndexingMode indexingMode) throws Exception {
 
         Element docs = new Element("doc");
         if (schemaDir != null) {
-            addMDFields(docs, schemaDir, metadata, metadataType);
+            addMDFields(docs, schemaDir, metadata, metadataType, indexingMode);
         }
         addMoreFields(docs, dbFields);
 
@@ -393,13 +409,19 @@ public class EsSearchManager implements ISearchManager {
             doc.put("sourceCatalogue", catalog);
         }
 
+        JsonNode errors = doc.get(INDEXING_ERROR_MSG);
+        if (errors != null) {
+            doc.put(INDEXING_ERROR_FIELD, "true");
+        }
+
         String jsonDocument = mapper.writeValueAsString(doc);
 
         if (forceRefreshReaders) {
-            HashMap<String, String> document = new HashMap<>();
+            Map<String, String> document = new HashMap<>();
             document.put(id, jsonDocument);
             final BulkResponse bulkItemResponses = client.bulkRequest(defaultIndex, document);
             checkIndexResponse(bulkItemResponses, document);
+            overviewFieldUpdater.process(id);
         } else {
             listOfDocumentsToIndex.put(id, jsonDocument);
             if (listOfDocumentsToIndex.size() == commitInterval) {
@@ -421,7 +443,10 @@ public class EsSearchManager implements ISearchManager {
                     "An error occurred while indexing {} documents in current indexing list. Error is {}.",
                     new Object[]{listOfDocumentsToIndex.size(), e.getMessage()});
             } finally {
-                //                listOfDocumentsToIndex.clear();
+                // TODO: Trigger this async ?
+                documents.keySet().forEach(uuid -> {
+                    overviewFieldUpdater.process(uuid);
+                });
             }
         }
     }
@@ -457,8 +482,9 @@ public class EsSearchManager implements ISearchManager {
                     docWithErrorInfo.put(IndexFields.RESOURCE_TITLE, resourceTitle);
                     docWithErrorInfo.put(IS_TEMPLATE, isTemplate);
                     docWithErrorInfo.put(IndexFields.DRAFT, "n");
-                    docWithErrorInfo.put(IndexFields.INDEXING_ERROR_FIELD, "true");
-                    docWithErrorInfo.put(IndexFields.INDEXING_ERROR_MSG, e.getFailureMessage());
+                    docWithErrorInfo.put(INDEXING_ERROR_FIELD, true);
+                    ArrayNode errors = docWithErrorInfo.putArray(INDEXING_ERROR_MSG);
+                    errors.add(e.getFailureMessage());
                     // TODO: Report the JSON which was causing the error ?
 
                     LOGGER.error("Document with error #{}: {}.",
@@ -495,6 +521,7 @@ public class EsSearchManager implements ISearchManager {
             .add("cat")
             .add("keyword")
             .add("extentDescriptionObject")
+            .add("resourceAltTitleObject")
             .add("resourceCredit")
             .add("resourceCreditObject")
             .add("resolutionScaleDenominator")
@@ -521,31 +548,36 @@ public class EsSearchManager implements ISearchManager {
             .add("MD_SecurityConstraintsUseLimitation")
             .add("MD_SecurityConstraintsUseLimitationObject")
             .add("overview")
+            .add("sourceDescription")
             .add("MD_ConstraintsUseLimitation")
             .add("MD_ConstraintsUseLimitationObject")
             .add("resourceType")
             .add("type")
             .add("resourceDate")
             .add("link")
+            .add("linkProtocol")
             .add("crsDetails")
             .add("format")
+            .add("orderingInstructionsObject")
             .add("contact")
             .add("contactForResource")
             .add("contactForDistribution")
             .add("OrgForResource")
             .add("specificationConformance")
+            .add("measure")
             .add("resourceProviderOrgForResource")
             .add("resourceVerticalRange")
             .add("resourceTemporalDateRange")
             .add("resourceTemporalExtentDateRange")
             .add("resourceTemporalExtentDetails")
+            .add("licenseObject")
             .build();
         booleanFields = ImmutableSet.<String>builder()
             .add("hasxlinks")
             .add("hasInspireTheme")
             .add("hasOverview")
-            .add(IndexFields.HAS_ATOM)
             .add(Geonet.IndexFieldNames.HASXLINKS)
+            .add(INDEXING_ERROR_FIELD)
             .add("isHarvested")
             .add("isPublishedToAll")
             .add("isSchemaValid")
@@ -624,24 +656,21 @@ public class EsSearchManager implements ISearchManager {
                 continue;
             }
 
-            if (!name.startsWith("conformTo_")) { // Skip some fields causing errors / TODO
-                if (isObject) {
-                    try {
-                        doc.set(propertyName,
-                            mapper.readTree(
-                                nodeElements.get(0).getTextNormalize()
-                            ));
-                    } catch (IOException e) {
-                        LOGGER.error("Parsing invalid JSON node {} for property {}. Error is: {}",
-                            new Object[]{nodeElements.get(0).getTextNormalize(), propertyName, e.getMessage()});
-                    }
-                } else {
-                    doc.put(propertyName,
-                        booleanFields.contains(propertyName) ?
-                            parseBoolean(nodeElements.get(0).getTextNormalize()) :
-                            nodeElements.get(0).getText());
+            if (isObject) {
+                try {
+                    doc.set(propertyName,
+                        mapper.readTree(
+                            nodeElements.get(0).getTextNormalize()
+                        ));
+                } catch (IOException e) {
+                    LOGGER.error("Parsing invalid JSON node {} for property {}. Error is: {}",
+                        new Object[]{nodeElements.get(0).getTextNormalize(), propertyName, e.getMessage()});
                 }
-
+            } else {
+                doc.put(propertyName,
+                    booleanFields.contains(propertyName) ?
+                        parseBoolean(nodeElements.get(0).getTextNormalize()) :
+                        nodeElements.get(0).getText());
             }
         }
         return doc;
@@ -908,27 +937,6 @@ public class EsSearchManager implements ISearchManager {
         return response.getHits().getTotalHits().value;
     }
 
-//    public List<FacetField.Count> getDocFieldValues(String indexField,
-//                                                    String query,
-//                                                    boolean missing,
-//                                                    Integer limit,
-//                                                    String sort) throws IOException {
-//        final SolrQuery solrQuery = new SolrQuery(query == null ? "*:*" : query)
-//            .setFilterQueries(DOC_TYPE + ":metadata")
-//            .setRows(0)
-//            .setFacet(true)
-//            .setFacetMissing(missing)
-//            .setFacetLimit(limit != null ? limit : 1000)
-//            .setFacetSort(sort != null ? sort : "count") // or index
-//            .addFacetField(indexField);
-//        QueryResponse response = client.query(solrQuery);
-//        return response.getFacetField(indexField).getValues();
-//    }
-//
-//    public void updateRating(int metadataId, int newValue) throws IOException, SolrServerException {
-//        updateField(metadataId, Geonet.IndexFieldNames.RATING, newValue, "set");
-//    }
-
     public EsRestClient getClient() {
         return client;
     }
@@ -938,47 +946,6 @@ public class EsSearchManager implements ISearchManager {
      */
     void setClient(EsRestClient client) {
         this.client = client;
-    }
-
-    public List<Element> getDocs(String query, long start, long rows) throws IOException, JDOMException {
-        final List<String> result = getDocIds(query, start, rows);
-        List<Element> xmlDocs = new ArrayList<>(result.size());
-        IMetadataUtils metadataRepository = ApplicationContextHolder.get().getBean(IMetadataUtils.class);
-        for (String id : result) {
-            AbstractMetadata metadata = metadataRepository.findOne(id);
-            xmlDocs.add(metadata.getXmlData(false));
-        }
-        return xmlDocs;
-    }
-
-    public List<String> getDocIds(String query, long start, long rows) throws IOException, JDOMException {
-//        final SolrQuery solrQuery = new SolrQuery(query == null ? "*:*" : query);
-//        solrQuery.setFilterQueries(DOC_TYPE + ":metadata");
-//        solrQuery.setFields(SolrSearchManager.ID);
-//        if (start != null) {
-//            solrQuery.setStart(start);
-//        }
-//        if (rows != null) {
-//            solrQuery.setRows(rows);
-//        }
-//        QueryResponse response = client.query(solrQuery);
-//        SolrDocumentList results = response.getResults();
-//        List<String> idList = new ArrayList<>(results.size());
-//        for (SolrDocument document : results) {
-//            idList.add(document.getFieldValue(SolrSearchManager.ID).toString());
-//        }
-//        return idList;
-        return null;
-    }
-
-    public List<Element> getAllDocs(String query) throws Exception {
-        long hitsNumber = getNumDocs(query);
-        return getDocs(query, 0, hitsNumber);
-    }
-
-    public List<String> getAllDocIds(String query) throws Exception {
-        long hitsNumber = getNumDocs(query);
-        return getDocIds(query, 0, hitsNumber);
     }
 
     public void setIndexList(Map<String, String> indexList) {

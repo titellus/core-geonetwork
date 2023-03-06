@@ -226,13 +226,13 @@
       <sch:let name="description" value="gex:description[text() != '']"/>
 
       <sch:let name="geographicId"
-               value="gex:geographicElement/gex:EX_GeographicDescription/                          gex:geographicIdentifier[normalize-space(*) != '']"/>
+               value="gex:geographicElement/gex:EX_GeographicDescription/                          gex:geographicIdentifier[normalize-space(mcc:*) != '']"/>
 
       <sch:let name="geographicBox"
                value="gex:geographicElement/                          gex:EX_GeographicBoundingBox[                          normalize-space(gex:westBoundLongitude/gco:Decimal) != '' and                          normalize-space(gex:eastBoundLongitude/gco:Decimal) != '' and                          normalize-space(gex:southBoundLatitude/gco:Decimal) != '' and                          normalize-space(gex:northBoundLatitude/gco:Decimal) != ''                          ]"/>
 
       <sch:let name="geographicPoly"
-               value="gex:geographicElement/gex:EX_BoundingPolygon[                          normalize-space(gex:polygon) != '']"/>
+               value="gex:geographicElement/gex:EX_BoundingPolygon[                          count(gex:polygon[normalize-space() != '']) > 0]"/>
 
       <sch:let name="temporal"
                value="gex:temporalElement/gex:EX_TemporalExtent[                          normalize-space(gex:extent) != '']"/>

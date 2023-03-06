@@ -20,79 +20,86 @@
  * Contact: Jeroen Ticheler - FAO - Viale delle Terme di Caracalla 2,
  * Rome - Italy. email: geonetwork@osgeo.org
  */
-(function() {
+(function () {
+  goog.provide("gn_login_service");
 
-  goog.provide('gn_login_service');
-
-  var module = angular.module('gn_login_service', []);
+  var module = angular.module("gn_login_service", []);
 
   /**
    * Take care of sign in/out
    */
-  module.factory('gnLoginService',
-      ['$http',
-       function($http) {
+  module.factory("gnLoginService", [
+    "$http",
+    function ($http) {
+      // Enable login in third party app. eg. geoserver
+      var thirdPartyAuthApp = {
+        signin: "/geoserver/j_spring_security_check",
+        signout: "/geoserver/j_spring_security_logout"
+      };
+      // var thirdPartyAuthApp = undefined;
 
-          // Enable login in third party app. eg. geoserver
-          var thirdPartyAuthApp = {
-            signin: '/geoserver/j_spring_security_check',
-            signout: '/geoserver/j_spring_security_logout'
-          };
-          // var thirdPartyAuthApp = undefined;
-
-          return {
-            /**
-             * Sign in first in the thirdparty app if one provided,
-             * and then in the catalogue.
-             *
-             * @param formId
-             * @param u
-             * @param p
-             */
-            signin: function(formId, u, p) {
-              formId = '#' + formId;
-              if (thirdPartyAuthApp) {
-                $http.post(window.location.origin + thirdPartyAuthApp.signin,
-                  $.param({
-                    username: u,
-                    password: p
-                  }), {
-                    headers: {
-                      'Content-Type':
-                        'application/x-www-form-urlencoded'
-                    }
-                  }).then(function (r) {
-                  $(formId).get(0).submit()
-                }, function (r) {
-                    console.warn(
-                      "Failed to authenticate on third party app using URL "
-                      + thirdPartyAuthApp.signin
-                      + ". Response status is " + r.status);
-                  $(formId).get(0).submit()
-                });
-              } else {
-                $(formId).get(0).submit()
-              }
-            },
-            /**
-             * Sign out in third party app first if any, then sign out from the catalogue.
-             * @param url
-             */
-            signout: function(url) {
-              if (thirdPartyAuthApp) {
-                $http.get(window.location.origin + thirdPartyAuthApp.signout).then(
-                  function (r) {
-                    window.location = url;
-                  },
-                  function (r) {
-                    window.location = url;
+      return {
+        /**
+         * Sign in first in the thirdparty app if one provided,
+         * and then in the catalogue.
+         *
+         * @param formId
+         * @param u
+         * @param p
+         */
+        signin: function (formId, u, p) {
+          formId = "#" + formId;
+          if (thirdPartyAuthApp) {
+            $http
+              .post(
+                window.location.origin + thirdPartyAuthApp.signin,
+                $.param({
+                  username: u,
+                  password: p
+                }),
+                {
+                  headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
                   }
-                );
-              } else {
+                }
+              )
+              .then(
+                function (r) {
+                  $(formId).get(0).submit();
+                },
+                function (r) {
+                  console.warn(
+                    "Failed to authenticate on third party app using URL " +
+                      thirdPartyAuthApp.signin +
+                      ". Response status is " +
+                      r.status
+                  );
+                  $(formId).get(0).submit();
+                }
+              );
+          } else {
+            $(formId).get(0).submit();
+          }
+        },
+        /**
+         * Sign out in third party app first if any, then sign out from the catalogue.
+         * @param url
+         */
+        signout: function (url) {
+          if (thirdPartyAuthApp) {
+            $http.get(window.location.origin + thirdPartyAuthApp.signout).then(
+              function (r) {
+                window.location = url;
+              },
+              function (r) {
                 window.location = url;
               }
-            }
-          };
-       }]);
-
+            );
+          } else {
+            window.location = url;
+          }
+        }
+      };
+    }
+  ]);
 })();

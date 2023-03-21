@@ -1927,12 +1927,5 @@
         "type": "long"
       }
     }
-  },
-  "aliases": {
-    "${es.index.records}-public": {
-      "filter": {
-        "term": { "op0": 1 }
-      }
-    }
   }
 }

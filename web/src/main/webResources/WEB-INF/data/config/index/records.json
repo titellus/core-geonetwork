@@ -5,6 +5,11 @@
       "query.default_field": "any.default",
       "mapping.total_fields.limit": ${es.index.mapping.total_fields.limit},
       "analysis": {
+        "normalizer": {
+          "sorting": {
+            "filter": ["lowercase", "asciifolding"]
+          }
+        },
         "analyzer": {
           "trigram": {
             "type": "custom",
@@ -1025,6 +1030,14 @@
   "mappings": {
     "dynamic_templates": [
       {
+        "conformTo": {
+          "match": "conformTo_*",
+          "mapping": {
+            "type": "keyword"
+          }
+        }
+      },
+      {
         "numbers": {
           "match": "*Number",
           "mapping": {
@@ -1058,6 +1071,10 @@
                 "type": "keyword",
                 "copy_to": ["any.langita"]
               },
+              "langdut": {
+                "type": "keyword",
+                "copy_to": ["any.langdut"]
+              },
               "langspa": {
                 "type": "keyword",
                 "copy_to": ["any.langspa"]
@@ -1083,6 +1100,11 @@
                   "keyword": {
                     "type": "keyword",
                     "ignore_above": ${es.index.ignore_above}
+                  },
+                  "sort": {
+                    "type": "keyword",
+                    "ignore_above": ${es.index.ignore_above},
+                    "normalizer": "sorting"
                   },
                   "trigram": {
                     "type": "text",
@@ -1297,6 +1319,14 @@
             "properties": {
               "organisation": {
                 "type": "keyword"
+              },
+              "email": {
+                "type": "keyword",
+                "copy_to": ["any.default"]
+              },
+              "individual": {
+                "type": "keyword",
+                "copy_to": ["any.default"]
               },
               "role": {
                 "type": "keyword"
@@ -1812,6 +1842,9 @@
               "type": {
                 "type": "keyword"
               },
+              "cardinality": {
+                "type": "keyword"
+              },
               "values": {
                 "type": "object",
                 "properties": {
@@ -1925,6 +1958,26 @@
       },
       "userSavedCount": {
         "type": "long"
+      },
+      "resourceTemporalExtentDetails": {
+        "properties": {
+          "start": {
+            "properties": {
+              "date": {
+                "type": "date",
+                "format": "date_optional_time"
+              }
+            }
+          },
+          "end": {
+            "properties": {
+              "date": {
+                "type": "date",
+                "format": "date_optional_time"
+              }
+            }
+          }
+        }
       }
     }
   },

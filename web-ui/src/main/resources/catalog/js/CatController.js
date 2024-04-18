@@ -83,11 +83,11 @@
             rssFeeds: [
               {
                 // List of rss feeds links to display when the OGC API Records service is enabled
-                url: "f=rss&sortby=-createDate&size=30",
+                url: "f=rss&sortby=-createDate&limit=30",
                 label: "lastCreatedRecords"
               }
               // , {
-              //   url: "f=rss&sortby=-publicationDateForResource&size=30",
+              //   url: "f=rss&sortby=-publicationDateForResource&limit=30",
               //   label: "lastPublishedRecords"
               // }
             ]
@@ -150,7 +150,8 @@
                   decorator: {
                     type: "icon",
                     prefix: "fa fa-2x pull-left gn-icon-"
-                  }
+                  },
+                  orderByTranslation: true
                 }
               },
               // 'OrgForResource': {
@@ -288,7 +289,7 @@
                 // Start boosting down records more than 3 months old
                 {
                   gauss: {
-                    dateStamp: {
+                    changeDate: {
                       scale: "365d",
                       offset: "90d",
                       decay: 0.5
@@ -677,7 +678,7 @@
                 sortOrder: ""
               },
               {
-                sortBy: "dateStamp",
+                sortBy: "changeDate",
                 sortOrder: "desc"
               },
               {
@@ -704,23 +705,30 @@
                   "../../catalog/components/" +
                   "search/resultsview/partials/viewtemplates/grid.html",
                 tooltip: "Grid",
-                icon: "fa-th"
+                icon: "fa-th",
+                related: []
               },
               {
                 tplUrl:
                   "../../catalog/components/" +
                   "search/resultsview/partials/viewtemplates/list.html",
                 tooltip: "List",
-                icon: "fa-bars"
+                icon: "fa-bars",
+                related: ["parent", "children", "services", "datasets"]
               },
               {
                 tplUrl:
                   "../../catalog/components/" +
                   "search/resultsview/partials/viewtemplates/table.html",
                 tooltip: "Table",
-                icon: "fa-table"
+                icon: "fa-table",
+                related: [],
+                source: {
+                  exclude: ["resourceAbstract*", "Org*", "contact*"]
+                }
               }
             ],
+            // Optional. If not set, the first resultViewTpls is used.
             resultTemplate:
               "../../catalog/components/" +
               "search/resultsview/partials/viewtemplates/grid.html",
@@ -776,6 +784,7 @@
                 class: "fa-file-code-o"
               }*/
             ],
+            // Deprecated (use configuration on resultViewTpls)
             grid: {
               related: ["parent", "children", "services", "datasets"]
             },
@@ -824,6 +833,7 @@
               valuesSeparator: ","
             },
             is3DModeAllowed: false,
+            singleTileWMS: true,
             isSaveMapInCatalogAllowed: true,
             isExportMapAsImageEnabled: false,
             isAccessible: false,
@@ -831,8 +841,11 @@
             bingKey: "",
             listOfServices: {
               wms: [],
-              wmts: []
+              wmts: [],
+              wps: []
             },
+            // wpsSource: ["list", "url", "recent"],
+            wpsSource: ["url", "recent"],
             projection: "EPSG:3857",
             projectionList: [
               {
@@ -920,32 +933,28 @@
               // 'layout': 'tabset',
               layout: "",
               sections: [
-                // {'types': 'services', 'title': 'Services', 'layout': 'card'},
                 {
-                  types: "onlines",
-                  filter: "protocol:OGC:.*|ESRI:.*|atom.*",
+                  filter:
+                    "protocol:OGC:WMS|OGC:WMTS|ESRI:.*|atom.*|REST|OGC API Maps|OGC API Records",
                   title: "API"
                 },
                 {
-                  types: "onlines",
-                  filter: "protocol:.*DOWNLOAD.*|DB:.*|FILE:.*",
+                  filter:
+                    "protocol:OGC:WFS|OGC:WCS|.*DOWNLOAD.*|DB:.*|FILE:.*|OGC API Features|OGC API Coverages",
                   title: "download"
                 },
-                { types: "onlines", filter: "function:legend", title: "mapLegend" },
+                { filter: "function:legend", title: "mapLegend" },
                 {
-                  types: "onlines",
                   filter: "function:featureCatalogue",
                   title: "featureCatalog"
                 },
                 {
-                  types: "onlines",
                   filter: "function:dataQualityReport",
                   title: "quality"
                 },
                 {
-                  types: "onlines",
                   filter:
-                    "-protocol:OGC:.*|ESRI:.*|atom.*|.*DOWNLOAD.*|DB:.*|FILE:.* AND -function:legend|featureCatalogue|dataQualityReport",
+                    "-protocol:OGC.*|REST|ESRI:.*|atom.*|.*DOWNLOAD.*|DB:.*|FILE:.* AND -function:legend|featureCatalogue|dataQualityReport",
                   title: "links"
                 }
               ]
@@ -1081,7 +1090,7 @@
                     prefix: "fa fa-fw ",
                     map: {
                       false: "fa-lock",
-                      true: "fa-unlock"
+                      true: "fa-lock-open"
                     }
                   }
                 }
@@ -1151,7 +1160,7 @@
                 sortOrder: ""
               },
               {
-                sortBy: "dateStamp",
+                sortBy: "changeDate",
                 sortOrder: "desc"
               },
               {
@@ -1275,7 +1284,7 @@
         requireProxy: [],
         gnCfg: angular.copy(defaultConfig),
         gnUrl: "",
-        docUrl: "https://geonetwork-opensource.org/manuals/4.0.x/{lang}",
+        docUrl: "https://docs.geonetwork-opensource.org/latest/{lang}",
         //docUrl: '../../doc/',
         modelOptions: {
           updateOn: "default blur",
@@ -1293,6 +1302,7 @@
           "languageWhitelist",
           "hitsperpageValues",
           "sortbyValues",
+          "wpsSource",
           "resultViewTpls",
           "formatter",
           "downloadFormatter",
@@ -1360,6 +1370,8 @@
           gnSearchSettings.mapProtocols = {
             layers: [
               "OGC:WMS",
+              "OGC:3DTILES",
+              "OGC:COG",
               "OGC:WMTS",
               "OGC:WMS-1.1.1-http-get-map",
               "OGC:WMS-1.3.0-http-get-map",
@@ -1418,7 +1430,7 @@
               _.set(this.gnCfg, p, o);
             }
             if (runAllChecks) {
-              optionInDefaultConfig = _.get(defaultConfig, p);
+              var optionInDefaultConfig = _.get(defaultConfig, p);
               if (optionInDefaultConfig === undefined) {
                 console.warn(
                   "Path " +
@@ -1454,7 +1466,7 @@
               option = _.get(config, p);
             if (angular.isObject(option) && Object.keys(option).length === 0) {
               var key = pathToken.pop();
-              parent = _.get(config, pathToken.join("."));
+              var parent = _.get(config, pathToken.join("."));
               delete parent[key];
             }
           }
@@ -1465,6 +1477,19 @@
         },
         getProxyUrl: function () {
           return this.proxyUrl;
+        },
+        getDefaultResultTemplate: function () {
+          if (this.gnCfg.mods.search.resultTemplate) {
+            for (var i = 0; i < this.gnCfg.mods.search.resultViewTpls.length; i++) {
+              if (
+                this.gnCfg.mods.search.resultViewTpls[i].tplUrl ==
+                this.gnCfg.mods.search.resultTemplate
+              ) {
+                return this.gnCfg.mods.search.resultViewTpls[i];
+              }
+            }
+          }
+          return this.gnCfg.mods.search.resultViewTpls[0];
         },
         // Removes the proxy path and decodes the layer url,
         // so the layer can be printed with MapFish.
@@ -1533,7 +1558,7 @@
       return angular.isDefined(this.langs[lang]);
     },
     isValidIso2Lang: function (lang) {
-      for (p in this.langs) {
+      for (var p in this.langs) {
         if (this.langs[p] === lang) {
           return true;
         }
@@ -1544,7 +1569,7 @@
       return this.langs[iso3lang] || "en";
     },
     getIso3Lang: function (iso2lang) {
-      for (p in this.langs) {
+      for (var p in this.langs) {
         if (this.langs[p] === iso2lang) {
           return p;
         }
@@ -1617,7 +1642,6 @@
       $scope.fluidHeaderLayout = gnGlobalSettings.gnCfg.mods.header.fluidHeaderLayout;
       $scope.showGNName = gnGlobalSettings.gnCfg.mods.header.showGNName;
       $scope.isHeaderFixed = gnGlobalSettings.gnCfg.mods.header.isHeaderFixed;
-      $scope.isMenubarAccessible = gnGlobalSettings.gnCfg.mods.header.isMenubarAccessible;
       $scope.isLogoInHeader = gnGlobalSettings.gnCfg.mods.header.isLogoInHeader;
       $scope.isFooterEnabled = gnGlobalSettings.gnCfg.mods.footer.enabled;
 
@@ -1704,7 +1728,8 @@
         chi: "中文",
         slo: "Slovenčina",
         swe: "Svenska",
-        dan: "Dansk"
+        dan: "Dansk",
+        wel: "Cymraeg"
       };
       $scope.url = "";
       $scope.gnUrl = gnGlobalSettings.gnUrl;
@@ -1884,6 +1909,25 @@
                   : "";
             return angular.isFunction(this[fnName]) ? this[fnName]() : false;
           },
+          canBatchEditMetadata: function () {
+            var profile = gnConfig["metadata.batchediting.accesslevel"] || "Editor",
+              fnName =
+                profile !== ""
+                  ? "is" + profile[0].toUpperCase() + profile.substring(1) + "OrMore"
+                  : "";
+            return angular.isFunction(this[fnName]) ? this[fnName]() : false;
+          },
+          canViewMetadataHistory: function () {
+            var profile = gnConfig["metadata.history.accesslevel"] || "Editor",
+              fnName =
+                profile !== ""
+                  ? "is" + profile[0].toUpperCase() + profile.substring(1) + "OrMore"
+                  : "";
+            if (profile === "RegisteredUser") {
+              return true;
+            }
+            return angular.isFunction(this[fnName]) ? this[fnName]() : false;
+          },
           canDeletePublishedMetadata: function () {
             var profile =
                 gnConfig["metadata.delete.profilePublishedMetadata"] || "Editor",
@@ -2036,7 +2080,7 @@
                 .then(function (r) {
                   $scope.searchInfo = r.data;
                   var keys = Object.keys(gnGlobalSettings.gnCfg.mods.home.facetConfig);
-                  selectedFacet = keys[0];
+                  var selectedFacet = keys[0];
 
                   for (var i = 0; i < keys.length; i++) {
                     if (

@@ -514,14 +514,18 @@ public class UserFeedbackAPI {
                     String title = XslUtil.getIndexField(null, userFeedbackDto.getMetadataUUID(), "resourceTitleObject", "");
 
                     if (toAddress.size() > 0) {
-                        MailUtil.sendMail(toAddress,
-                            String.format(
-                                messages.getString("new_user_rating"),
-                                catalogueName, title),
-                            String.format(
-                                messages.getString("new_user_rating_text"),
-                                metadataUtils.getDefaultUrl(userFeedbackDto.getMetadataUUID(), locale.getISO3Language())),
-                            settingManager);
+                        try {
+                            MailUtil.sendMail(toAddress,
+                                String.format(
+                                    messages.getString("new_user_rating"),
+                                    catalogueName, title),
+                                String.format(
+                                    messages.getString("new_user_rating_text"),
+                                    metadataUtils.getDefaultUrl(userFeedbackDto.getMetadataUUID(), locale.getISO3Language())),
+                                settingManager);
+                        } catch (IllegalArgumentException ex) {
+                            Log.warning(API.LOG_MODULE_NAME, ex.getMessage(), ex);
+                        }
                     }
                 }
             }
@@ -632,7 +636,7 @@ public class UserFeedbackAPI {
             String[] metadataAddresses = StringUtils.split(metadataEmail, ",");
             for (String metadataAddress : metadataAddresses) {
                 String cleanMetadataAddress = StringUtils.trimToEmpty(metadataAddress);
-                if (cleanMetadataAddress.length() > 0 && md.getData().indexOf(cleanMetadataAddress) > 0) {
+                if (!cleanMetadataAddress.isEmpty() && md.getData().contains(cleanMetadataAddress)) {
                     toAddress.add(cleanMetadataAddress);
                 }
             }

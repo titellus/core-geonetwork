@@ -190,16 +190,6 @@
          * If refreshForm is true, then will also update the current form.
          * This is required while switching tab for example. Update the tab
          * value in the form and trigger save to update the view.
-         */
-        save: function (refreshForm, silent, terminate) {
-          save(refreshForm, silent, terminate, false, false);
-        },
-        /**
-         * Save the metadata record currently in editing session.
-         *
-         * If refreshForm is true, then will also update the current form.
-         * This is required while switching tab for example. Update the tab
-         * value in the form and trigger save to update the view.
          * If submit is true and the current user is editor, the metadata
          * status will be changed to submitted.
          * If approve is true and the current user is reviewer, the metadata
@@ -386,6 +376,15 @@
               .val();
           };
 
+          // The list of layers in a record is defined in XSL template get-online-source-config
+          // and is depending on each schema. If emtpy an empty array is set.
+          var getLayerConfiguration = function () {
+            var configuration = angular.fromJson(getInputValue("layerConfig")) || [];
+            return Array.isArray(configuration)
+              ? configuration
+              : [configuration.resource];
+          };
+
           var extent = [],
             value = getInputValue("extent");
           try {
@@ -424,7 +423,7 @@
             extent: extent,
             dataFormats: dataFormats,
             isMinor: getInputValue("minor") === "true",
-            layerConfig: angular.fromJson(getInputValue("layerConfig")),
+            layerConfig: getLayerConfiguration(),
             saving: false
           });
 

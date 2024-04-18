@@ -246,7 +246,8 @@
             isArray = angular.isArray(types),
             defaultRelatedTypes = ["thumbnails", "onlines"],
             relatedTypes = [],
-            associatedTypes = [];
+            associatedTypes = [],
+            isApproved = gnCurrentEdit.metadata.draft !== "y";
 
           if (isArray) {
             var relatedTypeFilterFn = function (t) {
@@ -260,20 +261,37 @@
             relatedTypes = defaultRelatedTypes;
           }
 
-          linksAndRelatedPromises.push(
-            $http.get(apiPrefix + "/related?type=" + relatedTypes.join("&type="), {
-              headers: {
-                Accept: "application/json"
-              }
-            })
-          );
-          linksAndRelatedPromises.push(
-            $http.get(apiPrefix + "/associated?type=" + associatedTypes.join("&type="), {
-              headers: {
-                Accept: "application/json"
-              }
-            })
-          );
+          if (relatedTypes.length > 0) {
+            linksAndRelatedPromises.push(
+              $http.get(
+                apiPrefix +
+                  "/related?type=" +
+                  relatedTypes.join("&type=") +
+                  (!isApproved ? "&approved=false" : ""),
+                {
+                  headers: {
+                    Accept: "application/json"
+                  }
+                }
+              )
+            );
+          }
+
+          if (associatedTypes.length > 0) {
+            linksAndRelatedPromises.push(
+              $http.get(
+                apiPrefix +
+                  "/associated?type=" +
+                  associatedTypes.join(",") +
+                  (!isApproved ? "&approved=false" : ""),
+                {
+                  headers: {
+                    Accept: "application/json"
+                  }
+                }
+              )
+            );
+          }
 
           var all = $q.all(linksAndRelatedPromises).then(function (result) {
             var relations = {};
@@ -472,13 +490,14 @@
 
         getApprovedUrl: function (url) {
           if (
-            gnCurrentEdit.metadata.draft &&
-            url.match(".*/api/records/(.*)/attachments/.*") != null
+            gnCurrentEdit.metadata.draft === "y" &&
+            url.match(".*/api/records/" + gnCurrentEdit.uuid + "/attachments/.*") != null
           ) {
-            url +=
-              url.indexOf("?") > 0
-                ? "&"
-                : "?" + "approved=" + (gnCurrentEdit.metadata.draft != "y");
+            if (url.match(".*(&?)((approved=.*)(&?))+")) {
+              // Remove approved parameter if already exists.
+              url = gnUrlUtils.remove(url, ["approved"], true);
+            }
+            url += (url.indexOf("?") > 0 ? "&" : "?") + "approved=false";
           }
           return url;
         },
@@ -668,17 +687,21 @@
               this,
               setParams("thumbnail-remove", {
                 id: gnCurrentEdit.id,
-                thumbnail_url: thumb.id
+                thumbnail_url: thumb.id,
+                resourceIdx: thumb.idx,
+                resourceHash: thumb.hash
               })
             );
           }
-          // It is an uploaded tumbnail
+          // It is an uploaded thumbnail
           else {
             return runService(
               "removeThumbnail",
               {
                 type: thumb.title === "thumbnail" ? "small" : "large",
                 id: gnCurrentEdit.id,
+                resourceIdx: thumb.idx,
+                resourceHash: thumb.hash,
                 version: gnCurrentEdit.version
               },
               this
@@ -699,11 +722,20 @@
          * @param {Object} onlinesrc the online resource to remove
          */
         removeOnlinesrc: function (onlinesrc) {
+          var url = onlinesrc.lUrl || onlinesrc.url;
+          if (
+            url.match(".*/api/records/' + gnCurrentEdit.uuid + '/attachments/.*") != null
+          ) {
+            url = gnUrlUtils.remove(url, ["approved"], true);
+          }
+
           return runProcess(
             this,
             setParams("onlinesrc-remove", {
               id: gnCurrentEdit.id,
-              url: onlinesrc.lUrl || onlinesrc.url,
+              resourceHash: onlinesrc.hash,
+              resourceIdx: onlinesrc.idx,
+              url: url,
               name: $filter("gnLocalized")(onlinesrc.title)
             })
           );
@@ -878,6 +910,20 @@
             }
           }
           return xml;
+        }
+      };
+    }
+  ]);
+
+  /**
+   * Service to query a DOI service and return the results.
+   */
+  module.service("gnDoiSearchService", [
+    "$http",
+    function ($http) {
+      return {
+        search: function (url, prefix, query) {
+          return $http.get(url + "?prefix=" + prefix + "&query=" + query);
         }
       };
     }

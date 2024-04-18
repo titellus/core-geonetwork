@@ -2,11 +2,13 @@
   "settings": {
     "index": {
       "max_result_window": ${es.index.max_result_window.limit},
+      "max_inner_result_window": ${es.index.max_inner_result_window.limit},
       "query.default_field": "any.default",
       "mapping.total_fields.limit": ${es.index.mapping.total_fields.limit},
       "analysis": {
         "normalizer": {
           "sorting": {
+            "type": "custom",
             "filter": ["lowercase", "asciifolding"]
           }
         },
@@ -22,6 +24,7 @@
             "filter": ["reverse"]
           },
           "french_rebuilt": {
+            "type": "custom",
             "tokenizer": "standard",
             "filter": [
               "lowercase",
@@ -34,6 +37,7 @@
             ]
           },
           "english_rebuilt": {
+            "type": "custom",
             "tokenizer": "standard",
             "filter": [
               "english_possessive_stemmer",
@@ -46,6 +50,7 @@
             ]
           },
           "synInspireAnnexes": {
+            "type": "custom",
             "tokenizer": "keyword",
             "filter": [
               "lowercase",
@@ -55,22 +60,27 @@
             ]
           },
           "synInspireThemeUris": {
+            "type": "custom",
             "tokenizer": "keyword",
             "filter": ["lowercase", "synInspireThemeUris"]
           },
           "synInspireThemes": {
+            "type": "custom",
             "tokenizer": "keyword",
             "filter": ["lowercase", "synInspireThemes"]
           },
           "keepInspireServiceTypes": {
+            "type": "custom",
             "tokenizer": "keyword",
             "filter": ["lowercase", "keepInspireServiceTypes"]
           },
           "keepInspireAnnexes": {
+            "type": "custom",
             "tokenizer": "keyword",
             "filter": ["lowercase", "keepInspireAnnexes"]
           },
           "keepInspireThemes": {
+            "type": "custom",
             "tokenizer": "keyword",
             "filter": ["lowercase", "keepInspireThemes"]
           }
@@ -1053,23 +1063,31 @@
             "properties": {
               "default": {
                 "type": "keyword",
-                "copy_to": ["any.default"]
+                "copy_to": ["any.default", "organisationName.default"]
               },
               "langeng": {
                 "type": "keyword",
-                "copy_to": ["any.langeng"]
+                "copy_to": ["any.langeng", "organisationName.langeng"]
               },
               "langfre": {
                 "type": "keyword",
-                "copy_to": ["any.langfre"]
+                "copy_to": ["any.langfre", "organisationName.langfre"]
               },
               "langger": {
                 "type": "keyword",
-                "copy_to": ["any.langger"]
+                "copy_to": ["any.langger", "organisationName.langger"]
               },
               "langita": {
                 "type": "keyword",
-                "copy_to": ["any.langita"]
+                "copy_to": ["any.langita", "organisationName.langita"]
+              },
+              "langdut": {
+                "type": "keyword",
+                "copy_to": ["any.langdut", "organisationName.langdut"]
+              },
+              "langdan": {
+                "type": "keyword",
+                "copy_to": ["any.langdan", "organisationName.langdan"]
               },
               "langdut": {
                 "type": "keyword",
@@ -1077,7 +1095,7 @@
               },
               "langspa": {
                 "type": "keyword",
-                "copy_to": ["any.langspa"]
+                "copy_to": ["any.langspa", "organisationName.langspa"]
               },
               "link": {
                 "type": "keyword"
@@ -1154,6 +1172,19 @@
                 "analyzer": "dutch",
                 "copy_to": [
                   "any.langdut"
+                ],
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": ${es.index.ignore_above}
+                  }
+                }
+              },
+              "langdan": {
+                "type": "text",
+                "analyzer": "danish",
+                "copy_to": [
+                  "any.langdan"
                 ],
                 "fields": {
                   "keyword": {
@@ -1251,9 +1282,8 @@
       {
         "tag": {
           "match": "th_*",
+          "match_mapping_type": "object",
           "mapping": {
-            "type": "object",
-            "copy_to": ["tag"],
             "properties": {
               "default": {
                 "type": "keyword",
@@ -1275,6 +1305,12 @@
                 "type": "keyword",
                 "copy_to": [
                   "any.langdut"
+                ]
+              },
+              "langdan": {
+                "type": "keyword",
+                "copy_to": [
+                  "any.langdan"
                 ]
               },
               "langita": {
@@ -1404,7 +1440,7 @@
         "synInspireAnnexesType": {
           "match": "inspireAnnex*",
           "mapping": {
-            "type": "keyword",
+            "type": "text",
             "fielddata": true,
             "analyzer": "synInspireAnnexes",
             "search_analyzer": "keyword"
@@ -1415,7 +1451,7 @@
         "synInspireThemeType": {
           "match": "inspireTheme*",
           "mapping": {
-            "type": "keyword",
+            "type": "text",
             "fielddata": true,
             "analyzer": "synInspireThemes",
             "search_analyzer": "keyword"
@@ -1426,7 +1462,7 @@
         "inspireServiceType": {
           "match": "inspireServiceType",
           "mapping": {
-            "type": "keyword",
+            "type": "text",
             "fielddata": true,
             "analyzer": "keepInspireServiceTypes",
             "search_analyzer": "keyword"
@@ -1461,6 +1497,10 @@
           "langdut": {
             "type": "text",
             "analyzer": "dutch"
+          },
+          "langdan": {
+            "type": "text",
+            "analyzer": "danish"
           },
           "langita": {
             "type": "text",
@@ -1504,6 +1544,12 @@
               "any.langdut"
               ]
           },
+          "langdan": {
+            "type": "keyword",
+            "copy_to": [
+              "any.langdan"
+              ]
+          },
           "langita": {
             "type": "keyword",
             "copy_to": ["any.langita"]
@@ -1525,8 +1571,7 @@
       },
       "document": {
         "type": "text",
-        "index": false,
-        "doc_values": false
+        "index": false
       },
       "documentStandard": {
         "type": "keyword"
@@ -1597,9 +1642,6 @@
       "isOpenData": {
         "type": "keyword"
       },
-      "lineage": {
-        "type": "text"
-      },
       "resolutionScaleDenominator": {
         "type": "integer"
       },
@@ -1631,6 +1673,46 @@
           },
           "pass": {
             "type": "keyword"
+          }
+        }
+      },
+      "measure": {
+        "type": "nested",
+        "properties": {
+          "name": {
+            "type": "keyword"
+          },
+          "description": {
+            "type": "text"
+          },
+          "date": {
+            "type": "date"
+          },
+          "value": {
+            "type": "keyword"
+          },
+          "unit": {
+            "type": "keyword"
+          },
+          "type": {
+            "type": "keyword"
+          }
+        }
+      },
+      "processSteps": {
+        "type": "nested",
+        "properties": {
+          "descriptionObject": {
+            "type": "object"
+          },
+          "date": {
+            "type": "date"
+          },
+          "source": {
+            "type": "object"
+          },
+          "processor": {
+            "type": "object"
           }
         }
       },
@@ -1763,7 +1845,8 @@
             "type": "keyword"
           },
           "title": {
-            "type": "keyword"
+            "type": "keyword",
+            "copy_to": "any.common"
           },
           "origin": {
             "type": "keyword"
@@ -1886,8 +1969,7 @@
       },
       "validReport": {
         "type": "text",
-        "index": false,
-        "doc_values": false
+        "index": false
       },
       "useLimitation": {
         "type": "text",
@@ -1951,7 +2033,18 @@
         "type": "boolean"
       },
       "indexingErrorMsg": {
-        "type": "keyword"
+        "type": "object",
+        "properties": {
+          "string": {
+            "type": "keyword"
+          },
+          "type": {
+            "type": "keyword"
+          },
+          "values": {
+            "type": "nested"
+          }
+        }
       },
       "statusWorkflow": {
         "type": "keyword"
@@ -1976,6 +2069,35 @@
                 "format": "date_optional_time"
               }
             }
+          }
+        }
+      },
+      "organisationName": {
+        "type": "object",
+        "properties": {
+          "default": {
+            "type": "keyword"
+          },
+          "langeng": {
+            "type": "keyword"
+          },
+          "langfre": {
+            "type": "keyword"
+          },
+          "langger": {
+            "type": "keyword"
+          },
+          "langita": {
+            "type": "keyword"
+          },
+          "langdut": {
+            "type": "keyword"
+          },
+          "langdan": {
+            "type": "keyword"
+          },
+          "langspa": {
+            "type": "keyword"
           }
         }
       }

@@ -20,7 +20,7 @@
                 xmlns:mrd="http://standards.iso.org/iso/19115/-3/mrd/1.0"
                 xmlns:mdq="http://standards.iso.org/iso/19157/-2/mdq/1.0"
                 xmlns:gml="http://www.opengis.net/gml/3.2"
-                xmlns:srv="http://standards.iso.org/iso/19115/-3/srv/2.1"
+                xmlns:srv="http://standards.iso.org/iso/19115/-3/srv/2.0"
                 xmlns:gcx="http://standards.iso.org/iso/19115/-3/gcx/1.0"
                 xmlns:gex="http://standards.iso.org/iso/19115/-3/gex/1.0"
                 xmlns:gfc="http://standards.iso.org/iso/19110/gfc/1.1"
@@ -249,19 +249,27 @@
           </span>
         </h2>
 
-        <xsl:for-each select="mdb:identificationInfo/*/mri:graphicOverview/*">
-          <img data-gn-img-modal="md"
-               class="gn-img-thumbnail center-block"
-               alt="{$schemaStrings/overview}"
-               src="{mcc:fileName/*}"/>
+        <xsl:variable name="imgOnError" as="xs:string?"
+                      select="if (count(mdb:identificationInfo/*/mri:graphicOverview/*) > 1)
+                            then 'this.onerror=null; this.parentElement.style.display=''none'';'
+                            else 'this.onerror=null; $(''.gn-md-side-overview'').hide();'"/>
 
-          <xsl:for-each select="mcc:fileDescription">
-            <div class="gn-img-thumbnail-caption">
-              <xsl:call-template name="get-iso19115-3.2018-localised">
-                <xsl:with-param name="langId" select="$langId"/>
-              </xsl:call-template>
-            </div>
-          </xsl:for-each>
+        <xsl:for-each select="mdb:identificationInfo/*/mri:graphicOverview/*">
+          <div>
+            <img data-gn-img-modal="md"
+                 class="gn-img-thumbnail center-block"
+                 alt="{$schemaStrings/overview}"
+                 src="{mcc:fileName/*}"
+                 onerror="{$imgOnError}"/>
+
+            <xsl:for-each select="mcc:fileDescription">
+              <div class="gn-img-thumbnail-caption">
+                <xsl:call-template name="get-iso19115-3.2018-localised">
+                  <xsl:with-param name="langId" select="$langId"/>
+                </xsl:call-template>
+              </div>
+            </xsl:for-each>
+          </div>
         </xsl:for-each>
       </section>
     </xsl:if>
@@ -1172,7 +1180,10 @@
 
 
     <xsl:if test="@uom">
-      <xsl:comment select="'.'"/>&#160;<xsl:value-of select="@uom"/>
+      <!-- Display the unit value only -->
+      <xsl:comment select="'.'"/>&#160; <xsl:value-of select="if (contains(@uom, '#'))
+                                    then concat(., ' ', tokenize(@uom, '#')[2])
+                                    else  concat(., ' ', @uom)"/>
     </xsl:if>
   </xsl:template>
 

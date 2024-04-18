@@ -1094,7 +1094,11 @@
             });
           };
 
-          initTagsInput();
+          scope.$watch("source", function (newValue, oldValue) {
+            if (newValue && newValue != oldValue) {
+              initTagsInput();
+            }
+          });
         }
       };
     }

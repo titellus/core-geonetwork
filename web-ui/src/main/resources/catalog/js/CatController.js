@@ -104,7 +104,6 @@
               por: "pt",
               spa: "es",
               rum: "ro",
-              rus: "ru",
               ukr: "uk"
             },
             isLogoInHeader: false,

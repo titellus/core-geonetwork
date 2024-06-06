@@ -408,7 +408,7 @@
                         filters: {
                           filters: {
                             maps: {
-                              query_string: { query: '+resourceType:"map/interactive"' }
+                              query_string: { query: '+resourceType:"map-interactive"' }
                             }
                           }
                         }
@@ -474,7 +474,7 @@
 
                   // handle processes tool
                   if (scope.activeTools.processes && openedTool.url) {
-                    scope.wpsTabs.byUrl = true;
+                    scope.wpsTabs.url = true;
                     scope.selectedWps.url = openedTool.url;
                   }
 
@@ -496,6 +496,10 @@
               setTimeout(function () {
                 scope.map.updateSize();
               }, 300);
+
+              if (gnViewerSettings.mapConfig.disabledTools.scaleLine === false) {
+                scope.map.addControl(new ol.control.ScaleLine());
+              }
             }
           };
         }

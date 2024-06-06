@@ -376,22 +376,16 @@ public final class Xml {
     /**
      * Transforms an xml tree putting the result to a stream (uses a stylesheet on disk).
      */
+    public static void transform(Element xml, Path styleSheetPath, Map<String, Object> params, OutputStream out) throws Exception {
+        StreamResult resStream = new StreamResult(out);
+        transform(xml, styleSheetPath, resStream, params);
+        out.flush();
+    }
+
     public static void transform(Element xml, Path styleSheetPath, OutputStream out) throws Exception {
-        StreamResult resStream = new StreamResult(out);
-        transform(xml, styleSheetPath, resStream, null);
-        out.flush();
+        transform(xml, styleSheetPath, new HashMap<>(), out);
     }
 
-
-    public static void transformXml(Element xml, Path styleSheetPath, OutputStream out) throws Exception {
-        StreamResult resStream = new StreamResult(out);
-        Map<String, Object> map = new HashMap<>();
-        map.put("geonet-force-xml", "xml");
-        transform(xml, styleSheetPath, resStream, map);
-        out.flush();
-    }
-
-    //--------------------------------------------------------------------------
 
     /**
      * Transforms an xml tree putting the result to a stream  - no parameters.
@@ -457,6 +451,9 @@ public final class Xml {
 
     /**
      * Transforms an xml tree putting the result to a stream with optional parameters.
+     * <p>
+     * Add a geonet-force-xml parameter to force the formatting to be xml.
+     * The preferred method is to define it using xsl:output.
      */
     public static void
     transform(Element xml, Path styleSheetPath, Result result, Map<String, Object> params) throws Exception {
@@ -488,13 +485,13 @@ public final class Xml {
                         t.setParameter(param.getKey(), param.getValue());
                     }
 
-                if (params.containsKey("geonet-force-xml")) {
-                    ((Controller) t).setOutputProperty("indent", "yes");
-                    ((Controller) t).setOutputProperty("method", "xml");
-                    ((Controller) t).setOutputProperty("{http://saxon.sf.net/}indent-spaces", "3");
+                    if (params.containsKey("geonet-force-xml")) {
+                        ((Controller) t).setOutputProperty("indent", "yes");
+                        ((Controller) t).setOutputProperty("method", "xml");
+                        ((Controller) t).setOutputProperty("{http://saxon.sf.net/}indent-spaces", "2");
+                    }
                 }
 
-                }
                 t.transform(srcXml, result);
             }
         }

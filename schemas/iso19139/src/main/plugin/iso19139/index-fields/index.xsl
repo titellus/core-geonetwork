@@ -193,19 +193,6 @@
       </xsl:for-each>
 
       <!-- # Resource type -->
-      <xsl:choose>
-        <xsl:when test="$isDataset">
-          <resourceType>dataset</resourceType>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:for-each select="gmd:hierarchyLevel/*/@codeListValue[normalize-space(.) != '']">
-            <resourceType>
-              <xsl:value-of select="."/>
-            </resourceType>
-          </xsl:for-each>
-        </xsl:otherwise>
-      </xsl:choose>
-
       <xsl:variable name="isMapDigital"
                     select="count(gmd:identificationInfo/*/gmd:citation/*/gmd:presentationForm[*/@codeListValue = 'mapDigital']) > 0"/>
       <xsl:variable name="isStatic"
@@ -218,16 +205,25 @@
       <xsl:choose>
         <xsl:when test="$isDataset and $isMapDigital and
                             ($isStatic or $isInteractive or $isPublishedWithWMCProtocol)">
-          <resourceType>map</resourceType>
           <xsl:choose>
             <xsl:when test="$isStatic">
-              <resourceType>map/static</resourceType>
+              <resourceType>map-static</resourceType>
             </xsl:when>
             <xsl:when test="$isInteractive or $isPublishedWithWMCProtocol">
-              <resourceType>map/interactive</resourceType>
+              <resourceType>map-interactive</resourceType>
             </xsl:when>
           </xsl:choose>
         </xsl:when>
+        <xsl:when test="$isDataset">
+          <resourceType>dataset</resourceType>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:for-each select="gmd:hierarchyLevel/*/@codeListValue[normalize-space(.) != '']">
+            <resourceType>
+              <xsl:value-of select="."/>
+            </resourceType>
+          </xsl:for-each>
+        </xsl:otherwise>
       </xsl:choose>
 
 
@@ -879,14 +875,10 @@
               </inspireServiceType>
             </xsl:if>
           </xsl:if>
-          <xsl:if test="following-sibling::srv:serviceTypeVersion">
-            <serviceTypeAndVersion>
-              <xsl:value-of select="concat(
-                        text(),
-                        $separator,
-                        following-sibling::srv:serviceTypeVersion/gco:CharacterString/text())"/>
-            </serviceTypeAndVersion>
-          </xsl:if>
+        </xsl:for-each>
+
+        <xsl:for-each select="srv:serviceTypeVersion">
+          <serviceTypeVersion><xsl:value-of select="gco:CharacterString/text()"/></serviceTypeVersion>
         </xsl:for-each>
       </xsl:for-each>
 

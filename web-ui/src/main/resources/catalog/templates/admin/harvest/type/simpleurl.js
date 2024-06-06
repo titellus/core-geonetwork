@@ -30,7 +30,7 @@ var gnHarvestersimpleurl = {
         "batchEdits" : "",
         "translateContent": false,
         "translateContentLangs": "",
-        "translateContentFields": "",
+        "translateContentFields": ""
       },
       "options" : {
         "every" : "0 0 0 ? * *",

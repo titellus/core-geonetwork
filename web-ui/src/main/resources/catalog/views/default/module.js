@@ -95,7 +95,7 @@
         filters: [
           {
             query_string: {
-              query: '+resourceType:"map/interactive"'
+              query: '+resourceType:"map-interactive"'
             }
           }
         ],
@@ -479,6 +479,17 @@
 
       setActiveTab();
       $scope.$on("$locationChangeSuccess", setActiveTab);
+
+      $scope.$on("$locationChangeSuccess", function (next, current) {
+        if (
+          gnSearchLocation.isSearch() &&
+          (!angular.isArray(searchMap.getSize()) || searchMap.getSize()[0] < 0)
+        ) {
+          setTimeout(function () {
+            searchMap.updateSize();
+          }, 0);
+        }
+      });
 
       var sortConfig = gnSearchSettings.sortBy.split("#");
       angular.extend($scope.searchObj, {

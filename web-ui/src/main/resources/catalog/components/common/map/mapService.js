@@ -376,12 +376,11 @@
               case "bing_aerial":
                 defer.resolve(
                   new ol.layer.Tile({
-                    preload: Infinity,
-                    source: new ol.source.BingMaps({
-                      key: layerInfo.key,
-                      imagerySet: "Aerial"
+                    source: new ol.source.XYZ({
+                    url:
+                      'https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=' + gnViewerSettings.bingKey,
                     }),
-                    title: layerInfo.title || "Bing Aerial"
+                    title: "Mapbox"
                   })
                 );
                 break;
@@ -2327,14 +2326,12 @@
                 });
               case "bing_aerial":
                 return new ol.layer.Tile({
-                  preload: Infinity,
-                  source: new ol.source.BingMaps({
-                    key: gnViewerSettings.bingKey,
-                    imagerySet: "Aerial"
+                  source: new ol.source.XYZ({
+                    url:
+                      'https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=' + gnViewerSettings.bingKey,
                   }),
-                  title: title || "Bing Aerial"
+                  title: "Mapbox"
                 });
-
               case "wmts":
                 if (!opt.name || !opt.url) {
                   $log.warn(

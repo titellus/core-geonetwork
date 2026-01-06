@@ -559,6 +559,12 @@
             name = "{type=osm}";
           } else if (source instanceof ol.source.BingMaps) {
             name = "{type=bing_aerial}";
+          } else if (
+            source.getUrls() &&
+            source.getUrls().length === 1 &&
+            source.getUrls()[0].indexOf("https://api.maptiler.com") === 0
+          ) {
+            name = "{type=bing_aerial}";
           } else if (source instanceof ol.source.WMTS) {
             name = "{type=wmts,name=" + layer.get("name") + "}";
             params.server = [

@@ -377,8 +377,10 @@
                 defer.resolve(
                   new ol.layer.Tile({
                     source: new ol.source.XYZ({
-                    url:
-                      'https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=' + gnViewerSettings.bingKey,
+                      crossOrigin: "Anonymous",
+                      url:
+                        "https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=" +
+                        gnViewerSettings.bingKey
                     }),
                     title: "Mapbox"
                   })
@@ -2327,8 +2329,10 @@
               case "bing_aerial":
                 return new ol.layer.Tile({
                   source: new ol.source.XYZ({
+                    crossOrigin: "Anonymous",
                     url:
-                      'https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=' + gnViewerSettings.bingKey,
+                      "https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=" +
+                      gnViewerSettings.bingKey
                   }),
                   title: "Mapbox"
                 });

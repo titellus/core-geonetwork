@@ -56,6 +56,8 @@ import org.fao.geonet.kernel.harvest.harvester.IHarvester;
 import org.fao.geonet.kernel.harvest.harvester.RecordInfo;
 import org.fao.geonet.kernel.harvest.harvester.UriMapper;
 import org.fao.geonet.kernel.search.IndexingMode;
+import org.fao.geonet.kernel.search.submission.DirectIndexSubmitter;
+import org.fao.geonet.kernel.search.submission.batch.BatchingDeletionSubmitter;
 import org.fao.geonet.lib.Lib;
 import org.fao.geonet.repository.MetadataCategoryRepository;
 import org.fao.geonet.util.Sha1Encoder;
@@ -90,7 +92,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -191,7 +192,7 @@ class Harvester extends BaseAligner<ThreddsParams> implements IHarvester<Harvest
     private HashSet<String> harvestUris = new HashSet<String>();
     private Map<String, ThreddsService> services = new HashMap<String, Harvester.ThreddsService>();
     private InvCatalogImpl catalog;
-    private List<HarvestError> errors = new LinkedList<HarvestError>();
+    private List<HarvestError> errors;
 
     private LatLonRect globalLatLonBox = null;
     private DateRange globalDateRange = null;
@@ -226,11 +227,12 @@ class Harvester extends BaseAligner<ThreddsParams> implements IHarvester<Harvest
      * @return null
      **/
 
-    public Harvester(AtomicBoolean cancelMonitor, Logger log, ServiceContext context, ThreddsParams params) {
+    public Harvester(AtomicBoolean cancelMonitor, Logger log, ServiceContext context, ThreddsParams params, List<HarvestError> errors) {
         super(cancelMonitor);
         this.log = log;
         this.context = context;
         this.params = params;
+        this.errors = errors;
 
         result = new HarvestResult();
 
@@ -288,27 +290,30 @@ class Harvester extends BaseAligner<ThreddsParams> implements IHarvester<Harvest
         harvestCatalog(xml);
 
         //--- Remove previously harvested metadata for uris that no longer exist on the remote site
-        for (String localUri : localUris.getUris()) {
-            if (cancelMonitor.get()) {
-                return this.result;
-            }
+        try (BatchingDeletionSubmitter submitter = new BatchingDeletionSubmitter()) {
 
-            if (!harvestUris.contains(localUri)) {
-                for (RecordInfo record : localUris.getRecords(localUri)) {
-                    if (cancelMonitor.get()) {
-                        return this.result;
-                    }
+            for (String localUri : localUris.getUris()) {
+                if (cancelMonitor.get()) {
+                    return this.result;
+                }
 
-                    if (log.isDebugEnabled())
-                        log.debug("  - Removing deleted metadata with id: " + record.id);
-                    mdManager.deleteMetadata(context, record.id);
+                if (!harvestUris.contains(localUri)) {
+                    for (RecordInfo record : localUris.getRecords(localUri)) {
+                        if (cancelMonitor.get()) {
+                            return this.result;
+                        }
 
-                    if (record.isTemplate.equals("s")) {
-                        //--- Uncache xlinks if a subtemplate
-                        Processor.uncacheXLinkUri(metadataGetService + record.uuid);
-                        result.subtemplatesRemoved++;
-                    } else {
-                        result.locallyRemoved++;
+                        if (log.isDebugEnabled())
+                            log.debug("  - Removing deleted metadata with id: " + record.id);
+                        mdManager.deleteMetadata(context, record.id, submitter);
+
+                        if (record.isTemplate.equals("s")) {
+                            //--- Uncache xlinks if a subtemplate
+                            Processor.uncacheXLinkUri(metadataGetService + record.uuid);
+                            result.subtemplatesRemoved++;
+                        } else {
+                            result.locallyRemoved++;
+                        }
                     }
                 }
             }
@@ -318,11 +323,6 @@ class Harvester extends BaseAligner<ThreddsParams> implements IHarvester<Harvest
 
         result.totalMetadata = result.serviceRecords + result.collectionDatasetRecords;
         return result;
-    }
-
-    @Override
-    public List<HarvestError> getErrors() {
-        return errors;
     }
 
     //---------------------------------------------------------------------------
@@ -572,13 +572,13 @@ class Harvester extends BaseAligner<ThreddsParams> implements IHarvester<Harvest
         	addCategories(metadata, params.getCategories(), localCateg, context, null, false);
 				}
 
-        metadata = (Metadata) mdManager.insertMetadata(context, metadata, md, IndexingMode.none, false, UpdateDatestamp.NO, false, false);
+        metadata = (Metadata) mdManager.insertMetadata(context, metadata, md, IndexingMode.none, false, UpdateDatestamp.NO, false, DirectIndexSubmitter.INSTANCE);
 
         String id = String.valueOf(metadata.getId());
 
         addPrivileges(id, params.getPrivileges(), localGroups, context);
 
-        mdIndexer.indexMetadata(id, true, IndexingMode.full);
+        mdIndexer.indexMetadata(id, DirectIndexSubmitter.INSTANCE, IndexingMode.full);
 
         mdManager.flush();
     }
@@ -784,12 +784,14 @@ class Harvester extends BaseAligner<ThreddsParams> implements IHarvester<Harvest
 
         if (localRecords == null) return;
 
-        for (RecordInfo record : localRecords) {
-            mdManager.deleteMetadata(context, record.id);
+        try (BatchingDeletionSubmitter submitter = new BatchingDeletionSubmitter(localRecords.size())) {
+            for (RecordInfo record : localRecords) {
+                mdManager.deleteMetadata(context, record.id, submitter);
 
-            if (record.isTemplate.equals("s")) {
-                //--- Uncache xlinks if a subtemplate
-                Processor.uncacheXLinkUri(metadataGetService + record.uuid);
+                if (record.isTemplate.equals("s")) {
+                    //--- Uncache xlinks if a subtemplate
+                    Processor.uncacheXLinkUri(metadataGetService + record.uuid);
+                }
             }
         }
     }

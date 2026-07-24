@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2015 Food and Agriculture Organization of the
+ * Copyright (C) 2001-2026 Food and Agriculture Organization of the
  * United Nations (FAO-UN), United Nations World Food Programme (WFP)
  * and United Nations Environment Programme (UNEP)
  *
@@ -26,6 +26,7 @@ package org.fao.geonet.harvester.wfsfeatures;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.sf.json.JSONObject;
+import org.apache.camel.ProducerTemplate;
 import org.fao.geonet.ApplicationContextHolder;
 import org.fao.geonet.api.API;
 import org.fao.geonet.harvester.wfsfeatures.event.WFSHarvesterEvent;
@@ -34,11 +35,11 @@ import org.fao.geonet.harvester.wfsfeatures.worker.EsWFSFeatureIndexer;
 import org.fao.geonet.harvester.wfsfeatures.worker.WFSHarvesterRouteBuilder;
 import org.fao.geonet.index.es.EsRestClient;
 import org.fao.geonet.utils.Log;
-import org.geonetwork.messaging.JMSMessager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -55,7 +56,7 @@ import java.util.HashMap;
         description = "Workers related operations")
 public class WFSHarvesterApi {
     @Autowired
-    private JMSMessager jmsMessager;
+    private ProducerTemplate producerTemplate;
 
     @Operation(summary = "Index a WFS feature type")
     @RequestMapping(value = "start",
@@ -63,11 +64,11 @@ public class WFSHarvesterApi {
                     produces = MediaType.APPLICATION_JSON_VALUE,
                     method = RequestMethod.PUT)
     @ResponseStatus(value = HttpStatus.OK)
+    @PreAuthorize("hasAuthority('Editor')")
     @ResponseBody
     public JSONObject indexWfs(
             @RequestBody WFSHarvesterParameter config) throws Exception {
 
-        // TODO: Check user is authenticated ?
         JSONObject result = new JSONObject();
         result.put("success", true);
         result.put("indexedFeatures",
@@ -85,6 +86,7 @@ public class WFSHarvesterApi {
         produces = MediaType.ALL_VALUE,
         method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
+    @PreAuthorize("hasAuthority('Editor')")
     @ResponseBody
     public JSONObject deleteWfs(
         @RequestParam
@@ -95,11 +97,8 @@ public class WFSHarvesterApi {
         EsWFSFeatureIndexer indexer = ApplicationContextHolder.get().getBean(EsWFSFeatureIndexer.class);
         indexer.deleteFeatures(serviceUrl, typeName, client);
 
-        // TODO: Check user is authenticated ?
         JSONObject result = new JSONObject();
         result.put("success", true);
-//        result.put("indexedFeatures",
-//            sendMessage(config));
 
         return result;
     }
@@ -108,7 +107,7 @@ public class WFSHarvesterApi {
         ConfigurableApplicationContext appContext = ApplicationContextHolder.get();
         WFSHarvesterEvent event = new WFSHarvesterEvent(appContext, parameters);
         // TODO: Messages should be node specific eg. srv channel ?
-        jmsMessager.sendMessage(WFSHarvesterRouteBuilder.MESSAGE_HARVEST_WFS_FEATURES, event);
+        producerTemplate.sendBody(WFSHarvesterRouteBuilder.HARVEST_WFS_FEATURES_SEDA_URI, event);
 
         JSONObject j = new JSONObject();
         j.put("url", parameters.getUrl());

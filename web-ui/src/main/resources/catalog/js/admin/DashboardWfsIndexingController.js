@@ -24,7 +24,12 @@
 (function () {
   goog.provide("gn_dashboard_wfs_indexing_controller");
 
-  var module = angular.module("gn_dashboard_wfs_indexing_controller", ["bsTable"]);
+  goog.require("gn_utility_service");
+
+  var module = angular.module("gn_dashboard_wfs_indexing_controller", [
+    "bsTable",
+    "gn_utility_service"
+  ]);
 
   module.controller("GnDashboardWfsIndexingController", [
     "$q",
@@ -40,6 +45,7 @@
     "wfsFilterService",
     "gnHumanizeTimeService",
     "Metadata",
+    "gnUtilityService",
     function (
       $q,
       $scope,
@@ -53,7 +59,8 @@
       gnLangs,
       wfsFilterService,
       gnHumanizeTimeService,
-      Metadata
+      Metadata,
+      gnUtilityService
     ) {
       // this returns a valid xx_XX language code based on available locales in bootstrap-table
       // if none found, return 'en'
@@ -71,6 +78,8 @@
         return lang;
       }
 
+      var escapeHtml = gnUtilityService.escapeHtml;
+
       var defaultStrategy = "";
 
       $scope.wfsFilterValue = null;
@@ -86,7 +95,7 @@
       ];
 
       // URL of the index service endpoint
-      $scope.indexUrl = gnHttp.getService("featureindexproxy") + "?_=_search";
+      $scope.indexUrl = gnHttp.getService("featureindexproxy");
 
       // URL of the message producer CRUD API endpoint
       $scope.messageProducersApiUrl = "../api/msg_producers";
@@ -342,22 +351,23 @@
                 field: "mdUuid",
                 title: $translate.instant("wfsIndexingMetadata"),
                 formatter: function (value, row) {
+                  var escapedUuid = escapeHtml(row.mdUuid);
                   return row.mdUuid
                     ? '<div data-md-uuid="' +
-                        row.mdUuid +
+                        escapedUuid +
                         '">' +
                         '  <a class="md-title" style="display: none" href="catalog.search#/metadata/' +
-                        row.mdUuid +
+                        escapedUuid +
                         '">' +
                         "    <span>" +
                         $translate.instant("recordWithNoTitle") +
                         "</span>" +
                         "  </a>" +
                         '  <div class="alert alert-danger small" style="display: none" role="alert"></div>' +
-                        '  <i class="fa fa-spinner fa-spin"/>' +
+                        '  <i class="fa fa-spinner fa-spin"></i>' +
                         "</div>" +
                         "<code>" +
-                        row.mdUuid +
+                        escapedUuid +
                         "</code>"
                     : // '<a href="catalog.search#/metadata/' + row.mdUuid + '">' + row.mdUuid + '</a>' :
                       '<span class="text-muted">' +
@@ -370,20 +380,20 @@
                 field: "url",
                 title: $translate.instant("wfsurl"),
                 formatter: function (value, row) {
-                  var wfsUrl = row.url; // TODO: transform to getcapabilities
+                  var escapedUrl = escapeHtml(row.url); // TODO: transform to getcapabilities
                   var label = $translate.instant("wfsIndexingFeatureType");
                   return (
                     '<a href="' +
-                    row.url +
+                    escapedUrl +
                     '">' +
-                    row.url +
+                    escapedUrl +
                     '</a> - <a href="' +
-                    wfsUrl +
+                    escapedUrl +
                     '">GetCapabilities</a><br>' +
                     "<span>" +
                     label +
                     "</span>: <code>" +
-                    row.featureType +
+                    escapeHtml(row.featureType) +
                     "<code>"
                   );
                 },
@@ -404,7 +414,13 @@
                 formatter: function (value, row) {
                   if (value) {
                     var date = gnHumanizeTimeService(value, null, true);
-                    return '<div title="' + date.title + '">' + date.value + "</div>";
+                    return (
+                      '<div title="' +
+                      escapeHtml(date.title) +
+                      '">' +
+                      escapeHtml(date.value) +
+                      "</div>"
+                    );
                   } else {
                     return null;
                   }
@@ -419,9 +435,9 @@
                     $scope.getLabelClass(row.status) +
                     '" ' +
                     'title="' +
-                    (row.error || "") +
+                    escapeHtml(row.error || "") +
                     '">' +
-                    row.status +
+                    escapeHtml(row.status) +
                     "</span>"
                   );
                 },
@@ -435,7 +451,7 @@
                     var cronLabel = $translate.instant("cron-" + value);
                     return (
                       '<span title="' +
-                      (cronLabel || value) +
+                      escapeHtml(cronLabel || value) +
                       '">' +
                       $translate.instant("yes") +
                       "</span>"
@@ -450,7 +466,7 @@
                 field: "cronScheduleProducerId",
                 title: "",
                 formatter: function (value, row, index) {
-                  var key = row.url + "#" + row.featureType;
+                  var key = escapeHtml(row.url + "#" + row.featureType);
                   var labelEdit = $translate.instant("wfsIndexingEditSchedule");
                   var labelNow = $translate.instant("wfsIndexingTrigger");
                   var labelDelete = $translate.instant("wfsDeleteWfsIndexing");

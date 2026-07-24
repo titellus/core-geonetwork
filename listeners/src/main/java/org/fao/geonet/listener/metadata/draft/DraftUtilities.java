@@ -10,6 +10,7 @@ import org.fao.geonet.kernel.datamanager.IMetadataOperations;
 import org.fao.geonet.kernel.datamanager.IMetadataUtils;
 import org.fao.geonet.kernel.search.EsSearchManager;
 import org.fao.geonet.kernel.search.IndexingMode;
+import org.fao.geonet.kernel.search.submission.DirectDeletionSubmitter;
 import org.fao.geonet.repository.*;
 import org.fao.geonet.repository.specification.MetadataFileUploadSpecs;
 import org.fao.geonet.repository.specification.MetadataValidationSpecs;
@@ -87,6 +88,7 @@ public class DraftUtilities {
      * @return
      */
     public AbstractMetadata replaceMetadataWithDraft(AbstractMetadata md, AbstractMetadata draft) {
+        Log.info(Geonet.DATA_MANAGER, String.format("Replacing metadata approved record (%d) with draft record (%d)", md.getId(), draft.getId()));
         Log.trace(Geonet.DATA_MANAGER, "Found approved record with id " + md.getId());
         Log.trace(Geonet.DATA_MANAGER, "Found draft with id " + draft.getId());
         // Reassign metadata validations
@@ -131,6 +133,7 @@ public class DraftUtilities {
         }
 
         // Reassign file uploads
+        Log.info(Geonet.DATA_MANAGER, String.format("Copying draft record '%d' resources to approved record '%d'", draft.getId(), md.getId()));
         draftMetadataUtils.replaceFiles(draft, md);
 
         metadataFileUploadRepository.deleteAll(MetadataFileUploadSpecs.hasMetadataId(md.getId()));
@@ -146,7 +149,6 @@ public class DraftUtilities {
             Element xmlData = draft.getXmlData(false);
             String changeDate = draft.getDataInfo().getChangeDate().getDateAndTime();
 
-            store.delResources(context, draft.getUuid(), false);
             removeDraft((MetadataDraft) draft);
 
             // Copy contents
@@ -155,8 +157,10 @@ public class DraftUtilities {
                 xmlData, false, false,
                 context.getLanguage(), changeDate, true, IndexingMode.full);
 
-            Log.info(Geonet.DATA_MANAGER, "Record updated with draft contents: " + md.getId());
+            Log.info(Geonet.DATA_MANAGER, "Record '" + md.getUuid() + "(" +md.getId() +")' update with draft contents from metadata id '" + draft.getId() +"'.");
 
+            Log.info(Geonet.DATA_MANAGER, "Cleaning up draft record resources for metadata '" + draft.getUuid() + "(" +draft.getId() +")'");
+            store.delResources(context, draft.getId());
         } catch (Exception e) {
             Log.error(Geonet.DATA_MANAGER, "Error upgrading from draft record with id " + md.getId(), e);
         }
@@ -183,7 +187,7 @@ public class DraftUtilities {
 
             // --- remove metadata
             xmlSerializer.delete(String.valueOf(id), ServiceContext.get());
-            searchManager.delete(String.format("+id:%d", id ));
+            searchManager.deleteByUuid(draft.getUuid(), DirectDeletionSubmitter.INSTANCE);
         } catch (Exception e) {
             Log.error(Geonet.DATA_MANAGER, "Couldn't cleanup draft " + draft, e);
         }

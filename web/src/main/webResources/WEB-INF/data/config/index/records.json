@@ -1097,10 +1097,6 @@
                 "type": "keyword",
                 "copy_to": ["any.langdan", "organisationName.langdan"]
               },
-              "langdut": {
-                "type": "keyword",
-                "copy_to": ["any.langdut"]
-              },
               "langspa": {
                 "type": "keyword",
                 "copy_to": ["any.langspa", "organisationName.langspa"]
@@ -1124,6 +1120,18 @@
               "langukr": {
                 "type": "keyword",
                 "copy_to": ["any.langukr", "organisationName.langukr"]
+              },
+              "langpol": {
+                "type": "keyword",
+                "copy_to": ["any.langpol", "organisationName.langpol"]
+              },
+              "langpor": {
+                "type": "keyword",
+                "copy_to": ["any.langpor", "organisationName.langpor"]
+              },
+              "langswe": {
+                "type": "keyword",
+                "copy_to": ["any.langswe", "organisationName.langswe"]
               },
               "link": {
                 "type": "keyword"
@@ -1309,6 +1317,39 @@
                   }
                 }
               },
+              "langpol": {
+                "type": "text",
+                "analyzer": "${es.index.analyzer.default}",
+                "copy_to": ["any.langpol"],
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": ${es.index.ignore_above}
+                  }
+                }
+              },
+              "langpor": {
+                "type": "text",
+                "analyzer": "portuguese",
+                "copy_to": ["any.langpor"],
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": ${es.index.ignore_above}
+                  }
+                }
+              },
+              "langswe": {
+                "type": "text",
+                "analyzer": "swedish",
+                "copy_to": ["any.langswe"],
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": ${es.index.ignore_above}
+                  }
+                }
+              },
               "link": {
                 "type": "keyword"
               }
@@ -1420,6 +1461,18 @@
                 "type": "keyword",
                 "copy_to": ["any.langukr"]
               },
+              "langpol": {
+                "type": "keyword",
+                "copy_to": ["any.langpol"]
+              },
+              "langpor": {
+                "type": "keyword",
+                "copy_to": ["any.langpor"]
+              },
+              "langswe": {
+                "type": "keyword",
+                "copy_to": ["any.langswe"]
+              },
               "text": {
                 "type": "keyword"
               },
@@ -1462,6 +1515,21 @@
               "individual": {
                 "type": "keyword",
                 "copy_to": ["any.default"]
+              },
+              "identifiers": {
+                "type": "nested",
+                "properties": {
+                  "code": {
+                    "type": "keyword",
+                    "copy_to": ["any.default"]
+                  },
+                  "codeSpace": {
+                    "type": "keyword"
+                  },
+                  "link": {
+                    "type": "keyword"
+                  }
+                }
               },
               "role": {
                 "type": "keyword"
@@ -1632,6 +1700,18 @@
           "langroh": {
             "type": "text",
             "analyzer": "${es.index.analyzer.default}"
+          },
+          "langpol": {
+            "type": "text",
+            "analyzer": "${es.index.analyzer.default}"
+          },
+          "langpor": {
+            "type": "text",
+            "analyzer": "portuguese"
+          },
+          "langswe": {
+            "type": "text",
+            "analyzer": "swedish"
           }
         }
       },
@@ -1692,6 +1772,18 @@
           "langukr": {
             "type": "keyword",
             "copy_to": ["any.langukr"]
+          },
+          "langpol": {
+            "type": "keyword",
+            "copy_to": ["any.langpol"]
+          },
+          "langpor": {
+            "type": "keyword",
+            "copy_to": ["any.langpor"]
+          },
+          "langswe": {
+            "type": "keyword",
+            "copy_to": ["any.langswe"]
           },
           "link": {
             "type": "keyword"
@@ -2248,8 +2340,28 @@
           },
           "langukr": {
             "type": "keyword"
+          },
+          "langpol": {
+            "type": "keyword"
+          },
+          "langpor": {
+            "type": "keyword"
+          },
+          "langswe": {
+            "type": "keyword"
           }
         }
+      },
+      "resourceEdition": {
+        "type": "text"
+      },
+      "resourceEditionDate": {
+        "type": "date",
+        "format": "date_optional_time",
+        "ignore_malformed": true
+      },
+      "standardVersion": {
+        "type": "text"
       }
     }
   },

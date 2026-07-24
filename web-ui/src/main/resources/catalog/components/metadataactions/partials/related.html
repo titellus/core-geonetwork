@@ -11,6 +11,7 @@
     data-ng-repeat="(type, items) in relations track by $index"
     data-ng-if="layout !== 'card'
                    && layout !== 'title'
+                   && layout !== 'versions'
                    && type && type !== 'thumbnails'"
   >
     <div
@@ -178,10 +179,11 @@
                     badge = config.getBadgeLabel(mainType, md);
                     icon = config.getClassIcon(mainType);"
   >
-    <h3 data-ng-if="groupSiblingsByType && items.length > 0" class="gn-related-title">
-      <i class="fa fa-fw {{icon}}"></i>
-      {{type.replace('siblings', '') | translate}}
-    </h3>
+    <h3
+      data-ng-if="groupSiblingsByType && items.length > 0"
+      data-ng-init="keyToken = type.replace('siblings', '').split('-')"
+      data-gn-associated-record-label="{associationType: keyToken[0], initiativeType: keyToken[1]}"
+    ></h3>
 
     <ul class="gn-related-list list-group">
       <li class="list-group-item" data-ng-repeat="md in items | orderBy:getOrderBy">
@@ -201,7 +203,7 @@
           target="_blank"
           title="{{md.resourceTitle}}"
         >
-          {{md.resourceTitle}}
+          {{md.resourceTitle || md.remoteUrl}}
           <i
             data-ng-if="md.origin === 'remote'"
             class="fa fa-external-link"
@@ -220,9 +222,12 @@
                     badge = config.getBadgeLabel(mainType, md);
                     icon = config.getClassIcon(mainType);"
   >
-    <h3 data-ng-if="groupSiblingsByType && items.length > 0">
-      {{type.replace('siblings', '') | translate}}
-    </h3>
+    <h3
+      data-ng-if="groupSiblingsByType && items.length > 0"
+      data-ng-init="keyToken = type.replace('siblings', '').split('-')"
+      data-gn-associated-record-label="{associationType: keyToken[0], initiativeType: keyToken[1]}"
+    ></h3>
+
     <ul class="row list-group gn-info-list">
       <gn-metadata-card
         data-ng-repeat="md in items | orderBy:getOrderBy"
@@ -230,50 +235,6 @@
         md="md"
         formatter-url="formatter.defaultUrl"
       >
-        <span
-          class="gn-card-badge"
-          data-ng-class="{
-            'gn-card-series': type === 'parent',
-            'gn-card-nonGeographicDataset': type === 'nonGeographicDataset',
-            'gn-card-service': type === 'services' || type === 'application',
-            'gn-card-dataset': type !== 'parent' && type !== 'services' && type !== 'application' && type !== 'nonGeographicDataset'
-            }"
-        >
-          <span>
-            <span
-              data-ng-if="!md.properties || (md.properties && md.properties.associationType == '')"
-            >
-              {{(config.getLabel(mainType, type)) | translate}}</span
-            >
-            <span
-              data-ng-if="md.properties && md.properties.associationType"
-              data-ng-show="md.properties && md.properties.associationType"
-              title="{{(config.getLabel(mainType, type)) | translate}}"
-            >
-              {{'associatedTo' | translate}}
-              <b title="{{'associationType' | translate}}">
-                <i
-                  class="fa fa-fw {{icon}} gn-icon-association-{{md.properties.associationType}}"
-                ></i>
-                {{md.properties.associationType | translate}}
-              </b>
-              <span data-ng-if="md.properties && md.properties.initiativeType">
-                >
-                <b title="{{'initiativeType' | translate}}">
-                  <i
-                    class="fa fa-fw {{icon}} gn-icon-initiative-{{md.properties.initiativeType}}"
-                  ></i>
-                  {{md.properties.initiativeType | translate}}
-                </b>
-              </span>
-            </span>
-          </span>
-          <i
-            data-ng-if="md.origin === 'remote'"
-            class="fa fa-fw fa-external-link"
-            title="{{'remoteRecord' | translate}}"
-          ></i>
-        </span>
       </gn-metadata-card>
       <button
         class="btn btn-link"
@@ -287,6 +248,66 @@
           >showLess</span
         >
       </button>
+    </ul>
+  </div>
+
+  <div
+    data-ng-repeat="(type, versions) in relations track by $index"
+    data-ng-if="layout === 'versions'
+                  && type && type == 'versions'"
+    data-ng-init="mainType = config.getType(md, type);
+                    badge = config.getBadgeLabel(mainType, md);
+                    icon = config.getClassIcon(mainType);"
+  >
+    <h3>
+      <i class="fa fa-fw gn-icon-association-versions"></i>
+      {{'versions' | translate}}
+    </h3>
+
+    <ul class="gn-related-list list-group">
+      <li class="list-group-item flex flex-row" data-ng-repeat="version in versions">
+        <div class="flex-grow">
+          <a
+            data-ng-hide="md._id === version._id"
+            href=""
+            title="{{version.resourceTitle}}"
+            gn-metadata-open="version"
+            gn-formatter="formatter.defaultUrl"
+          >
+            {{version.resourceTitle}}
+            <span
+              data-ng-if="version.cl_status[0].key"
+              class="gn-status gn-status-{{version.cl_status[0].key}} gn-status-table"
+            >
+              {{version.cl_status[0].key | translate}}
+            </span>
+            <br />
+            <span data-ng-if="version.resourceEdition" class="text-muted"
+              >{{'resourceEdition' | translate}} {{version.resourceEdition}}</span
+            >
+          </a>
+
+          <span data-ng-show="md._id === version._id">
+            {{version.resourceTitle}}
+            <span
+              data-ng-if="version.cl_status[0].key"
+              class="gn-status gn-status-{{version.cl_status[0].key}} gn-status-table"
+            >
+              {{version.cl_status[0].key | translate}}
+            </span>
+            <br />
+            <span data-ng-if="version.resourceEdition" class="text-muted"
+              >{{'resourceEdition' | translate}} {{version.resourceEdition}}</span
+            >
+          </span>
+        </div>
+        <div
+          data-ng-repeat="date in version.resourceDate | filter: {type: 'publication'}"
+          data-gn-humanize-time="{{date.date}}"
+        >
+          {{date.date}}
+        </div>
+      </li>
     </ul>
   </div>
 </div>

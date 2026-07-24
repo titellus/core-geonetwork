@@ -64,6 +64,17 @@
        */
       var duration = 300;
 
+      gnCurrentEdit.getRelations = function (type) {
+        var c = gnCurrentEdit.relatedConfigUI.filter(function (c) {
+          return c.type === type;
+        });
+        if (c.length === 1) {
+          return c[0].relations;
+        } else {
+          return [];
+        }
+      };
+
       var isFirstElementOfItsKind = function (element) {
         return !isSameKindOfElement(element, $(element).prev().get(0));
       };
@@ -321,8 +332,7 @@
             // properly without removing them. There is maybe
             // references to DOM objects in the JS code which
             // make those objects not reachable by GC.
-            $(gnCurrentEdit.containerId).find("*").remove();
-
+            $(gnCurrentEdit.containerId).empty();
             $(gnCurrentEdit.containerId).replaceWith(snippet);
 
             if (gnCurrentEdit.compileScope) {

@@ -55,7 +55,7 @@
           ? mdView.current.record.related.aggregations_children
           :mdView.current.record.related.aggregations_siblings"
       data-type="'blocks'"
-      data-sort-by="resourceTitle"
+      data-sort-by="-lastResourceDate"
       data-title="{{'seriesComposedOf' | translate}}"
     ></div>
 
@@ -69,6 +69,7 @@
           :mdView.current.record.related.aggregations_siblings"
       labels="{{::viewConfig.collectionTableConfig.labels}}"
       columns="{{::viewConfig.collectionTableConfig.columns}}"
+      data-sort-by="-lastResourceDate"
     ></div>
   </div>
 </div>
@@ -85,6 +86,7 @@
       data-ng-if="mdView.current.record.contactForDistribution"
       data-gn-metadata-contacts="mdView.current.record.contactForDistribution"
       data-gn-mode="default"
+      data-type="distribution"
       data-layout="icon"
     ></div>
 
@@ -149,15 +151,14 @@
       ng-include="'../../catalog/views/default/templates/recordView/lineage.html'"
     ></div>
   </div>
-  <div class="gn-md-side">
-    <div
-      ng-include="'../../catalog/views/default/templates/recordView/sources.html'"
-    ></div>
-  </div>
+  <div ng-include="'../../catalog/views/default/templates/recordView/sources.html'"></div>
 </div>
 
 <!-- contact -->
-<div class="row gn-section">
+<div
+  class="row gn-section"
+  data-ng-if="mdView.current.record.contactForResource || mdView.current.record.resourceCredit"
+>
   <div class="col-md-8 gn-record gn-break">
     <div
       ng-include="'../../catalog/views/default/templates/recordView/contact.html'"

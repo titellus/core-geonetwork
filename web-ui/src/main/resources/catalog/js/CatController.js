@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2016 Food and Agriculture Organization of the
+ * Copyright (C) 2001-2024 Food and Agriculture Organization of the
  * United Nations (FAO-UN), United Nations World Food Programme (WFP)
  * and United Nations Environment Programme (UNEP)
  *
@@ -363,6 +363,8 @@
               size: 20
             },
             moreLikeThisSameType: true,
+            moreLikeThisFilter:
+              "-cl_status.key:(obsolete OR historicalArchive OR superseded)",
             moreLikeThisConfig: {
               more_like_this: {
                 fields: [
@@ -457,6 +459,14 @@
                       query_string: {
                         query: "+linkProtocol:/OGC:WFS.*/"
                       }
+                    }
+                  }
+                },
+                aggs: {
+                  keep_nonzero: {
+                    bucket_selector: {
+                      buckets_path: { count: "_count" },
+                      script: "params.count > 0"
                     }
                   }
                 },
@@ -727,6 +737,10 @@
                 sortOrder: ""
               },
               {
+                sortBy: "resourceTitleObject.default.sort",
+                sortOrder: "desc"
+              },
+              {
                 sortBy: "rating",
                 sortOrder: "desc"
               },
@@ -802,6 +816,11 @@
               {
                 label: "exportMEF",
                 url: "/formatters/zip?withRelated=false",
+                class: "fa-file-zip-o"
+              },
+              {
+                label: "exportMEF-excludeAttachments",
+                url: "/formatters/zip?withRelated=false&includeAttachments=false",
                 class: "fa-file-zip-o"
               },
               {
@@ -952,8 +971,10 @@
             // and redirecting to the catalogue to view metadata record
             // appUrl: "https://sextant.ifremer.fr/Donnees/Catalogue",
             isSocialbarEnabled: true,
+            isDefaultContactViewEnabled: false,
             showStatusWatermarkFor: "",
             showStatusTopBarFor: "",
+            recordviewCustomMenu: [], // List of static pages identifiers to display
             showCitation: {
               enabled: false,
               // if: {'documentStandard': ['iso19115-3.2018']}
@@ -1081,6 +1102,23 @@
                 },
                 meta: {
                   collapsed: true
+                }
+              },
+              "indexingErrorMsg.type": {
+                terms: {
+                  field: "indexingErrorMsg.type",
+                  size: 2
+                },
+                meta: {
+                  collapsed: true,
+                  decorator: {
+                    type: "icon",
+                    prefix: "fa fa-fw ",
+                    map: {
+                      error: "fa-exclamation-circle",
+                      warning: "fa-exclamation-triangle"
+                    }
+                  }
                 }
               },
               sourceCatalogue: {
@@ -1212,6 +1250,10 @@
                 sortOrder: ""
               },
               {
+                sortBy: "resourceTitleObject.default.sort",
+                sortOrder: "desc"
+              },
+              {
                 sortBy: "recordOwner",
                 sortOrder: ""
               },
@@ -1278,6 +1320,14 @@
                       }
                     }
                   }
+                },
+                aggs: {
+                  keep_nonzero: {
+                    bucket_selector: {
+                      buckets_path: { count: "_count" },
+                      script: "params.count > 0"
+                    }
+                  }
                 }
               },
               resourceType: {
@@ -1308,7 +1358,11 @@
           authentication: {
             enabled: true,
             signinUrl: "../../{{node}}/{{lang}}/catalog.signin",
+            signinAPI: "../../signin",
             signoutUrl: "../../signout"
+            // GN5 configuration
+            // signinAPI: "../../api/user/signin",
+            // signoutUrl: "../../api/user/signout"
           },
           page: {
             enabled: true,
@@ -1370,6 +1424,7 @@
           "geocoder",
           "disabledTools",
           "filters",
+          "info",
           "scoreConfig",
           "autocompleteConfig",
           "moreLikeThisConfig",
@@ -1654,6 +1709,7 @@
     "gnAlertService",
     "gnLoginService",
     "gnESFacet",
+    "gnFacetMetaLabel",
     function (
       $scope,
       $http,
@@ -1675,7 +1731,8 @@
       gnExternalViewer,
       gnAlertService,
       gnLoginService,
-      gnESFacet
+      gnESFacet,
+      gnFacetMetaLabel
     ) {
       $scope.version = "0.0.1";
       var defaultNode = "srv";
@@ -1704,6 +1761,10 @@
 
       $scope.getApplicationInfoVisible = function () {
         return gnGlobalSettings.gnCfg.mods.footer.showApplicationInfoAndLinksInFooter;
+      };
+
+      $scope.getContactusVisible = function () {
+        return gnConfig[gnConfig.key.isFeedbackEnabled];
       };
 
       function detectNode(detector) {
@@ -1780,7 +1841,8 @@
         swe: "Svenska",
         ukr: "українська",
         dan: "Dansk",
-        wel: "Cymraeg"
+        wel: "Cymraeg",
+        pol: "Polski"
       };
       $scope.url = "";
       $scope.gnUrl = gnGlobalSettings.gnUrl;
@@ -1796,6 +1858,7 @@
       $scope.isExternalViewerEnabled = gnExternalViewer.isEnabled();
       $scope.externalViewerUrl = gnExternalViewer.getBaseUrl();
       $scope.publicationOptions = [];
+      $scope.getFacetLabel = gnFacetMetaLabel.getFacetLabel;
 
       $http.get("../api/records/sharing/options").then(function (response) {
         $scope.publicationOptions = response.data;
@@ -1874,8 +1937,16 @@
         }
       });
 
-      // login url for inline signin form in top toolbar
-      $scope.signInFormAction = "../../signin#" + $location.url();
+      // login url and form action with hash reference to the current page
+      $scope.signInFormLinkWithHash =
+        ($scope.gnCfg.mods.authentication.signinUrl ||
+          "../../{{node}}/{{lang}}/catalog.signin") +
+        "#" +
+        $location.url();
+      $scope.signInFormActionWithHash =
+        ($scope.gnCfg.mods.authentication.signinAPI || "../../signin") +
+        "#" +
+        $location.url();
 
       // when the login input have focus, do not close the dropdown/popup
       $scope.focusLoginPopup = function () {
@@ -1988,23 +2059,37 @@
                   : "";
             return angular.isFunction(this[fnName]) ? this[fnName]() : false;
           },
-          canPublishMetadata: function () {
+          canPublishMetadata: function (groupId) {
+            if (this.isAdministrator()) {
+              return true;
+            }
+
             var profile =
                 gnConfig["metadata.publication.profilePublishMetadata"] || "Reviewer",
               fnName =
                 profile !== ""
-                  ? "is" + profile[0].toUpperCase() + profile.substring(1) + "OrMore"
+                  ? "is" + profile[0].toUpperCase() + profile.substring(1) + "ForGroup"
                   : "";
-            return angular.isFunction(this[fnName]) ? this[fnName]() : false;
+            if (groupId === undefined || groupId === null) {
+              return false;
+            }
+            return angular.isFunction(this[fnName]) ? this[fnName](groupId) : false;
           },
-          canUnpublishMetadata: function () {
+          canUnpublishMetadata: function (groupId) {
+            if (this.isAdministrator()) {
+              return true;
+            }
+
             var profile =
                 gnConfig["metadata.publication.profileUnpublishMetadata"] || "Reviewer",
               fnName =
                 profile !== ""
-                  ? "is" + profile[0].toUpperCase() + profile.substring(1) + "OrMore"
+                  ? "is" + profile[0].toUpperCase() + profile.substring(1) + "ForGroup"
                   : "";
-            return angular.isFunction(this[fnName]) ? this[fnName]() : false;
+            if (groupId === undefined || groupId === null) {
+              return false;
+            }
+            return angular.isFunction(this[fnName]) ? this[fnName](groupId) : false;
           },
           // The md provide the information about
           // if the current user can edit records or not
@@ -2077,6 +2162,17 @@
                       return true;
                     }
                     return false;
+                  };
+                  me["is" + profile + "OrMoreForGroup"] = function (groupId) {
+                    if ("Administrator" == profile) {
+                      return me.admin;
+                    }
+                    var allowedProfiles = $scope.profiles.slice(
+                      $scope.profiles.indexOf(profile)
+                    );
+                    return allowedProfiles.some(function (p) {
+                      return me["is" + p + "ForGroup"](groupId);
+                    });
                   };
                 });
                 angular.extend($scope.user, me);

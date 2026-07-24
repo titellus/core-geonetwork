@@ -39,7 +39,7 @@
             gnGlobalSettings.gnCfg.mods.header.showPortalSwitcher;
 
           function getPortals() {
-            var url = "../api/sources/subportal";
+            var url = "../api/sources?type=subportal";
             $http.get(url).then(function (response) {
               scope.portals = response.data.filter(function (p) {
                 return p.uuid != scope.nodeId;
@@ -586,7 +586,7 @@
                           ' fa-fw" title="' +
                           $filter("translate")("featuredsearch") +
                           '"></span>' +
-                          row.label
+                          gnUtilityService.escapeHtml(row.label)
                         );
                       }
                     },

@@ -28,6 +28,7 @@ import org.fao.geonet.constants.Geonet;
 import org.fao.geonet.domain.AbstractMetadata;
 import org.fao.geonet.domain.MetadataCategory;
 import org.fao.geonet.kernel.DataManager;
+import org.fao.geonet.kernel.GeonetworkDataDirectory;
 import org.fao.geonet.kernel.SchemaManager;
 import org.fao.geonet.kernel.datamanager.IMetadataManager;
 import org.fao.geonet.kernel.harvest.harvester.AbstractHarvester;
@@ -35,6 +36,7 @@ import org.fao.geonet.kernel.harvest.harvester.AbstractParams;
 import org.fao.geonet.kernel.harvest.harvester.CategoryMapper;
 import org.fao.geonet.kernel.harvest.harvester.GroupMapper;
 import org.fao.geonet.kernel.harvest.harvester.Privileges;
+import org.fao.geonet.kernel.search.submission.batch.BatchingIndexSubmitter;
 import org.fao.geonet.kernel.setting.SettingManager;
 import org.fao.geonet.kernel.setting.Settings;
 import org.fao.geonet.repository.MetadataCategoryRepository;
@@ -63,14 +65,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author heikki doeleman
  */
-public abstract class BaseAligner<P extends AbstractParams> extends AbstractAligner<P> {
+public abstract class BaseAligner<P extends AbstractParams> extends AbstractAligner<P> implements AutoCloseable {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(Geonet.HARVESTER);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Geonet.HARVESTER);
 
     public final AtomicBoolean cancelMonitor;
+    protected final BatchingIndexSubmitter batchingIndexSubmitter;
 
     protected BaseAligner(AtomicBoolean cancelMonitor) {
         this.cancelMonitor = cancelMonitor;
+        this.batchingIndexSubmitter = new BatchingIndexSubmitter();
     }
 
     public void addCategories(AbstractMetadata metadata, Iterable<String> categories,
@@ -199,4 +203,42 @@ public abstract class BaseAligner<P extends AbstractParams> extends AbstractAlig
         return md;
     }
 
+
+    /**
+     * Filter the metadata if process parameter is set and corresponding XSL transformation
+     * exists in xsl/conversion/import.
+     *
+     * @param context
+     * @param md
+     * @param processName
+     * @param processParams
+     * @param log
+     * @return
+     */
+    protected Element applyXSLTProcessToMetadata(ServiceContext context,
+                                    Element md,
+                                    String processName,
+                                    Map<String, Object> processParams,
+                                                 org.fao.geonet.Logger log) {
+        Path filePath = context.getBean(GeonetworkDataDirectory.class).getXsltConversion(processName);
+        if (!Files.exists(filePath)) {
+            log.debug("     processing instruction  " + processName + ". Metadata not filtered.");
+        } else {
+            Element processedMetadata;
+            try {
+                processedMetadata = Xml.transform(md, filePath, processParams);
+                log.debug("     metadata filtered.");
+                md = processedMetadata;
+            } catch (Exception e) {
+                log.warning("     processing error " + processName + ": " + e.getMessage());
+            }
+        }
+        return md;
+    }
+
+
+    @Override
+    public void close() throws Exception {
+        this.batchingIndexSubmitter.close();
+    }
 }

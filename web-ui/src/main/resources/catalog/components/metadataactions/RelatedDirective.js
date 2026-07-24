@@ -48,6 +48,34 @@
     "$http",
     "$q",
     function ($http, $q) {
+      this.sortByField = function (records, sortBy) {
+        if (!sortBy || !records) {
+          return records;
+        }
+
+        var descOrder = sortBy.startsWith("-");
+        var sortField = descOrder ? sortBy.substring(1) : sortBy;
+        records.sort(function (a, b) {
+          var aProperty = a[sortField] || (a.properties && a.properties[sortField]);
+          var bProperty = b[sortField] || (b.properties && b.properties[sortField]);
+
+          if (!aProperty && !bProperty) {
+            return 0;
+          }
+          if (!aProperty) {
+            return 1;
+          }
+          if (!bProperty) {
+            return -1;
+          }
+
+          var comparison = String(aProperty).localeCompare(String(bProperty));
+          return descOrder ? -comparison : comparison;
+        });
+
+        return records;
+      };
+
       this.get = function (uuidOrId, types, approved) {
         var canceller = $q.defer();
         var request = $http({
@@ -399,13 +427,14 @@
           }
 
           scope.convertLinkToEdit = function (link) {
+            var convertedNameObject = convertLangProperties(link.nameObject);
             var convertedLink = {
               id: link.url,
               idx: link.idx,
               hash: link.hash,
               url: convertLangProperties(link.urlObject),
               type: getType(link.function),
-              title: convertLangProperties(link.nameObject),
+              title: convertedNameObject ? convertedNameObject : {},
               protocol: link.protocol,
               description: convertLangProperties(link.descriptionObject),
               function: link["function"],
@@ -785,14 +814,21 @@
                   scope.relations.siblings = [];
                   siblings
                     .map(function (r) {
-                      return (r.properties && r.properties.initiativeType) || "";
+                      return r.properties
+                        ? r.properties.associationType + "-" + r.properties.initiativeType
+                        : "";
                     })
                     .filter(function (value, index, self) {
                       return self.indexOf(value) === index;
                     })
                     .forEach(function (type) {
                       scope.relations["siblings" + type] = siblings.filter(function (r) {
-                        return r.properties && r.properties.initiativeType === type;
+                        var key = r.properties
+                          ? r.properties.associationType +
+                            "-" +
+                            r.properties.initiativeType
+                          : "";
+                        return key === type;
                       });
                       siblingsCount += scope.relations["siblings" + type].length;
                     });
@@ -882,7 +918,8 @@
   module.directive("gnRecordsFilters", [
     "$rootScope",
     "gnGlobalSettings",
-    function ($rootScope, gnGlobalSettings) {
+    "gnFacetMetaLabel",
+    function ($rootScope, gnGlobalSettings, gnFacetMetaLabel) {
       return {
         restrict: "A",
         templateUrl: function (elem, attrs) {
@@ -904,6 +941,7 @@
           scope.criteria = { p: {} };
           scope.relatedFacetConfig =
             gnGlobalSettings.gnCfg.mods.recordview.relatedFacetConfig;
+          scope.getFacetLabel = gnFacetMetaLabel.getFacetLabel;
 
           function removeEmptyFilters(filters, agg) {
             var cleanFilterPos = [];
@@ -952,7 +990,8 @@
   ]);
 
   module.directive("gnRelatedWithStats", [
-    function () {
+    "gnRelatedService",
+    function (gnRelatedService) {
       return {
         restrict: "A",
         templateUrl: function (elem, attrs) {
@@ -1015,11 +1054,7 @@
           }
 
           function sort() {
-            if (scope.sortBy) {
-              scope.displayedRecords.sort(function (a, b) {
-                return a[scope.sortBy] && a[scope.sortBy].localeCompare(b[scope.sortBy]);
-              });
-            }
+            gnRelatedService.sortByField(scope.displayedRecords, scope.sortBy);
           }
 
           function reset() {
@@ -1066,6 +1101,8 @@
             if (md.overview && md.overview.length > 0) {
               return md.overview[0].url;
               // Related records contain the first overview in the properties.overview property
+            } else if (md.properties && md.properties.overview_data) {
+              return md.properties.overview_data;
             } else if (md.properties && md.properties.overview) {
               return md.properties.overview;
             }
@@ -1184,8 +1221,9 @@
 
   module.directive("gnRecordsTable", [
     "Metadata",
+    "gnConfigService",
     "gnRelatedService",
-    function (Metadata, gnRelatedService) {
+    function (Metadata, gnConfigService, gnRelatedService) {
       return {
         restrict: "A",
         templateUrl: function (elem, attrs) {
@@ -1202,6 +1240,7 @@
           // * links by type eg. link:OGC
           columns: "@",
           labels: "@",
+          sortBy: "@",
           agg: "="
         },
         link: function (scope, element, attrs, controller) {
@@ -1250,10 +1289,7 @@
           });
 
           function sort() {
-            scope.displayedRecords.sort(function (a, b) {
-              var sortBy = scope.columnsConfig[0];
-              return a[sortBy] && a[sortBy].localeCompare(b[sortBy]);
-            });
+            gnRelatedService.sortByField(scope.displayedRecords, scope.sortBy);
           }
 
           function reset() {
@@ -1356,6 +1392,7 @@
           scope.gnCurrentEdit = gnCurrentEdit;
           scope.relations = [];
           scope.relatedConfigUI = [];
+          gnCurrentEdit.relatedConfigUI = scope.relatedConfigUI;
           scope.relatedResourcesConfig = gnRelatedResources;
           if ($injector.has("gnOnlinesrc")) {
             scope.onlinesrcService = $injector.get("gnOnlinesrc");

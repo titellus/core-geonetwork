@@ -1,5 +1,5 @@
 //=============================================================================
-//===	Copyright (C) 2001-2007 Food and Agriculture Organization of the
+//===	Copyright (C) 2001-2026 Food and Agriculture Organization of the
 //===	United Nations (FAO-UN), United Nations World Food Programme (WFP)
 //===	and United Nations Environment Programme (UNEP)
 //===
@@ -77,24 +77,25 @@ class Harvester implements IHarvester<HarvestResult> {
     private static String CONSTRAINT_LANGUAGE_VERSION = "1.1.0";
 
     //FIXME version should be parametrized
-    private static String GETCAPABILITIES_PARAMETERS = "SERVICE=CSW&REQUEST=GetCapabilities&VERSION=2.0.2";
+    private static final String GETCAPABILITIES_PARAMETERS = "SERVICE=CSW&REQUEST=GetCapabilities&VERSION=2.0.2";
     private final AtomicBoolean cancelMonitor;
 
     private Logger log;
-    private CswParams params;
-    private ServiceContext context;
+    private final CswParams params;
+    private final ServiceContext context;
 
     /**
      * Contains a list of accumulated errors during the executing of this harvest.
      */
-    private List<HarvestError> errors = new LinkedList<HarvestError>();
+    private final List<HarvestError> errors;
 
 
-    public Harvester(AtomicBoolean cancelMonitor, Logger log, ServiceContext context, CswParams params) {
+    public Harvester(AtomicBoolean cancelMonitor, Logger log, ServiceContext context, CswParams params, List<HarvestError> errors) {
         this.cancelMonitor = cancelMonitor;
         this.log = log;
         this.context = context;
         this.params = params;
+        this.errors = errors;
     }
 
     public HarvestResult harvest(Logger log) throws Exception {
@@ -110,9 +111,8 @@ class Harvester implements IHarvester<HarvestResult> {
 
         boolean error = false;
         HarvestResult result = new HarvestResult();
-    	Set<String> uuids = new HashSet<String>();
-        try {
-            Aligner aligner = new Aligner(cancelMonitor, context, server, params, log);
+    	Set<String> uuids = new HashSet<>();
+        try (Aligner aligner = new Aligner(cancelMonitor, context, server, params, log)) {
             searchAndAlign(server, uuids, aligner, errors);
             result = aligner.cleanupRemovedRecords(uuids);
         } catch (Exception t) {
@@ -232,6 +232,11 @@ class Harvester implements IHarvester<HarvestResult> {
         if (params.isUseAccount()) {
             log.debug("Logging into server (" + params.getUsername() + ")");
             request.setCredentials(params.getUsername(), params.getPassword());
+        }
+
+        if (params.getApiKey() != null && !params.getApiKey().isBlank()) {
+            log.debug("Using apiKey to authenticate");
+            request.setApiKey(params.getApiKeyHeader(), params.getApiKey());
         }
         // Simple fallback mechanism. Try search with PREFERRED_HTTP_METHOD method, if fails change it
         try {
@@ -724,7 +729,7 @@ class Harvester implements IHarvester<HarvestResult> {
             if (modified.length() == 0) modified = null;
             if (log.isDebugEnabled())
                 log.debug("getRecordInfo: adding " + identif + " with modification date " + modified);
-            return new RecordInfo(identif, modified);
+            return new RecordInfo(identif, modified, schema, null);
         } catch (Exception e) {
             log.warning("Skipped record not in supported format : " + name);
         }
@@ -733,9 +738,5 @@ class Harvester implements IHarvester<HarvestResult> {
         // UUID or date modified
         return null;
 
-    }
-
-    public List<HarvestError> getErrors() {
-        return errors;
     }
 }

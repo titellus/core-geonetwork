@@ -44,6 +44,7 @@ import org.fao.geonet.kernel.harvest.harvester.UUIDMapper;
 import org.fao.geonet.kernel.harvest.harvester.fragment.FragmentHarvester;
 import org.fao.geonet.kernel.harvest.harvester.fragment.FragmentHarvester.FragmentParams;
 import org.fao.geonet.kernel.harvest.harvester.fragment.FragmentHarvester.HarvestSummary;
+import org.fao.geonet.kernel.search.submission.batch.BatchingDeletionSubmitter;
 import org.fao.geonet.kernel.setting.SettingInfo;
 import org.fao.geonet.lib.Lib;
 import org.fao.geonet.utils.*;
@@ -145,7 +146,8 @@ class Harvester implements IHarvester<HarvestResult> {
     /**
      * Contains a list of accumulated errors during the executing of this harvest.
      */
-    private List<HarvestError> errors = new LinkedList<HarvestError>();
+    private List<HarvestError> errors;
+
     /**
      * Constructor
      *
@@ -153,11 +155,12 @@ class Harvester implements IHarvester<HarvestResult> {
      * @param params  harvesting configuration for the node
      * @return null
      */
-    public Harvester(AtomicBoolean cancelMonitor, Logger log, ServiceContext context, WfsFeaturesParams params) {
+    public Harvester(AtomicBoolean cancelMonitor, Logger log, ServiceContext context, WfsFeaturesParams params, List<HarvestError> errors) {
         this.cancelMonitor = cancelMonitor;
         this.log = log;
         this.context = context;
         this.params = params;
+        this.errors = errors;
 
         result = new HarvestResult();
 
@@ -212,12 +215,12 @@ class Harvester implements IHarvester<HarvestResult> {
         }
 
         //--- harvest metadata and subtemplates from fragments using generic fragment harvester
-        FragmentHarvester fragmentHarvester = new FragmentHarvester(cancelMonitor, log, context, getFragmentHarvesterParams());
-
-        if (params.streamFeatures) {
-            harvestFeatures(wfsQuery, fragmentHarvester);
-        } else {
-            harvestResponse(wfsQuery, fragmentHarvester);
+        try (FragmentHarvester fragmentHarvester = new FragmentHarvester(cancelMonitor, log, context, getFragmentHarvesterParams())) {
+            if (params.streamFeatures) {
+                harvestFeatures(wfsQuery, fragmentHarvester);
+            } else {
+                harvestResponse(wfsQuery, fragmentHarvester);
+            }
         }
 
         return result;
@@ -334,29 +337,31 @@ class Harvester implements IHarvester<HarvestResult> {
         if (log.isDebugEnabled())
             log.debug("  - Removing orphaned metadata records and fragments after update");
 
-        for (String uuid : localUuids.getUUIDs()) {
-            try {
-                String isTemplate = localUuids.getTemplate(uuid);
-                if (isTemplate.equals("s")) {
-                    Processor.uncacheXLinkUri(metadataGetService + uuid);
-                }
-
-                if (!updatedMetadata.contains(uuid)) {
-                    String id = localUuids.getID(uuid);
-                    metadataManager.deleteMetadata(context, id);
-
+        try (BatchingDeletionSubmitter submitter = new BatchingDeletionSubmitter()) {
+            for (String uuid : localUuids.getUUIDs()) {
+                try {
+                    String isTemplate = localUuids.getTemplate(uuid);
                     if (isTemplate.equals("s")) {
-                        result.subtemplatesRemoved++;
-                    } else {
-                        result.locallyRemoved++;
+                        Processor.uncacheXLinkUri(metadataGetService + uuid);
                     }
+
+                    if (!updatedMetadata.contains(uuid)) {
+                        String id = localUuids.getID(uuid);
+                        metadataManager.deleteMetadata(context, id, submitter);
+
+                        if (isTemplate.equals("s")) {
+                            result.subtemplatesRemoved++;
+                        } else {
+                            result.locallyRemoved++;
+                        }
+                    }
+                } catch (CacheException e) {
+                    HarvestError error = new HarvestError(context, e);
+                    this.errors.add(error);
+                } catch (Exception e) {
+                    HarvestError error = new HarvestError(context, e);
+                    this.errors.add(error);
                 }
-            } catch (CacheException e) {
-                HarvestError error = new HarvestError(context, e);
-                this.errors.add(error);
-            } catch (Exception e) {
-                HarvestError error = new HarvestError(context, e);
-                this.errors.add(error);
             }
         }
 
@@ -380,9 +385,5 @@ class Harvester implements IHarvester<HarvestResult> {
         fragmentParams.uuid = params.getUuid();
         fragmentParams.owner = params.getOwnerId();
         return fragmentParams;
-    }
-
-    public List<HarvestError> getErrors() {
-        return errors;
     }
 }

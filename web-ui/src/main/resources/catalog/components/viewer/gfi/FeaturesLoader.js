@@ -24,7 +24,9 @@
 (function () {
   goog.provide("gn_featurestable_loader");
 
-  var module = angular.module("gn_featurestable_loader", []);
+  goog.require("gn_utility_service");
+
+  var module = angular.module("gn_featurestable_loader", ["gn_utility_service"]);
 
   var linkTpl =
     '<span class="fa-stack">' +
@@ -151,7 +153,7 @@
       })
       .then(
         function (response) {
-          if (infoFormat && infoFormat.match(/application\/(geo|geo\+)json/i) != null) {
+          if (infoFormat && infoFormat.match(/application\/(geo|geo\+)?json/i) != null) {
             var jsonf = new ol.format.GeoJSON();
             var features = [];
             response.data.features.forEach(function (f) {
@@ -197,7 +199,8 @@
   };
 
   geonetwork.GnFeaturesGFILoader.prototype.formatUrlValues_ = function (url) {
-    return '<a href="' + url + '" target="_blank">' + linkTpl + "</a>";
+    var escapeHtml = this.$injector.get("gnUtilityService").escapeHtml;
+    return '<a href="' + escapeHtml(url) + '" target="_blank">' + linkTpl + "</a>";
   };
 
   geonetwork.GnFeaturesGFILoader.prototype.getBsTableConfig = function () {

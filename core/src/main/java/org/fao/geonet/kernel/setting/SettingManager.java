@@ -33,6 +33,7 @@ import org.fao.geonet.domain.HarvesterSetting;
 import org.fao.geonet.domain.Setting;
 import org.fao.geonet.domain.SettingDataType;
 import org.fao.geonet.domain.Setting_;
+import org.fao.geonet.languages.FeedbackLanguages;
 import org.fao.geonet.repository.SettingRepository;
 import org.fao.geonet.repository.SortUtils;
 import org.fao.geonet.repository.SourceRepository;
@@ -93,6 +94,9 @@ public class SettingManager {
 
     @Autowired
     DefaultLanguage defaultLanguage;
+
+    @Autowired
+    FeedbackLanguages feedbackLanguages;
 
     @PostConstruct
     private void init() {
@@ -319,6 +323,20 @@ public class SettingManager {
     }
 
     /**
+     * Get values of a setting as long
+     *
+     * @param key The setting key
+     * @return The long value of the setting or null
+     * @throws NumberFormatException if the value cannot be converted to a Long
+     */
+    public Long getValueAsLong(String key) throws NumberFormatException {
+        String value = getValue(key);
+        if (value == null || value.trim().isEmpty())
+            return null;
+        return Long.valueOf(value);
+    }
+
+    /**
      * Set the value of a Setting entity
      *
      * @param key   the path/name/key of the setting.
@@ -342,6 +360,12 @@ public class SettingManager {
         setting.setValue(value);
 
         repo.save(setting);
+
+        if (key.equals("system/feedback/languages")) {
+            feedbackLanguages.updateSupportedLocales();
+        } else if (key.equals("system/feedback/translationFollowsText")) {
+            feedbackLanguages.updateTranslationFollowsText();
+        }
 
         return true;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2023 Food and Agriculture Organization of the
+ * Copyright (C) 2001-2024 Food and Agriculture Organization of the
  * United Nations (FAO-UN), United Nations World Food Programme (WFP)
  * and United Nations Environment Programme (UNEP)
  *
@@ -53,6 +53,7 @@ public class Settings {
     public static final String METADATA_URL_SITEMAPDOIFIRST = "metadata/url/sitemapDoiFirst";
     public static final String METADATA_URL_DYNAMICAPPLINKURL = "metadata/url/dynamicAppLinkUrl";
 
+    public static final String METADATA_EDIT_SUPPORTEDFILEMIMETYPES = "system/metadata/edit/supportedFileMimetypes";
     public static final String SYSTEM_INSPIRE_ENABLE = "system/inspire/enable";
     public static final String SYSTEM_INSPIRE_ATOM = "system/inspire/atom";
     public static final String SYSTEM_INSPIRE_ATOM_SCHEDULE = "system/inspire/atomSchedule";
@@ -60,6 +61,8 @@ public class Settings {
     public static final String SYSTEM_USERS_IDENTICON = "system/users/identicon";
     public static final String SYSTEM_SEARCHSTATS = "system/searchStats/enable";
     public static final String SYSTEM_FEEDBACK_EMAIL = "system/feedback/email";
+    public static final String SYSTEM_FEEDBACK_LANGUAGES = "system/feedback/languages";
+    public static final String SYSTEM_FEEDBACK_TRANSLATION_FOLLOWS_TEXT = "system/feedback/translationFollowsText";
     public static final String SYSTEM_FEEDBACK_MAILSERVER_HOST = "system/feedback/mailServer/host";
     public static final String SYSTEM_FEEDBACK_MAILSERVER_PORT = "system/feedback/mailServer/port";
     public static final String SYSTEM_FEEDBACK_MAILSERVER_USERNAME = "system/feedback/mailServer/username";
@@ -80,9 +83,11 @@ public class Settings {
     public static final String SYSTEM_SELECTIONMANAGER_MAXRECORDS = "system/selectionmanager/maxrecords";
     public static final String SYSTEM_CSW_ENABLE = "system/csw/enable";
     public static final String SYSTEM_CSW_ENABLEWHENINDEXING = "system/csw/enabledWhenIndexing";
+    public static final String SYSTEM_CSW_GETRECORDS_IGNORE_METADATA_NOT_SUPPORTED = "system/csw/getRecordsIgnoreMetadataNotSupported";
     public static final String SYSTEM_CSW_CAPABILITY_RECORD_UUID = "system/csw/capabilityRecordUuid";
     public static final String SYSTEM_CSW_METADATA_PUBLIC = "system/csw/metadataPublic";
     public static final String SYSTEM_USERSELFREGISTRATION_ENABLE = "system/userSelfRegistration/enable";
+    public static final String SYSTEM_USERSELFREGISTRATION_EMAIL_DOMAINS = "system/userSelfRegistration/domainsAllowed";
     public static final String SYSTEM_USERSELFREGISTRATION_RECAPTCHA_ENABLE = "system/userSelfRegistration/recaptcha/enable";
     public static final String SYSTEM_USERSELFREGISTRATION_RECAPTCHA_PUBLICKEY = "system/userSelfRegistration/recaptcha/publickey";
     public static final String SYSTEM_USERSELFREGISTRATION_RECAPTCHA_SECRETKEY = "system/userSelfRegistration/recaptcha/secretkey";
@@ -98,6 +103,7 @@ public class Settings {
     public static final String SYSTEM_OAI_MAXRECORDS = "system/oai/maxrecords";
     public static final String SYSTEM_OAI_TOKENTIMEOUT = "system/oai/tokentimeout";
     public static final String SYSTEM_OAI_CACHESIZE = "system/oai/cachesize";
+    public static final String SYSTEM_OAI_ENABLE = "system/oai/enable";
     public static final String SYSTEM_HARVESTER_ENABLE_EDITING = "system/harvester/enableEditing";
     public static final String SYSTEM_HARVESTER_ENABLE_PRIVILEGES_MANAGEMENT = "system/harvester/enablePrivilegesManagement";
     public static final String SYSTEM_HARVESTER_DISABLED_HARVESTER_TYPES = "system/harvester/disabledHarvesterTypes";
@@ -117,6 +123,9 @@ public class Settings {
     public static final String SYSTEM_HARVESTING_MAIL_TEMPLATE_ERROR = "system/harvesting/mail/templateError";
     public static final String SYSTEM_HARVESTING_MAIL_TEMPLATE = "system/harvesting/mail/template";
     public static final String SYSTEM_METADATACREATE_GENERATE_UUID = "system/metadatacreate/generateUuid";
+    public static final String SYSTEM_METADATACREATE_PUBLISH_FOR_GROUP_EDITORS = "system/metadatacreate/publishForGroupEditors";
+    public static final String SYSTEM_METADATACREATE_COPY_ATTACHMENTS = "system/metadatacreate/copyAttachments";
+    public static final String SYSTEM_METADATACREATE_SKIP_METADATA_CREATION_PAGE = "system/metadatacreate/skipMetadataCreationPage";
     public static final String SYSTEM_THREADEDINDEXING_MAXTHREADS = "system/threadedindexing/maxthreads";
     public static final String SYSTEM_RESOURCE_PREFIX = "metadata/resourceIdentifierPrefix";
     public static final String SYSTEM_INSPIRE_REMOTE_VALIDATION_URL = "system/inspire/remotevalidation/url";
@@ -141,10 +150,15 @@ public class Settings {
     public static final String METADATA_HISTORY_ENABLED = "metadata/history/enabled";
     public static final String METADATA_HISTORY_ACCESS_LEVEL = "metadata/history/accesslevel";
     public static final String METADATA_PUBLISHED_DELETE_USERPROFILE = "metadata/delete/profilePublishedMetadata";
+    public static final String METADATA_DELETE_BACKUPOPTIONS = "metadata/delete/backupOptions";
     public static final String METADATA_PUBLISH_USERPROFILE = "metadata/publication/profilePublishMetadata";
     public static final String METADATA_UNPUBLISH_USERPROFILE = "metadata/publication/profileUnpublishMetadata";
+    public static final String METADATA_PUBLICATION_ENABLE_SCHEDULED_PUBLICATION = "metadata/publication/enableScheduledPublication";
     public static final String METADATA_BACKUPARCHIVE_ENABLE = "metadata/backuparchive/enable";
     public static final String METADATA_VCS = "metadata/vcs/enable";
+    public static final String METADATA_ZIPEXPORT_ATTACHMENTSSIZELIMIT = "metadata/zipExport/attachmentsSizeLimit";
+
+    public static final String SYSTEM_AUDITABLE_ENABLE = "system/auditable/enable";
     public static final String VIRTUAL_SETTINGS_SUFFIX_ISDEFINED = "IsDefined";
     public static final String NODE = "node/id";
     public static final String NODE_DEFAULT = "node/default";
@@ -160,6 +174,7 @@ public class Settings {
     public static final String SYSTEM_TRANSLATION_APIKEY = "system/translation/apiKey";
 
     public static final String MICROSERVICES_ENABLED = "microservices/enabled";
+
 
     public static class GNSetting {
         private String name;

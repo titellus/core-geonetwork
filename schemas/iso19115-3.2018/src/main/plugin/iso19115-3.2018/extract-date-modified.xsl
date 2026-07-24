@@ -16,7 +16,7 @@
       <xsl:value-of select="(
         mdb:dateInfo/*[cit:dateType/*/@codeListValue = 'revision']/cit:date/*[. != ''],
         mdb:dateInfo/*[cit:dateType/*/@codeListValue = 'creation']/cit:date/*[. != ''],
-        format-dateTime(current-dateTime(),$dateFormat)
+        format-dateTime(current-dateTime(), $dateFormat)
       )[1]"/>
     </dateStamp>
   </xsl:template>

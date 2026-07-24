@@ -43,7 +43,7 @@ This release is all about user search experience:
 ![](img/3990-es-facet-histogram.png)
 
 -   Facets / Configuration from the admin --> Settings --> UI based on [Elasticsearch API](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html)
--   Record view / More like this \...
+-   Record view / More like this ...
 
 ![](img/3990-es-morelikethis.png)
 
@@ -61,7 +61,7 @@ This release is all about user search experience:
 
 ![](img/3990-es-indexing-errors.png)
 
-Regarding search protocols, only CSW has been migrated for now (ie. OAI-PMH, RDF, Z39.50/SRU, OpenSearch, \... are not available in this version). This means that a GeoNetwork 3.x can only harvest GeoNetwork 3.99 using CSW.
+Regarding search protocols, only CSW has been migrated for now (ie. OAI-PMH, RDF, Z39.50/SRU, OpenSearch, ... are not available in this version). This means that a GeoNetwork 3.x can only harvest GeoNetwork 3.99 using CSW.
 
 More details can be found in <https://github.com/geonetwork/core-geonetwork/pull/2830>.
 
@@ -86,10 +86,8 @@ This version is a beta version and needs testing and feedback from the community
 -   Transifex / Support multiple branches translation
 -   Multilingual metadata / Records are indexed and displayed but no logic to display depending on user interface language or search on specific language
 
-<figure>
-<img src="img/3990-es-index-multilingual.png" alt="img/3990-es-index-multilingual.png" />
-<figcaption>Multilingual fields are stored as a JSON object with an optional link if using Anchor.</figcaption>
-</figure>
+![Part of a JSON file for string translations](img/3990-es-index-multilingual.png)
+*Multilingual fields are stored as a JSON object with an optional link if using Anchor.*
 
 -   Indexing / Language specific analyzer (draft configuration made for French)
 -   Indexing / Spatial / Support for bounding polygons

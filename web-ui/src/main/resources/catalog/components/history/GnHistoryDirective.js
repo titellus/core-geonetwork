@@ -58,7 +58,10 @@
             if (gnConfig["metadata.workflow.enable"]) {
               types.workflow = true;
             }
-            types.task = true;
+            // Currently the only task is DOI
+            if (gnConfig["system.publication.doi.doienabled"]) {
+              types.task = true;
+            }
             types.event = true;
 
             scope.filter = {
@@ -68,6 +71,10 @@
               size: recordByPage
             };
           });
+
+          scope.getNumberOfTypes = function () {
+            return Object.keys(scope.filter.types).length;
+          };
 
           // Wait for metatada to be available
           scope.$watch("md", function (n, o) {
@@ -274,6 +281,81 @@
           );
 
           scope.loadHistory();
+        }
+      };
+    }
+  ]);
+
+  module.directive("gnCancelMetadataPublication", [
+    "$http",
+    "$filter",
+    "$translate",
+    "$rootScope",
+    "gnRecordHistoryService",
+    function ($http, $filter, $translate, $rootScope, gnRecordHistoryService) {
+      return {
+        restrict: "A",
+        replace: true,
+        scope: {
+          md: "=gnCancelMetadataPublication"
+        },
+        templateUrl:
+          "../../catalog/components/history/partials/cancelMetadataPublication.html",
+        link: function postLink(scope, element, attrs) {
+          var recordByPage = 20;
+          scope.publicationStatus = null;
+          scope.publicationDate = null;
+
+          function loadPublicationStatus() {
+            if (scope.md) {
+              var filter = {
+                types: { task: true },
+                statusId: 101, // Scheduled publication task
+                ownerFilter: null,
+                authorFilter: null,
+                recordFilter: scope.md.id,
+                dateFromFilter: null,
+                dateToFilter: null,
+                from: 0,
+                size: recordByPage
+              };
+
+              gnRecordHistoryService.search(filter).then(function (r) {
+                var publicationStatuses = _.filter(r.data, function (item) {
+                  return item.closeDate === null;
+                });
+
+                if (publicationStatuses.length > 0) {
+                  scope.publicationStatus = publicationStatuses[0];
+                  scope.publicationDate = moment(scope.publicationStatus.dateDue).format(
+                    "DD/MM/YYYY"
+                  );
+                }
+              });
+            }
+          }
+          // Wait for metatada to be available
+          scope.$watch("md", function (n, o) {
+            if (angular.isDefined(n)) {
+              loadPublicationStatus();
+            }
+          });
+
+          // Refresh the publication status when metadata status is updated
+          $rootScope.$on("metadataStatusUpdated", function (event, data) {
+            if (data && data === true) {
+              loadPublicationStatus();
+            }
+          });
+
+          scope.cancelPublication = function () {
+            gnRecordHistoryService
+              .close(scope.publicationStatus)
+              .then(function (response) {
+                scope.publicationStatus = null;
+                scope.publicationDate = null;
+              });
+          };
         }
       };
     }

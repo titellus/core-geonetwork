@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2016 Food and Agriculture Organization of the
+ * Copyright (C) 2001-2024 Food and Agriculture Organization of the
  * United Nations (FAO-UN), United Nations World Food Programme (WFP)
  * and United Nations Environment Programme (UNEP)
  *
@@ -48,6 +48,7 @@
     "$window",
     "$timeout",
     "gnUtilityService",
+    "gnConfigService",
     "gnConfig",
     "gnGlobalSettings",
     "vcRecaptchaService",
@@ -63,6 +64,7 @@
       $window,
       $timeout,
       gnUtilityService,
+      gnConfigService,
       gnConfig,
       gnGlobalSettings,
       vcRecaptchaService,
@@ -70,7 +72,6 @@
       gnLangs,
       gnLoginService
     ) {
-      $scope.formAction = "../../signin#" + $location.url();
       $scope.registrationStatus = null;
       $scope.sendPassword = false;
       $scope.password = null;
@@ -78,8 +79,29 @@
       $scope.userToRemind = null;
       $scope.changeKey = null;
 
-      $scope.recaptchaEnabled = gnConfig["system.userSelfRegistration.recaptcha.enable"];
-      $scope.recaptchaKey = gnConfig["system.userSelfRegistration.recaptcha.publickey"];
+      gnConfigService.loadPromise.then(function () {
+        $scope.recaptchaEnabled =
+          gnConfig["system.userSelfRegistration.recaptcha.enable"];
+        $scope.recaptchaKey = gnConfig["system.userSelfRegistration.recaptcha.publickey"];
+
+        // take the bigger of the two values
+        $scope.passwordMinLength = Math.max(
+          gnConfig["system.security.passwordEnforcement.minLength"],
+          6
+        );
+        $scope.passwordMaxLength = Math.max(
+          gnConfig["system.security.passwordEnforcement.maxLength"],
+          6
+        );
+
+        $scope.usePattern = gnConfig["system.security.passwordEnforcement.usePattern"];
+
+        if ($scope.usePattern) {
+          $scope.passwordPattern =
+            gnConfig["system.security.passwordEnforcement.pattern"];
+        }
+      });
+
       $scope.resolveRecaptcha = false;
 
       $scope.redirectUrl = gnUtilityService.getUrlParameter("redirect");
@@ -89,23 +111,14 @@
       $scope.isShowLoginAsLink = gnGlobalSettings.isShowLoginAsLink;
       $scope.isUserProfileUpdateEnabled = gnGlobalSettings.isUserProfileUpdateEnabled;
 
-      // take the bigger of the two values
-      $scope.passwordMinLength = Math.max(
-        gnConfig["system.security.passwordEnforcement.minLength"],
-        6
-      );
-      $scope.passwordMaxLength = Math.max(
-        gnConfig["system.security.passwordEnforcement.maxLength"],
-        6
-      );
-      $scope.passwordPattern = gnConfig["system.security.passwordEnforcement.pattern"];
-
       function initForm() {
         if ($window.location.pathname.indexOf("new.password") !== -1) {
           // Retrieve username from URL parameter
           $scope.userToRemind = gnUtilityService.getUrlParameter("username");
           $scope.changeKey = gnUtilityService.getUrlParameter("changeKey");
         }
+
+        $scope.retrieveGroups();
       }
 
       // TODO: https://github.com/angular/angular.js/issues/1460
@@ -139,12 +152,32 @@
         email: "",
         organisation: "",
         profile: "RegisteredUser",
+        group: "",
         address: {
           address: "",
           city: "",
           country: "",
           state: "",
           zip: ""
+        }
+      };
+
+      $scope.retrieveGroups = function () {
+        $http.get("../api/groups").then(
+          function (response) {
+            $scope.groups = gnUtilityService.sortByTranslation(
+              response.data,
+              $scope.lang,
+              "name"
+            );
+          },
+          function (response) {}
+        );
+      };
+
+      $scope.updateGroupSelection = function () {
+        if ($scope.userInfo.profile === "Administrator") {
+          $scope.userInfo.group = "";
         }
       };
 
@@ -183,6 +216,9 @@
                 timeout: 0,
                 type: "danger"
               });
+              if ($scope.recaptchaEnabled) {
+                vcRecaptchaService.reload();
+              }
             }
           );
       };

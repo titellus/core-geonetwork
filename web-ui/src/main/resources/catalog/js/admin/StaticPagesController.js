@@ -33,7 +33,16 @@
     "$translate",
     "$log",
     "gnGlobalSettings",
-    function ($scope, $http, $rootScope, $translate, $log, gnGlobalSettings) {
+    "gnUtilityService",
+    function (
+      $scope,
+      $http,
+      $rootScope,
+      $translate,
+      $log,
+      gnGlobalSettings,
+      gnUtilityService
+    ) {
       $scope.dbLanguages = [];
       $scope.staticPages = [];
       $scope.formats = [];
@@ -41,6 +50,10 @@
       $scope.staticPageSelected = null;
       $scope.queue = [];
       $scope.uploadScope = angular.element("#gn-static-page-edit").scope();
+      $scope.groups = [];
+
+      // Reject identifiers that start with "gn-" (reserved for built-in menu entries)
+      $scope.pageIdPattern = /^(?!gn-).+$/;
 
       $scope.unsupportedFile = false;
       $scope.$watchCollection("queue", function (n, o) {
@@ -64,9 +77,15 @@
         });
       }
 
+      function loadGroups() {
+        $http.get("../api/groups").then(function (r) {
+          $scope.groups = gnUtilityService.sortByTranslation(r.data, $scope.lang, "name");
+        });
+      }
+
       function loadStaticPages() {
         $scope.staticPageSelected = null;
-        $http.get("../api/pages").then(function (r) {
+        $http.get("../api/pages?includeAll=true").then(function (r) {
           $scope.staticPages = r.data;
         });
       }
@@ -144,6 +163,7 @@
 
       $scope.addStaticPage = function () {
         $scope.isUpdate = false;
+        $scope.isGroupEnabled = false;
         $scope.staticPageSelected = {
           language: "",
           pageId: "",
@@ -152,8 +172,12 @@
           data: "",
           content: "",
           status: "HIDDEN",
+          groups: "",
           label: "",
-          sections: []
+          sections: [],
+          showOnNonApproved: true,
+          showOnApproved: true,
+          showWhenWorkflowDisabled: true
         };
 
         $scope.pageApiLink = "";
@@ -164,6 +188,9 @@
       $scope.selectStaticPage = function (v) {
         $scope.isUpdate = true;
         $scope.staticPageSelected = v;
+        $scope.isGroupEnabled =
+          $scope.staticPageSelected.status == "GROUPS" ||
+          $scope.staticPageSelected.status == "GROUPS_AND_ADMIN";
 
         var link =
           "api/pages/" +
@@ -174,13 +201,20 @@
 
         $scope.content = "";
         $scope.pageApiLink = gnGlobalSettings.nodeUrl + link + "/content";
-        if ($scope.staticPageSelected.format !== "LINK") {
+        if (
+          $scope.staticPageSelected.format !== "LINK" &&
+          $scope.staticPageSelected.format !== "EMAILLINK"
+        ) {
           $http
             .get($scope.action + "/content", { headers: { Accept: "text/html" } })
             .then(function (r) {
               $scope.staticPageSelected.content = r.data;
             });
         }
+      };
+
+      $scope.isLinkFormat = function (format) {
+        return format === "LINK" || format === "EMAILLINK";
       };
 
       $scope.deleteContent = function () {
@@ -214,6 +248,12 @@
           $scope.uploadScope.submit();
         } else {
           delete sp.data;
+
+          // Reset empty string to null to avoid parsing error
+          if (sp.groups == "") {
+            sp.groups = null;
+          }
+
           return $http
             .put(action, sp, {
               headers: {
@@ -223,6 +263,16 @@
             .then(successHandler, function (r) {
               failureHandler(r.data);
             });
+        }
+      };
+      $scope.updateGroupSelection = function () {
+        if (
+          $scope.staticPageSelected.status === "GROUPS" ||
+          $scope.staticPageSelected.status === "GROUPS_AND_ADMIN"
+        ) {
+          $scope.isGroupEnabled = true;
+        } else {
+          $scope.isGroupEnabled = false;
         }
       };
 
@@ -262,6 +312,7 @@
       loadFormats();
       loadDbLanguages();
       loadStaticPages();
+      loadGroups();
     }
   ]);
 })();

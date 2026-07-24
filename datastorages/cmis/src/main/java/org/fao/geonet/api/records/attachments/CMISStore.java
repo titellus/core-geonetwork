@@ -1,6 +1,6 @@
 /*
  * =============================================================================
- * ===	Copyright (C) 2001-2016 Food and Agriculture Organization of the
+ * ===	Copyright (C) 2001-2024 Food and Agriculture Organization of the
  * ===	United Nations (FAO-UN), United Nations World Food Programme (WFP)
  * ===	and United Nations Environment Programme (UNEP)
  * ===
@@ -50,9 +50,12 @@ import org.fao.geonet.resources.CMISUtils;
 import org.fao.geonet.utils.IO;
 import org.fao.geonet.utils.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.nio.file.*;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -178,7 +181,7 @@ public class CMISStore extends AbstractStore {
         int metadataId = canDownload(context, metadataUuid, visibility, approved);
         try {
             final CmisObject object = cmisConfiguration.getClient().getObjectByPath(getKey(context, metadataUuid, metadataId, visibility, resourceId));
-            return new ResourceHolderImpl(object, createResourceDescription(context, metadataUuid, visibility, resourceId,
+            return new CMISResourceHolder(object, createResourceDescription(context, metadataUuid, visibility, resourceId,
                 (Document) object, metadataId, approved));
         } catch (CmisObjectNotFoundException e) {
             throw new ResourceNotFoundException(
@@ -189,8 +192,53 @@ public class CMISStore extends AbstractStore {
     }
 
     @Override
+    public MetadataResource getResourceMetadata(ServiceContext context, String metadataUuid, MetadataResourceVisibility visibility, String resourceId, Boolean approved) throws Exception {
+        // Those characters should not be allowed by URL structure
+        int metadataId = canDownload(context, metadataUuid, visibility, approved);
+        try {
+            final CmisObject object = cmisConfiguration.getClient().getObjectByPath(getKey(context, metadataUuid, metadataId, visibility, resourceId));
+            return createResourceDescription(context, metadataUuid, visibility, resourceId,
+                (Document) object, metadataId, approved);
+        } catch (CmisObjectNotFoundException e) {
+            throw new ResourceNotFoundException(
+                String.format("Metadata resource '%s' not found for metadata '%s'", resourceId, metadataUuid))
+                .withMessageKey("exception.resourceNotFound.resource", new String[]{resourceId})
+                .withDescriptionKey("exception.resourceNotFound.resource.description", new String[]{resourceId, metadataUuid});
+        }
+    }
+
+    @Override
+    public ResourceHolder getResourceWithRange(ServiceContext context, String metadataUuid, MetadataResourceVisibility metadataResourceVisibility, String resourceId, Boolean approved, long start, long end) throws Exception {
+        // Those characters should not be allowed by URL structure
+        int metadataId = canDownload(context, metadataUuid, metadataResourceVisibility, approved);
+        try {
+            final CmisObject object = cmisConfiguration.getClient().getObjectByPath(getKey(context, metadataUuid, metadataId, metadataResourceVisibility, resourceId));
+            return new CMISResourceHolder(object, createResourceDescription(context, metadataUuid, metadataResourceVisibility, resourceId,
+                (Document) object, metadataId, approved), start, end);
+        } catch (CmisObjectNotFoundException e) {
+            throw new ResourceNotFoundException(
+                String.format("Metadata resource '%s' not found for metadata '%s'", resourceId, metadataUuid))
+                .withMessageKey("exception.resourceNotFound.resource", new String[]{resourceId})
+                .withDescriptionKey("exception.resourceNotFound.resource.description", new String[]{resourceId, metadataUuid});
+        }
+    }
+
+    @Override
     public ResourceHolder getResourceInternal(String metadataUuid, MetadataResourceVisibility visibility, String resourceId, Boolean approved) throws Exception {
-        throw new UnsupportedOperationException("CMISStore does not support getResourceInternal.");
+        int metadataId = getAndCheckMetadataId(metadataUuid, approved);
+        checkResourceId(resourceId);
+
+        try {
+            ServiceContext context = ServiceContext.get();
+            final CmisObject object = cmisConfiguration.getClient().getObjectByPath(getKey(context, metadataUuid, metadataId, visibility, resourceId));
+            return new CMISResourceHolder(object, createResourceDescription(context, metadataUuid, visibility, resourceId,
+                (Document) object, metadataId, approved));
+        } catch (CmisObjectNotFoundException e) {
+            throw new ResourceNotFoundException(
+                String.format("Metadata resource '%s' not found for metadata '%s'", resourceId, metadataUuid))
+                .withMessageKey("exception.resourceNotFound.resource", new String[]{resourceId})
+                .withDescriptionKey("exception.resourceNotFound.resource.description", new String[]{resourceId, metadataUuid});
+        }
     }
 
     protected String getKey(final ServiceContext context, String metadataUuid, int metadataId, MetadataResourceVisibility visibility, String resourceId) {
@@ -385,35 +433,35 @@ public class CMISStore extends AbstractStore {
     }
 
     @Override
-    public String delResources(final ServiceContext context, final String metadataUuid, Boolean approved) throws Exception {
-        int metadataId = canEdit(context, metadataUuid, approved);
+    public String delResources(final ServiceContext context, final int metadataId) throws Exception {
         String folderKey = null;
         try {
             folderKey = getMetadataDir(context, metadataId);
             final Folder folder = cmisUtils.getFolderCache(folderKey, true);
 
+            Log.info(Geonet.RESOURCES, String.format("Deleting the folder of '%s' and the files within the folder", folderKey));
             folder.deleteTree(true, UnfileObject.DELETE, true);
             cmisUtils.invalidateFolderCache(folderKey);
 
             Log.info(Geonet.RESOURCES,
-                    String.format("Metadata '%s(%s)' directory '%s' removed.", metadataUuid, metadataId, folderKey));
-            return String.format("Metadata '%s(%s)' directory '%s' removed.", metadataUuid, metadataId, folderKey);
+                    String.format("Metadata '%d' directory '%s' removed.", metadataId, folderKey));
+            return String.format("Metadata '%d' directory '%s' removed.", metadataId, folderKey);
         } catch (CmisObjectNotFoundException e) {
             Log.warning(Geonet.RESOURCES,
-                    String.format("Unable to located metadata '%s(%s)' directory '%s' to be removed.", metadataUuid, metadataId, folderKey));
-            return String.format("Unable to located metadata '%s(%s)' directory '%s' to be removed.", metadataUuid, metadataId, folderKey);
+                    String.format("Unable to located metadata '%d' directory '%s' to be removed.", metadataId, folderKey));
+            return String.format("Unable to located metadata '%d' directory '%s' to be removed.", metadataId, folderKey);
         } catch (ResourceNotFoundException e) {
             Log.warning(Geonet.RESOURCES,
-                String.format("Unable to located metadata '%s(%s)' directory '%s' to be removed.", metadataUuid, metadataId, folderKey));
-            return String.format("Unable to located metadata '%s(%s)' directory '%s' to be removed.", metadataUuid, metadataId, folderKey);
+                String.format("Unable to located metadata '%d' directory '%s' to be removed.", metadataId, folderKey));
+            return String.format("Unable to located metadata '%d' directory '%s' to be removed.", metadataId, folderKey);
         } catch (CmisPermissionDeniedException e) {
             Log.warning(Geonet.RESOURCES,
-                    String.format("Insufficient privileges, unable to remove metadata '%s(%s)' directory '%s'.", metadataUuid, metadataId, folderKey));
-            return String.format("Insufficient privileges, unable to remove metadata '%s(%s)' directory '%s'.", metadataUuid, metadataId, folderKey);
+                    String.format("Insufficient privileges, unable to remove metadata '%d' directory '%s'.", metadataId, folderKey));
+            return String.format("Insufficient privileges, unable to remove metadata '%d' directory '%s'.", metadataId, folderKey);
         } catch (CmisConstraintException e) {
             Log.warning(Geonet.RESOURCES,
-                    String.format("Unable to remove metadata '%s(%s)' directory '%s' due so constraint violation or locks.", metadataUuid, metadataId, folderKey));
-            return String.format("Unable to remove metadata '%s(%s)' directory '%s' due so constraint violation or locks.", metadataUuid, metadataId, folderKey);
+                    String.format("Unable to remove metadata '%d' directory '%s' due so constraint violation or locks.", metadataId, folderKey));
+            return String.format("Unable to remove metadata '%d' directory '%s' due so constraint violation or locks.", metadataId, folderKey);
         }
     }
 
@@ -424,13 +472,9 @@ public class CMISStore extends AbstractStore {
 
         for (MetadataResourceVisibility visibility : MetadataResourceVisibility.values()) {
             if (tryDelResource(context, metadataUuid, metadataId, visibility, resourceId)) {
-                Log.info(Geonet.RESOURCES,
-                        String.format("MetadataResource '%s' removed.", resourceId));
-                return String.format("MetadataResource '%s' removed.", resourceId);
+                return String.format("Metadata resource '%s' removed.", resourceId);
             }
         }
-        Log.info(Geonet.RESOURCES,
-                String.format("Unable to remove resource '%s'.", resourceId));
         return String.format("Unable to remove resource '%s'.", resourceId);
     }
 
@@ -439,12 +483,8 @@ public class CMISStore extends AbstractStore {
                               final String resourceId, Boolean approved) throws Exception {
         int metadataId = canEdit(context, metadataUuid, approved);
         if (tryDelResource(context, metadataUuid, metadataId, visibility, resourceId)) {
-            Log.info(Geonet.RESOURCES,
-                    String.format("MetadataResource '%s' removed.", resourceId));
-            return String.format("MetadataResource '%s' removed.", resourceId);
+            return String.format("Metadata resource '%s' removed.", resourceId);
         }
-        Log.info(Geonet.RESOURCES,
-                String.format("Unable to remove resource '%s'.", resourceId));
         return String.format("Unable to remove resource '%s'.", resourceId);
     }
 
@@ -459,6 +499,8 @@ public class CMISStore extends AbstractStore {
         try {
             final CmisObject object = cmisConfiguration.getClient().getObjectByPath(key, oc);
             object.delete();
+            Log.info(Geonet.RESOURCES,
+                String.format("Resource '%s' removed for metadata %d (%s).", resourceId, metadataId, metadataUuid));
             if (object instanceof Folder) {
                 cmisUtils.invalidateFolderCacheItem(key);
             }
@@ -467,6 +509,8 @@ public class CMISStore extends AbstractStore {
             //CmisPermissionDeniedException when user does not have permissions.
             //CmisConstraintException when there is a lock on the file from a checkout.
         } catch (CmisObjectNotFoundException | CmisPermissionDeniedException | CmisConstraintException e) {
+            Log.info(Geonet.RESOURCES,
+                String.format("Unable to remove resource '%s' for metadata %d (%s). %s", resourceId, metadataId, metadataUuid, e.getMessage()));
             return false;
         }
     }
@@ -509,7 +553,9 @@ public class CMISStore extends AbstractStore {
     @Override
     public void copyResources(ServiceContext context, String sourceUuid, String targetUuid, MetadataResourceVisibility metadataResourceVisibility, boolean sourceApproved, boolean targetApproved) throws Exception {
         final int sourceMetadataId = canEdit(context, sourceUuid, metadataResourceVisibility, sourceApproved);
+        final int targetMetadataId = canEdit(context, sourceUuid, metadataResourceVisibility, targetApproved);
         final String sourceResourceTypeDir = getMetadataDir(context, sourceMetadataId) + cmisConfiguration.getFolderDelimiter() + metadataResourceVisibility.toString();
+        final String targetResourceTypeDir = getMetadataDir(context, targetMetadataId) + cmisConfiguration.getFolderDelimiter() + metadataResourceVisibility.toString();
         try {
             Folder sourceParentFolder = cmisUtils.getFolderCache(sourceResourceTypeDir, true);
 
@@ -523,8 +569,13 @@ public class CMISStore extends AbstractStore {
             for (Map.Entry<String, Document> sourceEntry : sourceDocumentMap.entrySet()) {
                 Document sourceDocument = sourceEntry.getValue();
 
+
+                Log.info(Geonet.RESOURCES, String.format("Copying %s to %s" , sourceResourceTypeDir+cmisConfiguration.getFolderDelimiter()+sourceDocument.getName(), targetResourceTypeDir));
                 // Get cmis properties from the source document
                 Map<String, Object> sourceProperties = getProperties(sourceDocument);
+
+                setCmisMetadataUUIDPrimary(sourceProperties, targetUuid);
+
                 putResource(context, targetUuid, sourceDocument.getName(), sourceDocument.getContentStream().getStream(), null, metadataResourceVisibility, targetApproved, sourceProperties);
 
             }
@@ -623,8 +674,10 @@ public class CMISStore extends AbstractStore {
     /**
      * get external resource management for the supplied resource.
      * Replace the following
+     * {objectId}  type:visibility:metadataId:version:resourceId in base64 encoding
      * {id}  resource id
-     * {type:folder:document} // If the type is folder then type "folder" will be displayed else if document then "document" will be displayed
+     * {type:folder:document} // Custom return type based on type. If the type is folder then type "folder" will be displayed else if document then "document" will be displayed
+     * {type} // If the type is folder then type "folder" will be displayed else if document then "document" will be displayed
      * {uuid}  metadatauuid
      * {metadataid}  metadataid
      * {visibility}  visibility
@@ -653,16 +706,27 @@ public class CMISStore extends AbstractStore {
     ) {
         String metadataResourceExternalManagementPropertiesUrl = cmisConfiguration.getExternalResourceManagementUrl();
         if (!StringUtils.isEmpty(metadataResourceExternalManagementPropertiesUrl)) {
+            // {objectid}  objectId // It will be the type:visibility:metadataId:version:resourceId in base64
+            // i.e. folder::100::100                     # Folder in resource 100
+            // i.e. document:public:100:v1:sample.jpg    # public document 100 version v1 name sample.jpg
+            if (metadataResourceExternalManagementPropertiesUrl.contains("{objectid}")) {
+                metadataResourceExternalManagementPropertiesUrl = metadataResourceExternalManagementPropertiesUrl.replaceAll("(\\{objectid\\})",
+                    getResourceManagementExternalPropertiesObjectId((type == null ? "document" : (type instanceof Folder ? "folder" : "document")), visibility, metadataId, version, resourceId));
+            }
             // {id}  id
             if (metadataResourceExternalManagementPropertiesUrl.contains("{id}")) {
                 metadataResourceExternalManagementPropertiesUrl = metadataResourceExternalManagementPropertiesUrl.replaceAll("(\\{id\\})", (resourceId==null?"":resourceId));
             }
-            // {type:folder:document} // If the type is folder then type "folder" will be displayed else if document then "document" will be displayed
+            // {type:folder:document} // Custom return type based on type. If the type is folder then type "folder" will be displayed else if document then "document" will be displayed
             if (metadataResourceExternalManagementPropertiesUrl.contains("{type:")) {
                 metadataResourceExternalManagementPropertiesUrl = metadataResourceExternalManagementPropertiesUrl.replaceAll("\\{type:([a-zA-Z0-9]*?):([a-zA-Z0-9]*?)\\}",
                     (type==null?"":(type instanceof Folder?"$1":"$2")));
             }
-
+            // {type} // If the type is folder then type "folder" will be displayed else if document then "document" will be displayed
+            if (metadataResourceExternalManagementPropertiesUrl.contains("{type}")) {
+                metadataResourceExternalManagementPropertiesUrl = metadataResourceExternalManagementPropertiesUrl.replaceAll("(\\{type\\})",
+                    (type == null ? "document" : (type instanceof Folder ? "folder" : "document")));
+            }
             // {uuid}  metadatauuid
             if (metadataResourceExternalManagementPropertiesUrl.contains("{uuid}")) {
                 metadataResourceExternalManagementPropertiesUrl = metadataResourceExternalManagementPropertiesUrl.replaceAll("(\\{uuid\\})", (metadataUuid==null?"":metadataUuid));
@@ -752,27 +816,29 @@ public class CMISStore extends AbstractStore {
         };
     }
 
-    protected static class ResourceHolderImpl implements ResourceHolder {
-        private CmisObject cmisObject;
-        private Path tempFolderPath;
-        private Path path;
-        private final MetadataResource metadataResource;
+    protected static class CMISResourceHolder implements ResourceHolder {
+        private final InputStreamResource resource;
+        private final MetadataResource metadata;
+        private final CmisObject cmisObject;
+        private final InputStream inputStream;
 
-        public ResourceHolderImpl(final CmisObject cmisObject, MetadataResource metadataResource) throws IOException {
-            // Preserve filename by putting the files into a temporary folder and using the same filename.
-            tempFolderPath = Files.createTempDirectory("gn-meta-res-" + String.valueOf(metadataResource.getMetadataId() + "-"));
-            tempFolderPath.toFile().deleteOnExit();
-            path = tempFolderPath.resolve(getFilename(cmisObject.getName()));
-            this.metadataResource = metadataResource;
+        public CMISResourceHolder(final CmisObject cmisObject, MetadataResource metadata) throws IOException {
+            this.metadata = metadata;
             this.cmisObject = cmisObject;
-            try (InputStream in = ((Document) cmisObject).getContentStream().getStream()) {
-                Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
-            }
+            this.inputStream = ((Document) cmisObject).getContentStream().getStream();
+            this.resource = new InputStreamResource(inputStream);
+        }
+
+        public CMISResourceHolder(final CmisObject cmisObject, MetadataResource metadata, long start, long end) throws IOException {
+            this.metadata = metadata;
+            this.cmisObject = cmisObject;
+            this.inputStream = ((Document) cmisObject).getContentStream(BigInteger.valueOf(start), BigInteger.valueOf(end - start + 1)).getStream();
+            this.resource = new InputStreamResource(inputStream);
         }
 
         @Override
-        public Path getPath() {
-            return path;
+        public Resource getResource() {
+            return resource;
         }
 
         public CmisObject getCmisObject() {
@@ -781,21 +847,12 @@ public class CMISStore extends AbstractStore {
 
         @Override
         public MetadataResource getMetadata() {
-            return metadataResource;
+            return metadata;
         }
 
         @Override
         public void close() throws IOException {
-            // Delete temporary file and folder.
-            IO.deleteFileOrDirectory(tempFolderPath, true);
-            path=null;
-            tempFolderPath = null;
-        }
-
-        @Override
-        protected void finalize() throws Throwable {
-            close();
-            super.finalize();
+            inputStream.close();
         }
     }
 }

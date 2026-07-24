@@ -7,11 +7,23 @@ The catalogue support DOI creation using:
 -   [DataCite API](https://support.datacite.org/docs/mds-api-guide).
 -   EU publication office API <https://ra.publications.europa.eu/servlet/ws/doidata?api=medra.org>
 
-Configure the API access point in the `admin console --> settings`:
+Configure the DOI API access point to publish the metadata in the `Admin console --> Settings --> Doi servers`:
 
-![](img/doi-admin-console.png)
+![](img/doi-create-server.png)
 
-A record can be downloaded using the DataCite format from the API using: <http://localhost:8080/geonetwork/srv/api/records/da165110-88fd-11da-a88f-000d939bc5d8/formatters/datacite?output=xml>
+Providing the following information:
+
+- `Name`: A descriptive name for the server.
+- `Description`: (Optional) A verbose description of the server.
+- `DataCite API endpoint`: The API url, usually https://mds.datacite.org or https://mds.test.datacite.org for testing.
+- `DataCite username` / `DataCite password`: Credentials required to publish the DOI resources.
+- `Landing page URL template`: The URL to use to register the DOI. A good default for GeoNetwork is http://localhost:8080/geonetwork/srv/resources/records/{{uuid}}. The landing page URL MUST contains the UUID of the record.
+- `Final DOI URL prefix`: (Optional) Keep it empty to use the default https://doi.org prefix. Use https://mds.test.datacite.org/doi when using the test API.
+- `DOI pattern`: Default is `{{uuid}}` but the DOI structure can be customized with database id and/or record group eg. `example-{{groupOwner}}-{{id}}`.
+- `DataCite prefix`: Usually looks like `10.xxxx`. You will be allowed to register DOI names only under the prefixes that have been assigned to you.
+- `Record groups`: (Optional) When creating a DOI, only DOI server(s) associated with the record group are proposed. If record group is not associated with any DOI servers, then DOI servers with no group are proposed.
+
+A record can be downloaded using the DataCite format from the API using: `http://localhost:8080/geonetwork/srv/api/records/da165110-88fd-11da-a88f-000d939bc5d8/formatters/datacite?output=xml`
 
 ## Creating the DOI
 
@@ -64,9 +76,9 @@ The mapping can be customized in:
 -   ISO19139 `schemas/iso19139/src/main/plugin/iso19139/formatter/datacite/view.xsl`
 -   ISO19115-3.2018 `schemas/iso19139/src/main/plugin/iso19139/formatter/datacite/view.xsl`
 
-See <http://schema.datacite.org/meta/kernel-4.1/doc/DataCite-MetadataKernel_v4.1.pdf> for more details on the format.
+See the [DataCite Metadata Kernel documentation](http://schema.datacite.org/meta/kernel-4.1/doc/DataCite-MetadataKernel_v4.1.pdf) for more details on the format.
 
-DataCite API return XSD validation error.
+DataCite API returns an XSD validation error.
 
 ![](img/doi-request-check.png)
 

@@ -99,3 +99,7 @@ INSERT INTO StatusValuesDes  (iddes, langid, label) VALUES (101,'wel','Scheduled
 
 UPDATE Settings SET value='4.4.13' WHERE name='system/platform/version';
 UPDATE Settings SET value='SNAPSHOT' WHERE name='system/platform/subVersion';
+
+
+UPDATE Settings SET editable = 'y' WHERE editable IS NULL;
+UPDATE Settings SET value = '' WHERE value IS NULL;

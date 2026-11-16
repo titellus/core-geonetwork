@@ -73,13 +73,13 @@ public class Settings {
         "system/feedback/mailServer/ignoreSslCertificateErrors";
     public static final String SYSTEM_ENABLE_ALL_THESAURUS = "system/metadata/allThesaurus";
     public static final String SYSTEM_METADATA_THESAURUS_NAMESPACE = "system/metadata/thesaurusNamespace";
+    public static final String SYSTEM_METADATA_THESAURUS_URL_ALLOWLIST = "system/metadata/thesaurusUrlAllowlist";
     public static final String SYSTEM_METADATA_VALIDATION_REMOVESCHEMALOCATION = "system/metadata/validation/removeSchemaLocation";
+    public static final String SYSTEM_METADATA_RECORD_CREATION_DATE_FROM_XML = "system/metadata/recordCreationDateFromXml";
     public static final GNSetting SYSTEM_SITE_SVNUUID = new GNSetting("system/site/svnUuid", true);
     public static final String SYSTEM_INTRANET_NETWORK = "system/intranet/network";
     public static final String SYSTEM_INTRANET_NETMASK = "system/intranet/netmask";
     public static final String SYSTEM_INTRANET_IP_SEPARATOR = ",";
-    public static final String SYSTEM_Z3950_ENABLE = "system/z3950/enable";
-    public static final String SYSTEM_Z3950_PORT = "system/z3950/port";
     public static final String SYSTEM_SELECTIONMANAGER_MAXRECORDS = "system/selectionmanager/maxrecords";
     public static final String SYSTEM_CSW_ENABLE = "system/csw/enable";
     public static final String SYSTEM_CSW_ENABLEWHENINDEXING = "system/csw/enabledWhenIndexing";
@@ -109,6 +109,7 @@ public class Settings {
     public static final String SYSTEM_HARVESTER_DISABLED_HARVESTER_TYPES = "system/harvester/disabledHarvesterTypes";
     public static final String SYSTEM_METADATAPRIVS_USERGROUPONLY = "system/metadataprivs/usergrouponly";
     public static final String SYSTEM_METADATAPRIVS_PUBLICATIONBYGROUPOWNERONLY = "system/metadataprivs/publicationbyrevieweringroupowneronly";
+    public static final String SYSTEM_METADATAPRIVS_PUBLICATION_MANAGEPUBLICATIONDATE = "system/metadataprivs/publication/managepublicationdate";
     public static final String SYSTEM_METADATAPRIVS_PUBLICATIONNOTIFICATION_EMAILS = "system/metadataprivs/publication/notificationEmails";
     public static final String SYSTEM_METADATAPRIVS_PUBLICATION_NOTIFICATIONLEVEL = "system/metadataprivs/publication/notificationLevel";
     public static final String SYSTEM_METADATAPRIVS_PUBLICATION_NOTIFICATIONGROUPS = "system/metadataprivs/publication/notificationGroups";
@@ -139,10 +140,10 @@ public class Settings {
     public static final String METADATA_WORKFLOW_ENABLE = "metadata/workflow/enable";
     public static final String METADATA_WORKFLOW_DRAFT_WHEN_IN_GROUP = "metadata/workflow/draftWhenInGroup";
     public static final String METADATA_WORKFLOW_ALLOW_SUBMIT_APPROVE_INVALID_MD = "metadata/workflow/allowSubmitApproveInvalidMd";
-    public static final String METADATA_WORKFLOW_ALLOW_PUBLISH_INVALID_MD = "metadata/workflow/allowPublishInvalidMd";
+    public static final String METADATA_PUBLICATION_ALLOW_PUBLISH_INVALID_MD = "metadata/publication/allowPublishInvalidMd";
     public static final String METADATA_WORKFLOW_ALLOW_PUBLISH_NON_APPROVED_MD = "metadata/workflow/allowPublishNonApprovedMd";
-    public static final String METADATA_WORKFLOW_AUTOMATIC_UNPUBLISH_INVALID_MD = "metadata/workflow/automaticUnpublishInvalidMd";
-    public static final String METADATA_WORKFLOW_FORCE_VALIDATION_ON_MD_SAVE = "metadata/workflow/forceValidationOnMdSave";
+    public static final String METADATA_PUBLICATION_AUTOMATIC_UNPUBLISH_INVALID_MD = "metadata/publication/automaticUnpublishInvalidMd";
+    public static final String METADATA_SAVE_FORCE_VALIDATION_ON_MD_SAVE = "metadata/save/forceValidationOnMdSave";
     public static final String METADATA_LINK_EXCLUDEPATTERN = "metadata/link/excludedUrlPattern";
     public static final String METADATA_IMPORT_RESTRICT = "metadata/import/restrict";
     public static final String METADATA_IMPORT_USERPROFILE = "metadata/import/userprofile";

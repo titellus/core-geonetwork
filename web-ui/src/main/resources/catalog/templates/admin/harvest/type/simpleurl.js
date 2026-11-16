@@ -25,7 +25,8 @@ var gnHarvestersimpleurl = {
         "pageSizeParam": "",
         "pageFromParam": "",
         "recordIdPath": "",
-        "toISOConversion": "",
+        "recordIdPathMode": "auto",
+        "toISOConversion": ""
       },
       "content" : {
         "validate" : "NOVALIDATION",
@@ -94,6 +95,7 @@ var gnHarvestersimpleurl = {
       + '    <loopElement>' + h.site.loopElement + '</loopElement>'
       + '    <numberOfRecordPath>' + h.site.numberOfRecordPath + '</numberOfRecordPath>'
       + '    <recordIdPath>' + h.site.recordIdPath + '</recordIdPath>'
+      + '    <recordIdPathMode>' + h.site.recordIdPathMode + '</recordIdPathMode>'
       + '    <pageFromParam>' + h.site.pageFromParam + '</pageFromParam>'
       + '    <pageSizeParam>' + h.site.pageSizeParam + '</pageSizeParam>'
       + '    <toISOConversion>' + h.site.toISOConversion + '</toISOConversion>'

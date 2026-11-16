@@ -125,7 +125,15 @@
             showSearch: true,
             showSocialBarInFooter: true,
             showMosaic: true,
+            // Random mosaic: records matching this query (used when mosaicRecords is empty)
+            mosaicQuery: "-cl_status.key:obsolete",
+            // Curated mosaic: list of {uuid, link}. An empty link opens the record page.
+            // Only links inside the application (starting with #/) are allowed.
+            mosaicRecords: [],
+            // Mosaic layout: "gallery" (full width, mixed sizes) or "grid" (same size tiles, max 4 per row)
+            mosaicLayout: "gallery",
             showMaps: true,
+            showWelcomeMessage: false,
             facetConfig: {
               "th_IWRM-theme.link": {
                 terms: {
@@ -922,6 +930,11 @@
             disabledTools: {
               processes: false,
               addLayers: false,
+              addLayersWms: false,
+              addLayersWmts: false,
+              addLayersWfs: false,
+              addLayersEsriRest: false,
+              addLayersKml: false,
               projectionSwitcher: false,
               layers: false,
               legend: false,
@@ -1057,6 +1070,7 @@
             isUserRecordsOnly: false,
             minUserProfileToCreateTemplate: "",
             isFilterTagsDisplayed: false,
+            showFileStoreSize: true,
             fluidEditorLayout: true,
             createPageTpl: "../../catalog/templates/editor/new-metadata-horizontal.html",
             editorIndentType: "",
@@ -1419,6 +1433,7 @@
           "switcherProjectionList",
           "cookieWarning",
           "facetConfig",
+          "mosaicRecords",
           "searchOptions",
           "graticuleOgcService",
           "geocoder",
@@ -2262,11 +2277,21 @@
       });
 
       $scope.allowPublishInvalidMd = function () {
-        return gnConfig["metadata.workflow.allowPublishInvalidMd"];
+        return gnConfig["metadata.publication.allowPublishInvalidMd"];
       };
 
       $scope.allowPublishNonApprovedMd = function () {
         return gnConfig["metadata.workflow.allowPublishNonApprovedMd"];
+      };
+
+      // Whether the metadata type requires validation before it can be
+      // published. This mirrors the backend MetadataType.requiresValidation
+      // logic: templates and sub-templates are incomplete by design and are
+      // therefore never validated, so they must not be blocked from being
+      // published because they are "invalid". Only normal
+      // records (isTemplate === "n") require validation.
+      $scope.metadataTypeRequiresValidation = function (md) {
+        return !md.isTemplate || md.isTemplate === "n";
       };
 
       $scope.getPublicationOptionClass = function (
@@ -2300,7 +2325,7 @@
       ) {
         var publicationOptionTitle = "";
         if (!md.isPublished(pubOption)) {
-          if (md.isValid()) {
+          if (!$scope.metadataTypeRequiresValidation(md) || md.isValid()) {
             publicationOptionTitle = "mdvalid";
           } else {
             if (
